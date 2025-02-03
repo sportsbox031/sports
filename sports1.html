@@ -279,17 +279,15 @@
     </div>
 
     <script>
-const API_BASE_URL = 'https://
-sports-box-api.sportsbox031.workers.dev';
+const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 
         // Socket.io 연결
-        const socket = io('http://
-sports-box-api.sportsbox031.workers.dev');
-withCredentials: true,
-            transports: ['websocket'],
-            timeout: 10000,
-            reconnection: true,
-            reconnectionAttempts: 5
+        const socket = io(API_BASE_URL, {
+    withCredentials: true,
+    transports: ['websocket'],
+    timeout: 10000,
+    reconnection: true,
+    reconnectionAttempts: 5
         });
 
         let currentUser = null;
@@ -303,8 +301,7 @@ withCredentials: true,
                 const password = document.getElementById('password').value;
                 
                 try {
-                    const response = await fetch(`${http://
-sports-box-api.sportsbox031.workers.dev}/api/login, {
+                    const response = await fetch(`${API_BASE_URL}/api/login`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
