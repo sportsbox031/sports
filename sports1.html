@@ -342,7 +342,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
                 };
 
                 try {
-                    const response = await fetch('http://localhost:5000/api/signup', {
+                    const response = await fetch(`${API_BASE_URL}/api/signup`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -495,7 +495,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
         // API 호출 함수들
         async function loadPendingUsers() {
             try {
-                const response = await fetch('http://localhost:5000/api/admin/pending-users', {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-users', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -509,7 +509,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 
         async function loadPendingBookings() {
             try {
-                const response = await fetch('http://localhost:5000/api/admin/pending-bookings', {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-bookings', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -523,7 +523,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 
         async function loadBookings() {
             try {
-                const response = await fetch('http://localhost:5000/api/bookings', {
+                const response = await fetch(`${API_BASE_URL}/api/bookings', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -592,7 +592,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
         // 관리자 기능
         async function approveUser(userId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/approve`, {
+                const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/approve`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -608,7 +608,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 
         async function approveBooking(bookingId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/admin/bookings/${bookingId}/approve`, {
+                const response = await fetch(`${API_BASE_URL}/api/admin/bookings/${bookingId}/approve`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -618,7 +618,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
                 alert(data.message);
                 loadPending async function approveBooking(bookingId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/admin/bookings/${bookingId}/approve`, {
+                const response = await fetch(`${API_BASE_URL}/api/admin/bookings/${bookingId}/approve`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -646,7 +646,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
             }
 
             try {
-                const response = await fetch('http://localhost:5000/api/bookings', {
+                const response = await fetch(`${API_BASE_URL}/api/bookings', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -692,7 +692,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
             if (!token) return;
 
             try {
-                const response = await fetch('http://localhost:5000/api/validate-token', {
+                const response = await fetch(`${API_BASE_URL}/api/validate-token', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
