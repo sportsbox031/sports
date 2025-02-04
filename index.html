@@ -299,6 +299,8 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
                 e.preventDefault();
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
+
+                console.log('Login attempt:', { username });
                 
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/login`, {
@@ -309,8 +311,12 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
                         credentials: 'include', 
                         body: JSON.stringify({ username, password }),
                     });
+
+                    console.log('Login response:', response);
                     
                     const data = await response.json();
+                    console.log('Login data:', data);
+
                     if (response.ok) {
                         localStorage.setItem('token', data.token);
                         currentUser = { role: data.role };
@@ -319,6 +325,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
                         alert(data.message);
                     }
                 } catch (error) {
+                    console.error('Login error:', error);
                     alert('로그인 중 오류가 발생했습니다.');
                 }
             });
@@ -495,7 +502,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
         // API 호출 함수들
         async function loadPendingUsers() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/pending-users', {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-users`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -509,7 +516,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 
         async function loadPendingBookings() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/pending-bookings', {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-bookings`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -646,7 +653,7 @@ const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/bookings', {
+                const response = await fetch(`${API_BASE_URL}/api/bookings`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
