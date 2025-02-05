@@ -251,15 +251,15 @@
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">인원</label>
                                 <input type="number" id="people" required
-                                    min="1" max="30"
+                                    min="1"
                                     class="w-full p-3 border border-gray-300 rounded-lg">
-                                <p class="text-sm text-gray-500 mt-1">최대 30명</p>
+                                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">장소</label>
                                 <input type="text" id="place" required
                                     class="w-full p-3 border border-gray-300 rounded-lg"
-                                    placeholder="사용할 장소를 입력하세요">
+                                    placeholder="수업 장소를 입력하세요">
                             </div>
                         </div>
                         <button type="submit" 
@@ -438,47 +438,39 @@
         }
     
         // API 요청 헬퍼 함수
-        async function apiRequest(endpoint, options = {}) {
-            showLoading();
-            try {
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    ...options,
-                    mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        ...options.headers
-                    }
-                });
-    
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                }
-    
-                const data = await response.json();
-                
-                if (!data.success && !endpoint.includes('/validate-token')) {
-                    throw new Error(data.message || '요청이 실패했습니다.');
-                }
-    
-                return data;
-            } catch (error) {
-                console.error('API Request Error:', error);
-                if (error.message.includes('Failed to fetch')) {
-                    showAlert('서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.', 'error');
-                } else if (error.message.includes('401')) {
-                    showAlert('인증이 만료되었습니다. 다시 로그인해주세요.', 'error');
-                    logout();
-                } else {
-                    showAlert(error.message || '요청 처리 중 오류가 발생했습니다.', 'error');
-                }
-                throw error;
-            } finally {
-                hideLoading();
+async function apiRequest(endpoint, options = {}) {
+    showLoading();
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token') ? 
+                    `Bearer ${localStorage.getItem('token')}` : '',
+                ...options.headers
             }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API Request Error:', error);
+        if (error.message.includes('Failed to fetch')) {
+            showAlert('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.', 'error');
+        } else {
+            showAlert(error.message || '요청 처리 중 오류가 발생했습니다.', 'error');
+        }
+        throw error;
+    } finally {
+        hideLoading();
+    }
+}
     
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
