@@ -438,7 +438,7 @@
         }
     
         // API 요청 헬퍼 함수
-async function apiRequest(endpoint, options = {}) {
+        async function apiRequest(endpoint, options = {}) {
     showLoading();
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -446,6 +446,7 @@ async function apiRequest(endpoint, options = {}) {
             mode: 'cors',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': localStorage.getItem('token') ? 
                     `Bearer ${localStorage.getItem('token')}` : '',
                 ...options.headers
@@ -453,19 +454,14 @@ async function apiRequest(endpoint, options = {}) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
-        if (error.message.includes('Failed to fetch')) {
-            showAlert('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.', 'error');
-        } else {
-            showAlert(error.message || '요청 처리 중 오류가 발생했습니다.', 'error');
-        }
+        showAlert('서버 연결에 실패했습니다.', 'error');
         throw error;
     } finally {
         hideLoading();
