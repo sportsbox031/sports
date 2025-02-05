@@ -453,15 +453,15 @@
             }
         });
 
+        const data = await response.json();
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
-        showAlert('서버 연결에 실패했습니다.', 'error');
+        showAlert(error.message || '서버 연결에 실패했습니다.', 'error');
         throw error;
     } finally {
         hideLoading();
