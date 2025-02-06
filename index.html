@@ -939,48 +939,56 @@
 
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
-        try {
-            const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
-            const tbody = document.getElementById('dateBookingsList');
-            const modalDate = document.getElementById('modalDate');
-            const blockDateBtn = document.getElementById('blockDateBtn');
-            const unblockDateBtn = document.getElementById('unblockDateBtn');
-            
-            // 날짜 표시
-            modalDate.textContent = formatDate(dateString);
+    try {
+        console.log('Loading bookings for date:', dateString);
+        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
+        console.log('Received booking data:', data);
 
-            // 마감 버튼 상태 설정
-            const dateStatus = bookingStatus[dateString];
-            if (dateStatus?.isBlocked) {
-                blockDateBtn.classList.add('hidden');
-                unblockDateBtn.classList.remove('hidden');
-            } else {
-                blockDateBtn.classList.remove('hidden');
-                unblockDateBtn.classList.add('hidden');
-            }
+        const tbody = document.getElementById('dateBookingsList');
+        const modalDate = document.getElementById('modalDate');
+        const blockDateBtn = document.getElementById('blockDateBtn');
+        const unblockDateBtn = document.getElementById('unblockDateBtn');
+        
+        // 날짜 표시
+        modalDate.textContent = formatDate(dateString);
 
-            // 예약 목록 표시
-            if (data.success && data.data) {
-                tbody.innerHTML = data.data.map(booking => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('') || '<tr><td colspan="5" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
-            }
-        } catch (error) {
-            console.error('Error loading date bookings:', error);
-            showAlert('예약 내역을 불러오는데 실패했습니다.', 'error');
+        // 마감 버튼 상태 설정
+        const dateStatus = bookingStatus[dateString];
+        if (dateStatus?.isBlocked) {
+            blockDateBtn.classList.add('hidden');
+            unblockDateBtn.classList.remove('hidden');
+        } else {
+            blockDateBtn.classList.remove('hidden');
+            unblockDateBtn.classList.add('hidden');
         }
+
+        // 예약 목록 표시
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(booking => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${getStatusClass(booking.status)}">
+                            ${getStatusText(booking.status)}
+                        </span>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading date bookings:', error);
+        console.error('Error details:', {
+            dateString,
+            error: error.message,
+            stack: error.stack
+        });
+        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error');
     }
+}
 
     // 관리자: 예약 승인/거부
     async function approveBooking(bookingId) {
