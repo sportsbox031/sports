@@ -710,6 +710,37 @@
         }
     }
 
+// 예약 생성
+async function createBooking(bookingData) {
+    try {
+        // 날짜 형식 변환 (YYYY년 MM월 DD일 -> YYYY-MM-DD)
+        const matches = bookingData.date.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+        if (!matches) {
+            throw new Error('날짜 형식이 올바르지 않습니다.');
+        }
+        
+        const formattedDate = `${matches[1]}-${matches[2].padStart(2, '0')}-${matches[3].padStart(2, '0')}`;
+
+        const response = await apiRequest('/api/bookings', {
+            method: 'POST',
+            body: JSON.stringify({
+                ...bookingData,
+                date: formattedDate
+            })
+        });
+
+        if (response.success) {
+            showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('bookingForm').reset();
+            await loadBookings();
+            await updateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking creation error:', error);
+        showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+    }
+}
+
     // 관리자: 예약 승인 대기 목록 로드
     async function loadPendingBookings() {
         try {
