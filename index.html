@@ -549,26 +549,26 @@
         }
 
     // 로그인/로그아웃 관련 함수
-    async function login(username, password) {
-        try {
-            const response = await apiRequest('/api/login', {
-                method: 'POST',
-                body: JSON.stringify({ username, password })
-            });
+async function login(username, password) {
+    try {
+        const response = await apiRequest('/api/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        });
 
-            if (response.success) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('role', response.role);
-                localStorage.setItem('username', response.username);
-                
-                showDashboard(response.role);
-                showAlert('로그인되었습니다.', 'success');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            showAlert(error.message || '로그인에 실패했습니다.', 'error');
+        if (response.success) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('role', response.role);
+            localStorage.setItem('username', response.username);
+            
+            showDashboard(response.role);
+            showAlert('로그인되었습니다.', 'success');
         }
+    } catch (error) {
+        console.error('Login error:', error);
+        showAlert(error.message || '로그인에 실패했습니다.', 'error');
     }
+}
 
     function logout() {
         localStorage.removeItem('token');
@@ -583,24 +583,25 @@
     }
 
     function showDashboard(role) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminDashboard').style.display = 'none';
-        document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
 
-        if (role === 'admin') {
-            document.getElementById('adminDashboard').style.display = 'block';
-            loadPendingUsers();
-            loadPendingBookings();
-        } else {
-            document.getElementById('userDashboard').style.display = 'block';
-            if (localStorage.getItem('username')) {
-                document.getElementById('userGroupName').textContent = 
-                    localStorage.getItem('username');
-            }
-            loadBookings();
-            updateCalendarStatus();
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminCalendar(); // 여기에 추가
+        loadPendingUsers();
+        loadPendingBookings();
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
         }
+        loadBookings();
+        updateCalendarStatus();
     }
+}
 
     // 회원가입 관련 함수
     async function signup(formData) {
@@ -1214,11 +1215,15 @@ if (role === 'admin') {
         initializeTimeSelects();
 
         // 자동 로그인 체크
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
-        if (token && role) {
-            showDashboard(role);
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token && role) {
+        showDashboard(role);
+        if (role === 'admin') {
+            initializeAdminCalendar();
         }
+    }
+});
 
         // 예약 목록 자동 갱신 시작
         startBookingRefresh();
