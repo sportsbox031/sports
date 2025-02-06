@@ -575,26 +575,27 @@
         }
 
         function showDashboard(role) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminDashboard').style.display = 'none';
-        document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
 
-        if (role === 'admin') {
-            document.getElementById('adminDashboard').style.display = 'block';
-            loadPendingUsers();
-            loadPendingBookings();
-            initializeAdminCalendar(); // 관리자 캘린더 초기화
-            updateCalendarStatus();
-        } else {
-            document.getElementById('userDashboard').style.display = 'block';
-            if (localStorage.getItem('username')) {
-                document.getElementById('userGroupName').textContent = 
-                    localStorage.getItem('username');
-            }
-            loadBookings();
-            updateCalendarStatus();
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminCalendar(); // 먼저 캘린더 초기화
+        updateCalendarStatus(); // 그 다음 상태 업데이트
+        loadPendingUsers();
+        loadPendingBookings();
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
         }
+        initializeCalendar();
+        updateCalendarStatus();
+        loadBookings();
     }
+}
 
     // 회원가입 관련 함수
     async function signup(formData) {
@@ -773,32 +774,35 @@
 
     // 예약 상태 조회 함수에 월별 예약 횟수 추가
     async function updateCalendarStatus() {
-        try {
-            const data = await apiRequest('/api/bookings/status');
-            bookingStatus = data.data;
+    try {
+        const data = await apiRequest('/api/bookings/status');
+        bookingStatus = data.data;
 
-            // 현재 월의 예약 횟수 표시
-            const monthlyCount = Object.values(bookingStatus)
-                .filter(status => status.isCurrentMonth && status.isMyBooking)
-                .length;
+        // 현재 월의 예약 횟수 표시 (일반 사용자 대시보드용)
+        const monthlyCount = Object.values(bookingStatus)
+            .filter(status => status.isCurrentMonth && status.isMyBooking)
+            .length;
 
-            // 남은 예약 가능 횟수 표시
-            const remainingBookings = 4 - monthlyCount;
-            const bookingCountElement = document.getElementById('remainingBookings');
-            if (bookingCountElement) {
-                bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
-                bookingCountElement.className = remainingBookings > 0 ? 
-                    'text-green-600' : 'text-red-600';
-            }
-
-            renderCalendar(currentDate);
-            if (document.getElementById('adminCalendar')) {
-                renderAdminCalendar(adminCurrentDate);
-            }
-        } catch (error) {
-            console.error('Calendar status update error:', error);
+        // 남은 예약 가능 횟수 표시
+        const remainingBookings = 4 - monthlyCount;
+        const bookingCountElement = document.getElementById('remainingBookings');
+        if (bookingCountElement) {
+            bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
+            bookingCountElement.className = remainingBookings > 0 ? 
+                'text-green-600' : 'text-red-600';
         }
+
+        // 각 캘린더 업데이트
+        const role = localStorage.getItem('role');
+        if (role === 'admin') {
+            renderAdminCalendar(adminCurrentDate);
+        } else {
+            renderCalendar(currentDate);
+        }
+    } catch (error) {
+        console.error('Calendar status update error:', error);
     }
+}
 
     // 캘린더 관련 변수와 함수
     let currentDate = new Date();
