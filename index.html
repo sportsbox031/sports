@@ -227,79 +227,80 @@
                 </div>
 
                 <!-- 예약 정보 섹션 -->
-<div class="bg-white rounded-lg shadow-lg p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-700">예약하기</h2>
-        <div id="remainingBookings" class="text-sm font-medium text-green-600">
-            이번 달 남은 예약 가능 횟수: 4회
-        </div>
-    </div>
-    <form id="bookingForm" class="space-y-6">
-        <div>
-            <label class="block text-gray-700 font-medium mb-2">선택된 날짜</label>
-            <input type="text" id="selectedDate" readonly required
-                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
-                <select id="startTime" required
-                    class="w-full p-3 border border-gray-300 rounded-lg">
-                </select>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">종료 시간</label>
-                <select id="endTime" required
-                    class="w-full p-3 border border-gray-300 rounded-lg">
-                </select>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">인원</label>
-                <input type="number" id="people" required min="1"
-                    class="w-full p-3 border border-gray-300 rounded-lg">
-                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">장소</label>
-                <input type="text" id="place" required
-                    class="w-full p-3 border border-gray-300 rounded-lg"
-                    placeholder="수업 장소를 입력하세요">
-            </div>
-        </div>
-        <button type="submit" 
-            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
-            예약하기
-        </button>
-    </form>
-</div>
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-700">예약하기</h2>
+                        <div id="remainingBookings" class="text-sm font-medium text-green-600">
+                            이번 달 남은 예약 가능 횟수: 4회
+                        </div>
+                    </div>
+                    <form id="bookingForm" class="space-y-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">선택된 날짜</label>
+                            <input type="text" id="selectedDate" readonly required
+                                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
+                                <select id="startTime" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg">
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">종료 시간</label>
+                                <select id="endTime" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg">
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">인원</label>
+                                <input type="number" id="people" required min="1"
+                                    class="w-full p-3 border border-gray-300 rounded-lg">
+                                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">장소</label>
+                                <input type="text" id="place" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg"
+                                    placeholder="수업 장소를 입력하세요">
+                            </div>
+                        </div>
+                        <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                            예약하기
+                        </button>
+                    </form>
+                </div>
 
-            <!-- 내 예약 목록 -->
-            <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-700 mb-6">내 예약 목록</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    날짜
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    시간
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    장소
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    인원
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    상태
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="bookingsList" class="bg-white divide-y divide-gray-200">
-                        </tbody>
-                    </table>
+                <!-- 내 예약 목록 -->
+                <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-700 mb-6">내 예약 목록</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        날짜
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        시간
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        장소
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        인원
+                                    </th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        상태
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsList" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
@@ -325,6 +326,42 @@
         </nav>
 
         <main class="container mx-auto px-4 py-8">
+            <!-- 캘린더 섹션 추가 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-700">예약 현황</h2>
+                    <div class="flex space-x-4">
+                        <button id="adminPrevMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
+                            <i class="fas fa-chevron-left text-blue-600"></i>
+                        </button>
+                        <span id="adminCurrentMonth" class="p-2 font-medium text-gray-700"></span>
+                        <button id="adminNextMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
+                            <i class="fas fa-chevron-right text-blue-600"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-2 mb-2">
+                    <div class="text-center font-medium text-gray-600">일</div>
+                    <div class="text-center font-medium text-gray-600">월</div>
+                    <div class="text-center font-medium text-gray-600">화</div>
+                    <div class="text-center font-medium text-gray-600">수</div>
+                    <div class="text-center font-medium text-gray-600">목</div>
+                    <div class="text-center font-medium text-gray-600">금</div>
+                    <div class="text-center font-medium text-gray-600">토</div>
+                </div>
+                <div id="adminCalendar" class="grid grid-cols-7 gap-2"></div>
+                <div class="mt-4 flex justify-end space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-yellow-100 rounded mr-2"></div>
+                        <span class="text-sm text-gray-600">예약있음</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-100 rounded mr-2"></div>
+                        <span class="text-sm text-gray-600">예약마감</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- 회원가입 승인 목록 -->
             <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
                 <h2 class="text-xl font-bold text-gray-700 mb-6">회원가입 승인 대기</h2>
@@ -502,42 +539,42 @@
                     return '알 수 없음';
             }
         }
-
-    // 로그인/로그아웃 관련 함수
-    async function login(username, password) {
-        try {
-            const response = await apiRequest('/api/login', {
-                method: 'POST',
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.success) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('role', response.role);
-                localStorage.setItem('username', response.username);
-                
-                showDashboard(response.role);
-                showAlert('로그인되었습니다.', 'success');
+    
+        // 로그인/로그아웃 관련 함수
+        async function login(username, password) {
+            try {
+                const response = await apiRequest('/api/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+    
+                if (response.success) {
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('role', response.role);
+                    localStorage.setItem('username', response.username);
+                    
+                    showDashboard(response.role);
+                    showAlert('로그인되었습니다.', 'success');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(error.message || '로그인에 실패했습니다.', 'error');
             }
-        } catch (error) {
-            console.error('Login error:', error);
-            showAlert(error.message || '로그인에 실패했습니다.', 'error');
         }
-    }
+    
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('username');
+            
+            document.getElementById('adminDashboard').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            
+            showAlert('로그아웃되었습니다.', 'info');
+        }
 
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('username');
-        
-        document.getElementById('adminDashboard').style.display = 'none';
-        document.getElementById('userDashboard').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'flex';
-        
-        showAlert('로그아웃되었습니다.', 'info');
-    }
-
-    function showDashboard(role) {
+        function showDashboard(role) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminDashboard').style.display = 'none';
         document.getElementById('userDashboard').style.display = 'none';
@@ -546,6 +583,8 @@
             document.getElementById('adminDashboard').style.display = 'block';
             loadPendingUsers();
             loadPendingBookings();
+            initializeAdminCalendar(); // 관리자 캘린더 초기화
+            updateCalendarStatus();
         } else {
             document.getElementById('userDashboard').style.display = 'block';
             if (localStorage.getItem('username')) {
@@ -733,53 +772,37 @@
     }
 
     // 예약 상태 조회 함수에 월별 예약 횟수 추가
-async function updateCalendarStatus() {
-    try {
-        const data = await apiRequest('/api/bookings/status');
-        bookingStatus = data.data;
-
-        // 현재 월의 예약 횟수 표시
-        const monthlyCount = Object.values(bookingStatus)
-            .filter(status => status.isCurrentMonth && status.isMyBooking)
-            .length;
-
-        // 남은 예약 가능 횟수 표시
-        const remainingBookings = 4 - monthlyCount;
-        const bookingCountElement = document.getElementById('remainingBookings');
-        if (bookingCountElement) {
-            bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
-            bookingCountElement.className = remainingBookings > 0 ? 
-                'text-green-600' : 'text-red-600';
-        }
-
-        renderCalendar(currentDate);
-    } catch (error) {
-        console.error('Calendar status update error:', error);
-    }
-}
-
-    // 예약 생성
-    async function createBooking(bookingData) {
+    async function updateCalendarStatus() {
         try {
-            const response = await apiRequest('/api/bookings', {
-                method: 'POST',
-                body: JSON.stringify(bookingData)
-            });
+            const data = await apiRequest('/api/bookings/status');
+            bookingStatus = data.data;
 
-            if (response.success) {
-                showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                document.getElementById('bookingForm').reset();
-                await loadBookings();
-                await updateCalendarStatus();
+            // 현재 월의 예약 횟수 표시
+            const monthlyCount = Object.values(bookingStatus)
+                .filter(status => status.isCurrentMonth && status.isMyBooking)
+                .length;
+
+            // 남은 예약 가능 횟수 표시
+            const remainingBookings = 4 - monthlyCount;
+            const bookingCountElement = document.getElementById('remainingBookings');
+            if (bookingCountElement) {
+                bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
+                bookingCountElement.className = remainingBookings > 0 ? 
+                    'text-green-600' : 'text-red-600';
+            }
+
+            renderCalendar(currentDate);
+            if (document.getElementById('adminCalendar')) {
+                renderAdminCalendar(adminCurrentDate);
             }
         } catch (error) {
-            console.error('Booking creation error:', error);
-            showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+            console.error('Calendar status update error:', error);
         }
     }
 
     // 캘린더 관련 변수와 함수
     let currentDate = new Date();
+    let adminCurrentDate = new Date();
     let calendar, currentMonthElement, selectedDateInput;
 
     function initializeCalendar() {
@@ -800,7 +823,29 @@ async function updateCalendarStatus() {
         renderCalendar(currentDate);
     }
 
+    // 관리자 캘린더 초기화 함수
+    function initializeAdminCalendar() {
+        const adminCalendar = document.getElementById('adminCalendar');
+        const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+
+        document.getElementById('adminPrevMonth').addEventListener('click', function() {
+            adminCurrentDate.setMonth(adminCurrentDate.getMonth() - 1);
+            renderAdminCalendar(adminCurrentDate);
+        });
+
+        document.getElementById('adminNextMonth').addEventListener('click', function() {
+            adminCurrentDate.setMonth(adminCurrentDate.getMonth() + 1);
+            renderAdminCalendar(adminCurrentDate);
+        });
+
+        renderAdminCalendar(adminCurrentDate);
+    }
+
+    // 캘린더 렌더링 함수들
     function renderCalendar(date) {
+        const calendar = document.getElementById('calendar');
+        const currentMonthElement = document.getElementById('currentMonth');
+        
         const year = date.getFullYear();
         const month = date.getMonth();
 
@@ -829,11 +874,9 @@ async function updateCalendarStatus() {
             const dateStatus = bookingStatus[dateString];
 
             if (selectedDateObj < today) {
-                // 과거 날짜
                 dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
                 dayElement.title = '지난 날짜';
             } else {
-                // 예약 상태에 따른 스타일
                 if (dateStatus?.isFull) {
                     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
                     dayElement.title = '예약 마감';
@@ -850,7 +893,6 @@ async function updateCalendarStatus() {
 
             dayElement.textContent = day;
 
-            // 오늘 날짜 표시
             if (
                 day === today.getDate() &&
                 currentDate.getMonth() === today.getMonth() &&
@@ -860,6 +902,67 @@ async function updateCalendarStatus() {
             }
 
             calendar.appendChild(dayElement);
+        }
+    }
+
+    function renderAdminCalendar(date) {
+        const adminCalendar = document.getElementById('adminCalendar');
+        const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+        
+        const year = date.getFullYear();
+        const month = date.getMonth();
+
+        adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        adminCalendar.innerHTML = '';
+
+        // 첫째 날의 요일만큼 빈 칸 추가
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'h-12 rounded-lg';
+            adminCalendar.appendChild(emptyDay);
+        }
+
+        // 날짜 채우기
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayElement = document.createElement('div');
+            const selectedDateObj = new Date(year, month, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateStatus = bookingStatus[dateString];
+
+            if (selectedDateObj < today) {
+                dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+                dayElement.title = '지난 날짜';
+            } else {
+                if (dateStatus?.isFull) {
+                    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+                    dayElement.title = '예약 마감';
+                } else if (dateStatus?.hasBooking) {
+                    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center';
+                    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+                } else {
+                    dayElement.className = 
+                        'calendar-day h-12 flex items-center justify-center rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                }
+            }
+
+            dayElement.textContent = day;
+
+            if (
+                day === today.getDate() &&
+                adminCurrentDate.getMonth() === today.getMonth() &&
+                adminCurrentDate.getFullYear() === today.getFullYear()
+            ) {
+                dayElement.classList.add('bg-blue-100', 'font-bold');
+            }
+
+            adminCalendar.appendChild(dayElement);
         }
     }
 
@@ -900,26 +1003,6 @@ async function updateCalendarStatus() {
             endTimeSelect.innerHTML = '<option value="">선택해주세요</option>' + 
                 timeOptions.slice(selectedIndex + 1).map(time => `<option value="${time}">${time}</option>`).join('');
         });
-    }
-
-    // 주기적으로 예약 목록 갱신
-    function startBookingRefresh() {
-        setInterval(async () => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin') {
-                if (document.getElementById('pendingUsersList').offsetParent !== null) {
-                    await loadPendingUsers();
-                }
-                if (document.getElementById('pendingBookingsList').offsetParent !== null) {
-                    await loadPendingBookings();
-                }
-            } else {
-                if (document.getElementById('bookingsList').offsetParent !== null) {
-                    await loadBookings();
-                    await updateCalendarStatus();
-                }
-            }
-        }, 30000); // 30초마다 갱신
     }
 
     // 이벤트 리스너 설정
@@ -963,12 +1046,12 @@ async function updateCalendarStatus() {
             e.preventDefault();
             
             const remainingBookings = parseInt(document.getElementById('remainingBookings')
-        .textContent.match(/\d+/)[0]);
-    
-    if (remainingBookings <= 0) {
-        showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
-        return;
-    }
+                .textContent.match(/\d+/)[0]);
+            
+            if (remainingBookings <= 0) {
+                showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
+                return;
+            }
 
             const bookingData = {
                 date: document.getElementById('selectedDate').value,
@@ -1009,9 +1092,6 @@ async function updateCalendarStatus() {
         if (token && role) {
             showDashboard(role);
         }
-
-        // 예약 목록 자동 갱신 시작
-        startBookingRefresh();
     });
 </script>
 </body>
