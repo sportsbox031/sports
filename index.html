@@ -996,6 +996,89 @@ function initializeAdminCalendar() {
     renderAdminCalendar(adminCurrentDate);
 }
 
+function renderAdminCalendar(date) {
+    const adminCalendar = document.getElementById('adminCalendar');
+    const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+    
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    adminCalendar.innerHTML = '';
+
+    // 첫째 날의 요일만큼 빈 칸 추가
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'h-12 rounded-lg';
+        adminCalendar.appendChild(emptyDay);
+    }
+
+    // 날짜 채우기
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dayElement = document.createElement('div');
+        const selectedDateObj = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStatus = bookingStatus[dateString];
+
+        // 기본 클래스 설정
+        let className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg';
+        let title = '';
+
+        if (selectedDateObj < today) {
+            // 과거 날짜
+            className += ' past text-gray-400 cursor-not-allowed';
+            title = '지난 날짜';
+        } else {
+            // 예약 상태에 따른 스타일
+            if (dateStatus?.isFull) {
+                className += ' full bg-red-100';
+                title = '예약 마감';
+            } else if (dateStatus?.hasBooking) {
+                className += ' booked bg-yellow-100';
+                title = `${dateStatus.bookingCount}개 예약됨`;
+            }
+
+            // 관리자가 마감한 날짜 표시
+            if (dateStatus?.isBlocked) {
+                className += ' blocked bg-gray-300';
+                title = '관리자 마감';
+            }
+
+            // 클릭 이벤트 추가
+            dayElement.addEventListener('click', function() {
+                const selected = adminCalendar.querySelector('.selected');
+                if (selected) {
+                    selected.classList.remove('selected');
+                }
+                this.classList.add('selected');
+            });
+        }
+
+        dayElement.className = className;
+        dayElement.title = title;
+        dayElement.textContent = day;
+        dayElement.dataset.date = dateString;
+
+        // 오늘 날짜 표시
+        if (
+            day === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        ) {
+            dayElement.classList.add('bg-blue-100', 'font-bold');
+        }
+
+        adminCalendar.appendChild(dayElement);
+    }
+}
+
 // 관리자 로그인 시 캘린더 초기화 호출
 if (role === 'admin') {
     initializeAdminCalendar();
