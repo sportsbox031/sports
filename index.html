@@ -1110,51 +1110,63 @@ async function unblockDate(date) {
         document.getElementById('adminLogoutBtn').addEventListener('click', logout);
 
         // 예약 폼 제출
-        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const remainingBookings = parseInt(document.getElementById('remainingBookings')
-                .textContent.match(/\d+/)[0]);
-            
-            if (remainingBookings <= 0) {
-                showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
-                return;
-            }
+        // 예약 폼 제출
+document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const remainingBookings = parseInt(document.getElementById('remainingBookings')
+        .textContent.match(/\d+/)[0]);
+    
+    if (remainingBookings <= 0) {
+        showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
+        return;
+    }
 
-// 예약 폼 제출 이벤트 리스너 내부
-if (bookingStatus[dateString]?.isBlocked) {
-    showAlert('마감된 날짜는 예약할 수 없습니다.', 'error');
-    return;
-}
+    const selectedDate = document.getElementById('selectedDate').value;
+    // 날짜 형식 변환 (YYYY년 MM월 DD일 -> YYYY-MM-DD)
+    const matches = selectedDate.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+    if (!matches) {
+        showAlert('날짜 형식이 올바르지 않습니다.', 'error');
+        return;
+    }
+    
+    const dateString = `${matches[1]}-${matches[2].padStart(2, '0')}-${matches[3].padStart(2, '0')}`;
 
-            const bookingData = {
-                date: document.getElementById('selectedDate').value,
-                startTime: document.getElementById('startTime').value,
-                endTime: document.getElementById('endTime').value,
-                people: parseInt(document.getElementById('people').value),
-                place: document.getElementById('place').value
-            };
+    // 마감된 날짜 체크
+    if (bookingStatus[dateString]?.isBlocked) {
+        showAlert('마감된 날짜는 예약할 수 없습니다.', 'error');
+        return;
+    }
 
-            // 입력값 검증
-            if (!bookingData.date) {
-                showAlert('날짜를 선택해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.startTime || !bookingData.endTime) {
-                showAlert('시간을 선택해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.people || bookingData.people < 1) {
-                showAlert('올바른 인원 수를 입력해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.place.trim()) {
-                showAlert('장소를 입력해주세요.', 'error');
-                return;
-            }
+    const bookingData = {
+        date: selectedDate,
+        startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime').value,
+        people: parseInt(document.getElementById('people').value),
+        place: document.getElementById('place').value
+    };
 
-            await createBooking(bookingData);
-        });
+    // 입력값 검증
+    if (!bookingData.date) {
+        showAlert('날짜를 선택해주세요.', 'error');
+        return;
+    }
+    if (!bookingData.startTime || !bookingData.endTime) {
+        showAlert('시간을 선택해주세요.', 'error');
+        return;
+    }
+    if (!bookingData.people || bookingData.people < 1) {
+        showAlert('올바른 인원 수를 입력해주세요.', 'error');
+        return;
+    }
+    if (!bookingData.place.trim()) {
+        showAlert('장소를 입력해주세요.', 'error');
+        return;
+    }
+
+    await createBooking(bookingData);
+});
+
 
         // 캘린더 및 시간 선택 초기화
         initializeCalendar();
