@@ -1046,13 +1046,13 @@
 
         // 오늘 날짜 표시 (단, 마감된 날짜가 아닌 경우에만)
         if (
-            !dateStatus?.isBlocked && 
-            day === today.getDate() &&
-            currentDate.getMonth() === today.getMonth() &&
-            currentDate.getFullYear() === today.getFullYear()
-        ) {
-            dayElement.classList.add('bg-blue-100', 'font-bold');
-        }
+    !dateStatus?.isBlocked && 
+    day === today.getDate() &&
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getFullYear() === today.getFullYear()
+) {
+    dayElement.classList.add('font-bold');  // bg-blue-100 제거
+}
 
         calendar.appendChild(dayElement);
     }
@@ -1129,13 +1129,13 @@
 
             // 오늘 날짜 표시 (단, 마감된 날짜가 아닌 경우에만)
             if (
-                !dateStatus?.isBlocked && 
-                day === today.getDate() &&
-                adminCurrentDate.getMonth() === today.getMonth() &&
-                adminCurrentDate.getFullYear() === today.getFullYear()
-            ) {
-                dayElement.classList.add('bg-blue-100', 'font-bold');
-            }
+    !dateStatus?.isBlocked && 
+    day === today.getDate() &&
+    adminCurrentDate.getMonth() === today.getMonth() &&
+    adminCurrentDate.getFullYear() === today.getFullYear()
+) {
+    dayElement.classList.add('font-bold');  // bg-blue-100 제거
+}
 
             adminCalendar.appendChild(dayElement);
         }
