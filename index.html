@@ -488,31 +488,35 @@
     
         // API 요청 헬퍼 함수
         async function apiRequest(endpoint, options = {}) {
-            showLoading();
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    ...options,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token ? `Bearer ${token}` : '',
-                        ...options.headers
-                    }
-                });
-    
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
-                }
-    
-                return data;
-            } catch (error) {
-                console.error('API Request Error:', error);
-                throw error;
-            } finally {
-                hideLoading();
+    showLoading();
+    try {
+        console.log('API Request:', {
+            url: `${API_BASE_URL}${endpoint}`,
+            method: options.method,
+            body: options.body // 실제 전송되는 데이터 확인
+        });
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token') ? 
+                    `Bearer ${localStorage.getItem('token')}` : '',
+                ...options.headers
             }
-        }
+        });
+
+        const data = await response.json();
+        console.log('API Response:', data);
+        
+        return data;
+    } catch (error) {
+        console.error('API Request failed:', error);
+        throw error;
+    } finally {
+        hideLoading();
+    }
+}
     
         // 날짜 포맷 함수
         function formatDate(dateStr) {
@@ -583,16 +587,20 @@ async function login(username, password) {
     }
 
     function showDashboard(role) {
+    console.log('Showing dashboard for role:', role);
+    
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
 
     if (role === 'admin') {
+        console.log('Showing admin dashboard');
         document.getElementById('adminDashboard').style.display = 'block';
-        initializeAdminCalendar(); // 여기에 추가
+        initializeAdminCalendar();
         loadPendingUsers();
         loadPendingBookings();
     } else {
+        console.log('Showing user dashboard');
         document.getElementById('userDashboard').style.display = 'block';
         if (localStorage.getItem('username')) {
             document.getElementById('userGroupName').textContent = 
@@ -1137,11 +1145,40 @@ if (role === 'admin') {
     document.addEventListener('DOMContentLoaded', function() {
         // 로그인 폼 이벤트 리스너
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            await login(username, password);
-        });
+        e.preventDefault();
+        console.log('Login form submitted');
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        console.log('Attempting login with:', { username });
+        
+        try {
+            const response = await apiRequest('/api/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            
+            console.log('Raw login response:', response);
+            
+            if (response.success) {
+                console.log('Login successful, setting storage...');
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('role', response.role);
+                localStorage.setItem('username', response.username);
+                
+                console.log('Storage set, showing dashboard...');
+                showDashboard(response.role);
+                showAlert('로그인되었습니다.', 'success');
+            } else {
+                console.log('Login failed:', response.message);
+                showAlert(response.message || '로그인에 실패했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showAlert(error.message || '로그인 처리 중 오류가 발생했습니다.', 'error');
+        }
+    });
 
         // 회원가입 모달 제어
         document.getElementById('showSignup').addEventListener('click', function() {
