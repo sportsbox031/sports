@@ -519,7 +519,61 @@
                 hideLoading();
             }
         }
-    
+
+    // 예약 생성 함수
+    async function createBooking(bookingData) {
+        try {
+            const response = await apiRequest('/api/bookings', {
+                method: 'POST',
+                body: JSON.stringify(bookingData)
+            });
+
+            if (response.success) {
+                showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+                document.getElementById('bookingForm').reset();
+                await loadBookings();
+                await updateCalendarStatus();
+            }
+        } catch (error) {
+            console.error('Booking creation error:', error);
+            showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    // 날짜 마감 함수
+    async function blockDate(date) {
+        try {
+            const response = await apiRequest('/api/admin/dates/block', {
+                method: 'POST',
+                body: JSON.stringify({ date })
+            });
+            if (response.success) {
+                showAlert('날짜가 마감 처리되었습니다.', 'success');
+                await updateCalendarStatus();
+            }
+        } catch (error) {
+            console.error('Date blocking error:', error);
+            showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    // 날짜 마감 해제 함수
+    async function unblockDate(date) {
+        try {
+            const response = await apiRequest('/api/admin/dates/unblock', {
+                method: 'POST',
+                body: JSON.stringify({ date })
+            });
+            if (response.success) {
+                showAlert('날짜 마감이 해제되었습니다.', 'success');
+                await updateCalendarStatus();
+            }
+        } catch (error) {
+            console.error('Date unblocking error:', error);
+            showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+        }
+    }        
+
         // 날짜 포맷 함수
         function formatDate(dateStr) {
             const date = new Date(dateStr);
