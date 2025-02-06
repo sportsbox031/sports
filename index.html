@@ -588,6 +588,8 @@ async function login(username, password) {
 
     function showDashboard(role) {
     console.log('Showing dashboard for role:', role);
+    console.log('Token:', localStorage.getItem('token'));
+    console.log('Username:', localStorage.getItem('username'));
     
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
@@ -1256,9 +1258,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const role = localStorage.getItem('role');
     if (token && role) {
         showDashboard(role);
-        if (role === 'admin') {
-            initializeAdminCalendar();
-        }
     }
 
     // 예약 목록 자동 갱신 시작
