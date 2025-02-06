@@ -1142,9 +1142,9 @@ if (role === 'admin') {
     }
 
     // 이벤트 리스너 설정
-    document.addEventListener('DOMContentLoaded', function() {
-        // 로그인 폼 이벤트 리스너
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+document.addEventListener('DOMContentLoaded', function() {
+    // 로그인 폼 이벤트 리스너
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         console.log('Login form submitted');
         
@@ -1180,78 +1180,78 @@ if (role === 'admin') {
         }
     });
 
-        // 회원가입 모달 제어
-        document.getElementById('showSignup').addEventListener('click', function() {
-            document.getElementById('signupModal').classList.add('show');
-        });
+    // 회원가입 모달 제어
+    document.getElementById('showSignup').addEventListener('click', function() {
+        document.getElementById('signupModal').classList.add('show');
+    });
 
-        document.getElementById('closeSignup').addEventListener('click', function() {
-            document.getElementById('signupModal').classList.remove('show');
-            document.getElementById('signupForm').reset();
-        });
+    document.getElementById('closeSignup').addEventListener('click', function() {
+        document.getElementById('signupModal').classList.remove('show');
+        document.getElementById('signupForm').reset();
+    });
 
-        // 회원가입 폼 제출
-        document.getElementById('signupForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = {
-                groupName: document.getElementById('groupName').value,
-                password: document.getElementById('signupPassword').value,
-                manager: document.getElementById('manager').value,
-                contact: document.getElementById('contact').value
-            };
-            await signup(formData);
-        });
+    // 회원가입 폼 제출
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = {
+            groupName: document.getElementById('groupName').value,
+            password: document.getElementById('signupPassword').value,
+            manager: document.getElementById('manager').value,
+            contact: document.getElementById('contact').value
+        };
+        await signup(formData);
+    });
 
-        // 로그아웃 버튼
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('adminLogoutBtn').addEventListener('click', logout);
+    // 로그아웃 버튼
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('adminLogoutBtn').addEventListener('click', logout);
 
-        // 예약 폼 제출
-        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const remainingBookings = parseInt(document.getElementById('remainingBookings')
-        .textContent.match(/\d+/)[0]);
-    
-    if (remainingBookings <= 0) {
-        showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
-        return;
-    }
+    // 예약 폼 제출
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const remainingBookings = parseInt(document.getElementById('remainingBookings')
+            .textContent.match(/\d+/)[0]);
+        
+        if (remainingBookings <= 0) {
+            showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
+            return;
+        }
 
-            const bookingData = {
-                date: document.getElementById('selectedDate').value,
-                startTime: document.getElementById('startTime').value,
-                endTime: document.getElementById('endTime').value,
-                people: parseInt(document.getElementById('people').value),
-                place: document.getElementById('place').value
-            };
+        const bookingData = {
+            date: document.getElementById('selectedDate').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            people: parseInt(document.getElementById('people').value),
+            place: document.getElementById('place').value
+        };
 
-            // 입력값 검증
-            if (!bookingData.date) {
-                showAlert('날짜를 선택해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.startTime || !bookingData.endTime) {
-                showAlert('시간을 선택해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.people || bookingData.people < 1) {
-                showAlert('올바른 인원 수를 입력해주세요.', 'error');
-                return;
-            }
-            if (!bookingData.place.trim()) {
-                showAlert('장소를 입력해주세요.', 'error');
-                return;
-            }
+        // 입력값 검증
+        if (!bookingData.date) {
+            showAlert('날짜를 선택해주세요.', 'error');
+            return;
+        }
+        if (!bookingData.startTime || !bookingData.endTime) {
+            showAlert('시간을 선택해주세요.', 'error');
+            return;
+        }
+        if (!bookingData.people || bookingData.people < 1) {
+            showAlert('올바른 인원 수를 입력해주세요.', 'error');
+            return;
+        }
+        if (!bookingData.place.trim()) {
+            showAlert('장소를 입력해주세요.', 'error');
+            return;
+        }
 
-            await createBooking(bookingData);
-        });
+        await createBooking(bookingData);
+    });
 
-        // 캘린더 및 시간 선택 초기화
-        initializeCalendar();
-        initializeTimeSelects();
+    // 캘린더 및 시간 선택 초기화
+    initializeCalendar();
+    initializeTimeSelects();
 
-        // 자동 로그인 체크
+    // 자동 로그인 체크
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     if (token && role) {
@@ -1260,11 +1260,10 @@ if (role === 'admin') {
             initializeAdminCalendar();
         }
     }
-});
 
-        // 예약 목록 자동 갱신 시작
-        startBookingRefresh();
-    });
+    // 예약 목록 자동 갱신 시작
+    startBookingRefresh();
+});
 </script>
 </body>
 </html>
