@@ -227,47 +227,51 @@
                 </div>
 
                 <!-- 예약 정보 섹션 -->
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-xl font-bold text-gray-700 mb-6">예약하기</h2>
-                    <form id="bookingForm" class="space-y-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">선택된 날짜</label>
-                            <input type="text" id="selectedDate" readonly required
-                                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
-                                <select id="startTime" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-2">종료 시간</label>
-                                <select id="endTime" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-2">인원</label>
-                                <input type="number" id="people" required min="1"
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
-                                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-2">장소</label>
-                                <input type="text" id="place" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg"
-                                    placeholder="수업 장소를 입력하세요">
-                            </div>
-                        </div>
-                        <button type="submit" 
-                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
-                            예약하기
-                        </button>
-                    </form>
-                </div>
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-700">예약하기</h2>
+        <div id="remainingBookings" class="text-sm font-medium text-green-600">
+            이번 달 남은 예약 가능 횟수: 4회
+        </div>
+    </div>
+    <form id="bookingForm" class="space-y-6">
+        <div>
+            <label class="block text-gray-700 font-medium mb-2">선택된 날짜</label>
+            <input type="text" id="selectedDate" readonly required
+                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
+                <select id="startTime" required
+                    class="w-full p-3 border border-gray-300 rounded-lg">
+                </select>
             </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">종료 시간</label>
+                <select id="endTime" required
+                    class="w-full p-3 border border-gray-300 rounded-lg">
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">인원</label>
+                <input type="number" id="people" required min="1"
+                    class="w-full p-3 border border-gray-300 rounded-lg">
+                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">장소</label>
+                <input type="text" id="place" required
+                    class="w-full p-3 border border-gray-300 rounded-lg"
+                    placeholder="수업 장소를 입력하세요">
+            </div>
+        </div>
+        <button type="submit" 
+            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+            예약하기
+        </button>
+    </form>
+</div>
 
             <!-- 내 예약 목록 -->
             <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
@@ -728,16 +732,31 @@
         }
     }
 
-    // 예약 상태 업데이트
-    async function updateCalendarStatus() {
-        try {
-            const data = await apiRequest('/api/bookings/status');
-            bookingStatus = data.data;
-            renderCalendar(currentDate);
-        } catch (error) {
-            console.error('Calendar status update error:', error);
+    // 예약 상태 조회 함수에 월별 예약 횟수 추가
+async function updateCalendarStatus() {
+    try {
+        const data = await apiRequest('/api/bookings/status');
+        bookingStatus = data.data;
+
+        // 현재 월의 예약 횟수 표시
+        const monthlyCount = Object.values(bookingStatus)
+            .filter(status => status.isCurrentMonth && status.isMyBooking)
+            .length;
+
+        // 남은 예약 가능 횟수 표시
+        const remainingBookings = 4 - monthlyCount;
+        const bookingCountElement = document.getElementById('remainingBookings');
+        if (bookingCountElement) {
+            bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
+            bookingCountElement.className = remainingBookings > 0 ? 
+                'text-green-600' : 'text-red-600';
         }
+
+        renderCalendar(currentDate);
+    } catch (error) {
+        console.error('Calendar status update error:', error);
     }
+}
 
     // 예약 생성
     async function createBooking(bookingData) {
@@ -943,6 +962,14 @@
         document.getElementById('bookingForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const remainingBookings = parseInt(document.getElementById('remainingBookings')
+        .textContent.match(/\d+/)[0]);
+    
+    if (remainingBookings <= 0) {
+        showAlert('이번 달 예약 가능 횟수를 모두 사용하셨습니다.', 'error');
+        return;
+    }
+
             const bookingData = {
                 date: document.getElementById('selectedDate').value,
                 startTime: document.getElementById('startTime').value,
