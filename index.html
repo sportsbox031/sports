@@ -835,16 +835,36 @@
 
     // 관리자: 예약 승인 대기 목록 로드
     async function loadPendingBookings() {
-        try {
-            const data = await apiRequest('/api/admin/pending-bookings');
-            const tbody = document.getElementById('pendingBookingsList');
-            
-            if (data.success && data.data) {
-                tbody.innerHTML = data.data.map(booking => `
+    try {
+        const data = await apiRequest('/api/admin/pending-bookings');
+        const tbody = document.getElementById('pendingBookingsList');
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(booking => {
+                // 예약 신청 시간을 한국 시간으로 변환
+                const createdAt = new Date(booking.created_at);
+                const createdAtStr = new Intl.DateTimeFormat('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(createdAt);
+
+                return `
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm">
+                                <div>시작: ${booking.start_time}</div>
+                                <div>종료: ${booking.end_time}</div>
+                                <div class="text-gray-500 text-xs mt-1">
+                                    신청: ${createdAtStr}
+                                </div>
+                            </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -858,13 +878,14 @@
                             </button>
                         </td>
                     </tr>
-                `).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
-            }
-        } catch (error) {
-            console.error('Error loading pending bookings:', error);
-            showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
+                `;
+            }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
         }
+    } catch (error) {
+        console.error('Error loading pending bookings:', error);
+        showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
     }
+}
 
     // 관리자: 예약 승인/거부
     async function approveBooking(bookingId) {
