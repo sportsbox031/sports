@@ -349,9 +349,14 @@
 
         <main class="container mx-auto px-4 py-8">
             <!-- 캘린더 섹션 -->
-            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-700">예약 현황</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-700">예약 현황</h2>
+                <div class="flex items-center space-x-4">
+                    <button id="downloadExcel" 
+                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        월간 일정표 다운로드
+                    </button>
                     <div class="flex space-x-4">
                         <button id="adminPrevMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
                             <i class="fas fa-chevron-left text-blue-600"></i>
@@ -362,6 +367,7 @@
                         </button>
                     </div>
                 </div>
+            </div>
                 <div class="grid grid-cols-7 gap-2 mb-2">
                     <div class="text-center font-medium text-gray-600">일</div>
                     <div class="text-center font-medium text-gray-600">월</div>
@@ -1296,6 +1302,88 @@ dayElement.textContent = day;
         });
     }
 
+// 월별 예약 데이터 조회
+async function fetchMonthlyBookings(year, month) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching monthly bookings:', error);
+        showAlert('월간 예약 데이터 조회 중 오류가 발생했습니다.', 'error');
+        return null;
+    }
+}
+
+// 엑셀 데이터 생성
+async function generateExcelData(year, month) {
+    const bookings = await fetchMonthlyBookings(year, month);
+    if (!bookings) return null;
+
+    const headers = ['일', '월', '화', '수', '목', '금', '토'];
+    let excelData = [headers];
+    
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const lastDate = new Date(year, month, 0).getDate();
+    
+    let currentWeek = Array(firstDay).fill('');
+    
+    for (let day = 1; day <= lastDate; day++) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        let cellContent = String(day);
+        
+        if (bookings[dateStr]) {
+            cellContent += '\n' + bookings[dateStr].map(booking => 
+                `${booking.group_name}\n${booking.start_time}-${booking.end_time}`
+            ).join('\n\n');
+        }
+        
+        currentWeek.push(cellContent);
+        
+        if (currentWeek.length === 7) {
+            excelData.push(currentWeek);
+            currentWeek = [];
+        }
+    }
+    
+    if (currentWeek.length > 0) {
+        while (currentWeek.length < 7) {
+            currentWeek.push('');
+        }
+        excelData.push(currentWeek);
+    }
+    
+    return excelData;
+}
+
+// 엑셀 다운로드 이벤트 리스너 (DOMContentLoaded 이벤트 내부에 추가)
+document.getElementById('downloadExcel').addEventListener('click', async function() {
+    const year = adminCurrentDate.getFullYear();
+    const month = adminCurrentDate.getMonth() + 1;
+    
+    showLoading();
+    try {
+        const data = await generateExcelData(year, month);
+        if (!data) return;
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        
+        // 셀 크기 설정
+        ws['!cols'] = Array(7).fill({ wch: 20 });
+        ws['!rows'] = data.map(() => ({ hpt: 80 }));
+        
+        XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월 일정표`);
+        XLSX.writeFile(wb, `스포츠박스_일정표_${year}${String(month).padStart(2, '0')}.xlsx`);
+        
+        showAlert('일정표가 다운로드되었습니다.', 'success');
+    } catch (error) {
+        console.error('Excel generation error:', error);
+        showAlert('엑셀 파일 생성 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});    
+
     // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', function() {
     // 로그인 폼 이벤트 리스너
@@ -1375,6 +1463,35 @@ document.addEventListener('DOMContentLoaded', function() {
         await createBooking(bookingData);
     });
 
+// 엑셀 다운로드 이벤트 리스너 (DOMContentLoaded 이벤트 내부에 추가)
+document.getElementById('downloadExcel').addEventListener('click', async function() {
+    const year = adminCurrentDate.getFullYear();
+    const month = adminCurrentDate.getMonth() + 1;
+    
+    showLoading();
+    try {
+        const data = await generateExcelData(year, month);
+        if (!data) return;
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        
+        // 셀 크기 설정
+        ws['!cols'] = Array(7).fill({ wch: 20 });
+        ws['!rows'] = data.map(() => ({ hpt: 80 }));
+        
+        XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월 일정표`);
+        XLSX.writeFile(wb, `스포츠박스_일정표_${year}${String(month).padStart(2, '0')}.xlsx`);
+        
+        showAlert('일정표가 다운로드되었습니다.', 'success');
+    } catch (error) {
+        console.error('Excel generation error:', error);
+        showAlert('엑셀 파일 생성 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
+
     // 캘린더 및 시간 선택 초기화
     initializeTimeSelects();
 
@@ -1397,6 +1514,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showDashboard(role);
     }
 });
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js">
 </script>
 </body>
 </html>
