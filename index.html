@@ -590,44 +590,114 @@
 
         // 엑셀 데이터 생성
         async function generateExcelData(year, month) {
-            const bookings = await fetchMonthlyBookings(year, month);
-            if (!bookings) return null;
+    try {
+        const bookings = await fetchMonthlyBookings(year, month);
+        if (!bookings) return null;
 
-            const headers = ['일', '월', '화', '수', '목', '금', '토'];
-            let excelData = [headers];
-            
-            const firstDay = new Date(year, month - 1, 1).getDay();
-            const lastDate = new Date(year, month, 0).getDate();
-            
-            let currentWeek = Array(firstDay).fill('');
-            
-            for (let day = 1; day <= lastDate; day++) {
-                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                let cellContent = String(day);
-                
-                if (bookings[dateStr]) {
-                    cellContent += '\n' + bookings[dateStr].map(booking => 
-                        `${booking.group_name}\n${booking.start_time}-${booking.end_time}`
-                    ).join('\n\n');
-                }
-                
-                currentWeek.push(cellContent);
-                
-                if (currentWeek.length === 7) {
-                    excelData.push(currentWeek);
-                    currentWeek = [];
-                }
+        // 헤더 스타일 정의
+        const headerStyle = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "4472C4" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+                top: { style: "thin" },
+                bottom: { style: "thin" },
+                left: { style: "thin" },
+                right: { style: "thin" }
             }
-            
-            if (currentWeek.length > 0) {
-                while (currentWeek.length < 7) {
-                    currentWeek.push('');
-                }
-                excelData.push(currentWeek);
+        };
+
+        // 주말 셀 스타일
+        const weekendStyle = {
+            fill: { fgColor: { rgb: "DCE6F1" } },
+            font: { color: { rgb: "FF0000" } }
+        };
+
+        // 평일 셀 스타일
+        const weekdayStyle = {
+            fill: { fgColor: { rgb: "FFFFFF" } }
+        };
+
+        // 날짜 셀 기본 스타일
+        const dateCellStyle = {
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            border: {
+                top: { style: "thin" },
+                bottom: { style: "thin" },
+                left: { style: "thin" },
+                right: { style: "thin" }
             }
+        };
+
+        const headers = ['일', '월', '화', '수', '목', '금', '토'];
+        let calendarData = [headers];
+        
+        // 달력 데이터 생성
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        let currentWeek = Array(firstDay.getDay()).fill('');
+        
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            let cellContent = day.toString();
+
+            if (bookings[dateStr]) {
+                cellContent += '\n\n' + bookings[dateStr].map(booking => 
+                    `${booking.group_name}\n${booking.start_time}-${booking.end_time}`
+                ).join('\n\n');
+            }
+
+            currentWeek.push(cellContent);
             
-            return excelData;
+            if (currentWeek.length === 7) {
+                calendarData.push(currentWeek);
+                currentWeek = [];
+            }
         }
+
+        if (currentWeek.length > 0) {
+            while (currentWeek.length < 7) {
+                currentWeek.push('');
+            }
+            calendarData.push(currentWeek);
+        }
+
+        // 워크시트 생성
+        const ws = XLSX.utils.aoa_to_sheet(calendarData);
+
+        // 열 너비 설정
+        const colWidth = 20;
+        ws['!cols'] = Array(7).fill({ wch: colWidth });
+
+        // 행 높이 설정
+        const rowHeight = 80;
+        ws['!rows'] = Array(calendarData.length).fill({ hpt: rowHeight });
+
+        // 스타일 적용
+        for (let i = 0; i < calendarData.length; i++) {
+            for (let j = 0; j < 7; j++) {
+                const cellRef = XLSX.utils.encode_cell({ r: i, c: j });
+                if (!ws[cellRef]) continue;
+
+                // 헤더 행
+                if (i === 0) {
+                    ws[cellRef].s = headerStyle;
+                } else {
+                    // 데이터 행
+                    ws[cellRef].s = {
+                        ...dateCellStyle,
+                        ...(j === 0 || j === 6 ? weekendStyle : weekdayStyle)
+                    };
+                }
+            }
+        }
+
+        return ws;
+    } catch (error) {
+        console.error('Error generating Excel data:', error);
+        return null;
+    }
+}
 
         // 날짜 포맷 함수
         function formatDate(dateStr) {
@@ -1346,29 +1416,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 엑셀 다운로드 버튼
     document.getElementById('downloadExcel')?.addEventListener('click', async function() {
-        const year = adminCurrentDate.getFullYear();
-        const month = adminCurrentDate.getMonth() + 1;
-        
-        try {
-            showLoading();
-            const excelData = await generateExcelData(year, month);
-            if (!excelData) {
-                throw new Error('엑셀 데이터 생성 실패');
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, '예약현황');
-            
-            XLSX.writeFile(wb, `스포츠박스_예약현황_${year}년${month}월.xlsx`);
-            showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
-        } catch (error) {
-            console.error('Excel download error:', error);
-            showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
-        } finally {
-            hideLoading();
+    const year = adminCurrentDate.getFullYear();
+    const month = adminCurrentDate.getMonth() + 1;
+    
+    try {
+        showLoading();
+        const ws = await generateExcelData(year, month);
+        if (!ws) {
+            throw new Error('엑셀 데이터 생성 실패');
         }
-    });
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '예약현황');
+        
+        // 파일명 설정
+        const fileName = `스포츠박스_예약현황_${year}년${month}월.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
+    } catch (error) {
+        console.error('Excel download error:', error);
+        showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
 
     // 시간 선택 초기화
     initializeTimeSelects();
