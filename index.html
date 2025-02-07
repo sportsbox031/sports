@@ -750,39 +750,38 @@
         }
 
         // 엑셀 다운로드 핸들러
-        async function handleExcelDownload() {
-            try {
-                const year = adminCurrentDate.getFullYear();
-                const month = adminCurrentDate.getMonth() + 1;
-                
-                // 다운로드 전 사용자 확인
-                if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
-                    return;
-                }
+        document.getElementById('downloadExcel')?.addEventListener('click', function() {
+    const year = adminCurrentDate.getFullYear();
+    const month = adminCurrentDate.getMonth() + 1;
+    
+    if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
+        return;
+    }
 
-                showLoading();
-                const ws = await generateExcelData(year, month);
-                
-                if (!ws) {
-                    throw new Error('엑셀 데이터 생성 실패');
-                }
-
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
-                
-                // 파일명에 타임스탬프 추가
-                const timestamp = new Date().toISOString().slice(0, 10);
-                const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
-                
-                XLSX.writeFile(wb, fileName);
-                showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
-            } catch (error) {
-                console.error('Excel download error:', error);
-                showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
-            } finally {
-                hideLoading();
+    showLoading();
+    generateExcelData(year, month)
+        .then(ws => {
+            if (!ws) {
+                throw new Error('엑셀 데이터 생성 실패');
             }
-        }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
+            
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
+            
+            XLSX.writeFile(wb, fileName);
+            showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
+        })
+        .catch(error => {
+            console.error('Excel download error:', error);
+            showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+});
 
         // 로그인/로그아웃 관련 함수
         async function login(username, password) {
