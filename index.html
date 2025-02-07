@@ -1411,7 +1411,6 @@ async function cancelBooking(bookingId) {
         const year = adminCurrentDate.getFullYear();
         const month = adminCurrentDate.getMonth() + 1;
         
-        // 다운로드 전 사용자 확인
         if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
             return;
         }
@@ -1426,7 +1425,6 @@ async function cancelBooking(bookingId) {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
         
-        // 파일명에 타임스탬프 추가
         const timestamp = new Date().toISOString().slice(0, 10);
         const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
         
@@ -1503,8 +1501,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 엑셀 다운로드 버튼
-    document.getElementById('downloadExcel')?.addEventListener('click', handleExcelDownload);
-    
+    document.getElementById('downloadExcel')?.addEventListener('click', () => {
+        handleExcelDownload();
+        
     try {
         showLoading();
         const ws = await generateExcelData(year, month);
