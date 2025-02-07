@@ -789,14 +789,26 @@ function initializeAdminDashboard() {
         console.log('No token available for admin dashboard');
         return;
     }
+
+    // 즉시 첫 로드
     loadPendingUsers();
     loadPendingBookings();
-    setInterval(() => {
+
+    // 이전 인터벌이 있다면 제거
+    if (adminDashboardInterval) {
+        clearInterval(adminDashboardInterval);
+    }
+
+    // 새로운 인터벌 설정
+    adminDashboardInterval = setInterval(() => {
         const currentToken = localStorage.getItem('token');
-        if (currentToken) {
-            loadPendingUsers();
-            loadPendingBookings();
+        if (!currentToken) {
+            clearInterval(adminDashboardInterval);
+            adminDashboardInterval = null;
+            return;
         }
+        loadPendingUsers();
+        loadPendingBookings();
     }, 5000);
 }
 
@@ -823,31 +835,42 @@ function initializeAdminDashboard() {
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            localStorage.removeItem('username');
-            
-            document.getElementById('adminDashboard').style.display = 'none';
-            document.getElementById('userDashboard').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
-            
-            showAlert('로그아웃되었습니다.', 'info');
-        }
+    if (adminDashboardInterval) {
+        clearInterval(adminDashboardInterval);
+        adminDashboardInterval = null;
+    }
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('username');
+    
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    
+    showAlert('로그아웃되었습니다.', 'info');
+}
 
         function showDashboard(role) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
 
+    // 이전 인터벌이 있다면 제거
+    if (adminDashboardInterval) {
+        clearInterval(adminDashboardInterval);
+        adminDashboardInterval = null;
+    }
+
     if (role === 'admin') {
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminCalendar();
-        // 토큰이 있을 때만 관리자 대시보드 초기화
+        updateCalendarStatus();
+        // 로그인 직후에만 관리자 대시보드 초기화
         const token = localStorage.getItem('token');
         if (token) {
             initializeAdminDashboard();
         }
-        updateCalendarStatus();
     } else {
         document.getElementById('userDashboard').style.display = 'block';
         if (localStorage.getItem('username')) {
@@ -882,6 +905,7 @@ function initializeAdminDashboard() {
         // 캘린더 관련 변수와 함수
         let currentDate = new Date();
         let adminCurrentDate = new Date();
+        let adminDashboardInterval = null;
 
         function initializeCalendar() {
             const calendar = document.getElementById('calendar');
