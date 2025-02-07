@@ -1262,9 +1262,9 @@ async function rejectCancelBooking(bookingId) {
 
         // 캘린더 관련 변수와 함수
         let currentDate = new Date();
-        let adminCurrentDate = new Date();
+let adminCurrentDate = new Date();
 
-        function initializeCalendar() {
+function initializeCalendar() {
     const calendar = document.getElementById('calendar');
     const currentMonthElement = document.getElementById('currentMonth');
 
@@ -1306,175 +1306,175 @@ function initializeAdminCalendar() {
     renderAdminCalendar(adminCurrentDate);
 }
 
-        function renderCalendar(date) {
-            const calendar = document.getElementById('calendar');
-            const currentMonthElement = document.getElementById('currentMonth');
-            
-            const year = date.getFullYear();
-            const month = date.getMonth();
+function renderCalendar(date) {
+    const calendar = document.getElementById('calendar');
+    const currentMonthElement = document.getElementById('currentMonth');
+    
+    const year = date.getFullYear();
+    const month = date.getMonth();
 
-            currentMonthElement.textContent = `${year}년 ${month + 1}월`;
+    currentMonthElement.textContent = `${year}년 ${month + 1}월`;
 
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            
-            calendar.innerHTML = '';
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    calendar.innerHTML = '';
 
-            // 첫째 날의 요일만큼 빈 칸 추가
-            for (let i = 0; i < firstDay.getDay(); i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'h-12 rounded-lg';
-                calendar.appendChild(emptyDay);
-            }
+    // 첫째 날의 요일만큼 빈 칸 추가
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'h-12 rounded-lg';
+        calendar.appendChild(emptyDay);
+    }
 
-            // 날짜 채우기
-            for (let day = 1; day <= lastDay.getDate(); day++) {
-                const dayElement = document.createElement('div');
-                const selectedDateObj = new Date(year, month, day);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+    // 날짜 채우기
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dayElement = document.createElement('div');
+        const selectedDateObj = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dateStatus = bookingStatus[dateString];
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStatus = bookingStatus[dateString];
 
-                if (selectedDateObj < today) {
-                    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-                    dayElement.title = '지난 날짜';
-                } else if (dateStatus?.isBlocked) {
-                    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-                    dayElement.title = '마감된 날짜';
-                    dayElement.style.backgroundColor = '#4B5563';
-                    dayElement.style.color = 'white';
-                } else if (dateStatus?.isFull) {
-                    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-                    dayElement.title = '예약 마감';
-                } else if (dateStatus?.hasBooking) {
-                    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-                    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-                    addDateClickHandler(dayElement, year, month, day);
-                } else {
-                    dayElement.className = 
-                        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-                    addDateClickHandler(dayElement, year, month, day);
-                }
-
-                dayElement.textContent = day;
-
-                if (
-                    !dateStatus?.isBlocked && 
-                    day === today.getDate() &&
-                    currentDate.getMonth() === today.getMonth() &&
-                    currentDate.getFullYear() === today.getFullYear()
-                ) {
-                    dayElement.classList.add('font-bold');
-                }
-
-                calendar.appendChild(dayElement);
-            }
+        if (selectedDateObj < today) {
+            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+            dayElement.title = '지난 날짜';
+        } else if (dateStatus?.isBlocked) {
+            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+            dayElement.title = '마감된 날짜';
+            dayElement.style.backgroundColor = '#4B5563';
+            dayElement.style.color = 'white';
+        } else if (dateStatus?.isFull) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감';
+        } else if (dateStatus?.hasBooking) {
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            addDateClickHandler(dayElement, year, month, day);
+        } else {
+            dayElement.className = 
+                'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+            addDateClickHandler(dayElement, year, month, day);
         }
 
-        function renderAdminCalendar(date) {
-            const adminCalendar = document.getElementById('adminCalendar');
-            const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
-            
-            const year = date.getFullYear();
-            const month = date.getMonth();
+        dayElement.textContent = day;
 
-            adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
+        if (
+            !dateStatus?.isBlocked && 
+            day === today.getDate() &&
+            currentDate.getMonth() === today.getMonth() &&
+            currentDate.getFullYear() === today.getFullYear()
+        ) {
+            dayElement.classList.add('font-bold');
+        }
 
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            
-            adminCalendar.innerHTML = '';
+        calendar.appendChild(dayElement);
+    }
+}
 
-            // 첫째 날의 요일만큼 빈 칸 추가
-            for (let i = 0; i < firstDay.getDay(); i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'h-12 rounded-lg';
-                adminCalendar.appendChild(emptyDay);
-            }
+function renderAdminCalendar(date) {
+    const adminCalendar = document.getElementById('adminCalendar');
+    const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+    
+    const year = date.getFullYear();
+    const month = date.getMonth();
 
-            // 날짜 채우기
-            for (let day = 1; day <= lastDay.getDate(); day++) {
-                const dayElement = document.createElement('div');
-                const selectedDateObj = new Date(year, month, day);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+    adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
 
-                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dateStatus = bookingStatus[dateString];
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    adminCalendar.innerHTML = '';
 
-                if (selectedDateObj < today) {
-                    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-                    dayElement.title = '지난 날짜';
-                } else if (dateStatus?.isBlocked) {
-                    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
-                    dayElement.title = '마감됨 (클릭하여 해제)';
-                    dayElement.style.backgroundColor = '#4B5563';
-                    dayElement.style.color = 'white';
-                } else if (dateStatus?.isFull) {
-                    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-                    dayElement.title = '예약 마감';
-                } else if (dateStatus?.hasBooking) {
-                    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-                    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-                } else {
-                    dayElement.className = 
-                        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-                    dayElement.title = '클릭하여 마감 처리';
-                }
+    // 첫째 날의 요일만큼 빈 칸 추가
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'h-12 rounded-lg';
+        adminCalendar.appendChild(emptyDay);
+    }
 
-                // 관리자용 날짜 클릭 이벤트 (미래 날짜만)
-                if (selectedDateObj >= today) {
-                    dayElement.addEventListener('click', async function() {
-                        const modal = document.getElementById('dateBookingsModal');
+    // 날짜 채우기
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dayElement = document.createElement('div');
+        const selectedDateObj = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStatus = bookingStatus[dateString];
+
+        if (selectedDateObj < today) {
+            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+            dayElement.title = '지난 날짜';
+        } else if (dateStatus?.isBlocked) {
+            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = '마감됨 (클릭하여 해제)';
+            dayElement.style.backgroundColor = '#4B5563';
+            dayElement.style.color = 'white';
+        } else if (dateStatus?.isFull) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감';
+        } else if (dateStatus?.hasBooking) {
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+        } else {
+            dayElement.className = 
+                'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+            dayElement.title = '클릭하여 마감 처리';
+        }
+
+        // 관리자용 날짜 클릭 이벤트 (미래 날짜만)
+        if (selectedDateObj >= today) {
+            dayElement.addEventListener('click', async function() {
+                const modal = document.getElementById('dateBookingsModal');
+                await loadDateBookings(dateString);
+                modal.classList.add('show');
+
+                // 마감 처리 버튼 이벤트
+                document.getElementById('blockDateBtn').onclick = async () => {
+                    if (confirm('이 날짜를 마감 처리하시겠습니까?')) {
+                        await blockDate(dateString);
                         await loadDateBookings(dateString);
-                        modal.classList.add('show');
+                        await updateCalendarStatus();
+                    }
+                };
 
-                        // 마감 처리 버튼 이벤트
-                        document.getElementById('blockDateBtn').onclick = async () => {
-                            if (confirm('이 날짜를 마감 처리하시겠습니까?')) {
-                                await blockDate(dateString);
-                                await loadDateBookings(dateString);
-                                await updateCalendarStatus();
-                            }
-                        };
-
-                        document.getElementById('unblockDateBtn').onclick = async () => {
-                            if (confirm('마감을 해제하시겠습니까?')) {
-                                await unblockDate(dateString);
-                                await loadDateBookings(dateString);
-                                await updateCalendarStatus();
-                            }
-                        };
-                    });
-                }
-
-                dayElement.textContent = day;
-
-                if (
-                    !dateStatus?.isBlocked && 
-                    day === today.getDate() &&
-                    adminCurrentDate.getMonth() === today.getMonth() &&
-                    adminCurrentDate.getFullYear() === today.getFullYear()
-                ) {
-                    dayElement.classList.add('font-bold');
-                }
-
-                adminCalendar.appendChild(dayElement);
-            }
-        }
-
-        function addDateClickHandler(element, year, month, day) {
-            element.addEventListener('click', function() {
-                const selected = document.querySelector('.selected');
-                if (selected) {
-                    selected.classList.remove('selected');
-                }
-                element.classList.add('selected');
-                document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+                document.getElementById('unblockDateBtn').onclick = async () => {
+                    if (confirm('마감을 해제하시겠습니까?')) {
+                        await unblockDate(dateString);
+                        await loadDateBookings(dateString);
+                        await updateCalendarStatus();
+                    }
+                };
             });
         }
+
+        dayElement.textContent = day;
+
+        if (
+            !dateStatus?.isBlocked && 
+            day === today.getDate() &&
+            adminCurrentDate.getMonth() === today.getMonth() &&
+            adminCurrentDate.getFullYear() === today.getFullYear()
+        ) {
+            dayElement.classList.add('font-bold');
+        }
+
+        adminCalendar.appendChild(dayElement);
+    }
+}
+
+function addDateClickHandler(element, year, month, day) {
+    element.addEventListener('click', function() {
+        const selected = document.querySelector('.selected');
+        if (selected) {
+            selected.classList.remove('selected');
+        }
+        element.classList.add('selected');
+        document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+    });
+}
 
         // 시간 선택 초기화
         function initializeTimeSelects() {
