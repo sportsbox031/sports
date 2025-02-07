@@ -861,38 +861,40 @@
         const tbody = document.getElementById('bookingsList');
         
         if (data.success && data.data) {
-            tbody.innerHTML = data.data.map(booking => {
-                const bookingDate = new Date(booking.date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const canCancel = bookingDate >= today && 
-                    booking.status !== 'cancelled' && 
-                    booking.status !== 'rejected';
+            tbody.innerHTML = data.data
+                .filter(booking => booking.status !== 'cancelled')  // 취소된 예약 필터링
+                .map(booking => {
+                    const bookingDate = new Date(booking.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const canCancel = bookingDate >= today && 
+                        booking.status !== 'cancelled' && 
+                        booking.status !== 'rejected';
 
-                return `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            ${canCancel ? `
-                                <button onclick="cancelBooking(${booking.id})" 
-                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                    취소
-                                </button>
-                            ` : ''}
-                        </td>
-                    </tr>
-                `;
-            }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${getStatusClass(booking.status)}">
+                                    ${getStatusText(booking.status)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${canCancel ? `
+                                    <button onclick="cancelBooking(${booking.id})" 
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                        취소
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
