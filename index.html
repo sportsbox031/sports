@@ -610,17 +610,18 @@
         // 주말 셀 스타일
         const weekendStyle = {
             fill: { fgColor: { rgb: "DCE6F1" } },
-            font: { color: { rgb: "FF0000" } }
+            font: { bold: true, color: { rgb: "FF0000" } }
         };
 
         // 평일 셀 스타일
         const weekdayStyle = {
-            fill: { fgColor: { rgb: "FFFFFF" } }
+            fill: { fgColor: { rgb: "FFFFFF" } },
+            font: { bold: true }
         };
 
         // 날짜 셀 기본 스타일
         const dateCellStyle = {
-            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            alignment: { vertical: "top", wrapText: true },
             border: {
                 top: { style: "thin" },
                 bottom: { style: "thin" },
@@ -632,19 +633,23 @@
         const headers = ['일', '월', '화', '수', '목', '금', '토'];
         let calendarData = [headers];
         
-        // 달력 데이터 생성
         const firstDay = new Date(year, month - 1, 1);
         const lastDay = new Date(year, month, 0);
         let currentWeek = Array(firstDay.getDay()).fill('');
         
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            let cellContent = day.toString();
+            let cellContent = String(day);  // 날짜는 맨 위에
 
             if (bookings[dateStr]) {
-                cellContent += '\n\n' + bookings[dateStr].map(booking => 
+                // 각 예약마다 단체명과 시간을 줄바꿈으로 구분
+                const bookingDetails = bookings[dateStr].map(booking => 
                     `${booking.group_name}\n${booking.start_time}-${booking.end_time}`
                 ).join('\n\n');
+                
+                if (bookingDetails) {
+                    cellContent += '\n\n' + bookingDetails;
+                }
             }
 
             currentWeek.push(cellContent);
@@ -666,11 +671,11 @@
         const ws = XLSX.utils.aoa_to_sheet(calendarData);
 
         // 열 너비 설정
-        const colWidth = 20;
+        const colWidth = 25;  // 열 너비 증가
         ws['!cols'] = Array(7).fill({ wch: colWidth });
 
         // 행 높이 설정
-        const rowHeight = 80;
+        const rowHeight = 100;  // 행 높이 증가
         ws['!rows'] = Array(calendarData.length).fill({ hpt: rowHeight });
 
         // 스타일 적용
