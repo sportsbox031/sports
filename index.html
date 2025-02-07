@@ -277,9 +277,9 @@
                             </div>
                         </div>
                         <button type="submit" 
-                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
-                            예약하기
-                        </button>
+    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+    예약하기
+</button>
                     </form>
                 </div>
 
@@ -585,131 +585,142 @@
 
         // 엑셀 데이터 생성
         async function generateExcelData(year, month) {
-            try {
-                const bookings = await fetchMonthlyBookings(year, month);
-                if (!bookings) return null;
+    try {
+        const bookings = await fetchMonthlyBookings(year, month);
+        if (!bookings) return null;
 
-                // 워크시트 데이터 생성
-                const wsData = [];
-                
-                // 제목 행 추가
-                wsData.push([`${year}년 ${month}월 스포츠박스 예약 현황`]);
-                wsData.push([]); // 빈 행 추가
+        // 워크시트 데이터 생성
+        const wsData = [];
+        
+        // 제목 행 추가
+        wsData.push([`${year}년 ${month}월 스포츠박스 예약 현황`]);
+        wsData.push([]); // 빈 행 추가
 
-                // 헤더 행
-                wsData.push(['날짜', '요일', '시간', '단체명', '인원', '장소', '상태']);
+        // 요일 헤더 추가
+        wsData.push(['일', '월', '화', '수', '목', '금', '토']);
 
-                // 날짜별 데이터 정렬 및 추가
-                const sortedDates = Object.keys(bookings).sort();
-                const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+        // 달력 데이터 생성
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        let currentWeek = new Array(7).fill('');
+        let weekData = [];
 
-                sortedDates.forEach(date => {
-                    const dayOfWeek = weekDays[new Date(date).getDay()];
-                    if (bookings[date].length === 0) {
-                        wsData.push([
-                            date,
-                            dayOfWeek,
-                            '-',
-                            '-',
-                            '-',
-                            '-',
-                            '예약없음'
-                        ]);
-                    } else {
-                        bookings[date].forEach((booking, index) => {
-                            wsData.push([
-                                index === 0 ? date : '',
-                                index === 0 ? dayOfWeek : '',
-                                `${booking.start_time}-${booking.end_time}`,
-                                booking.group_name,
-                                booking.people,
-                                booking.place,
-                                getStatusText(booking.status)
-                            ]);
-                        });
-                    }
-                });
+        // 첫 주의 시작 전 빈 셀 채우기
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            currentWeek[i] = '';
+        }
 
-                // 워크시트 생성
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
+        // 날짜 채우기
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            let cellContent = day.toString();
 
-                // 스타일 설정
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                
-                // 열 너비 설정
-                ws['!cols'] = [
-                    { wch: 15 }, // 날짜
-                    { wch: 8 },  // 요일
-                    { wch: 15 }, // 시간
-                    { wch: 20 }, // 단체명
-                    { wch: 10 }, // 인원
-                    { wch: 20 }, // 장소
-                    { wch: 12 }  // 상태
-                ];
+            // 해당 날짜의 예약 정보 추가
+            if (bookings[dateStr] && bookings[dateStr].length > 0) {
+                cellContent += '\n' + bookings[dateStr]
+                    .map(booking => `${booking.group_name}\n${booking.start_time}-${booking.end_time}`)
+                    .join('\n\n');
+            }
 
-                // 제목 행 병합
-                ws['!merges'] = [
-                    { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
-                ];
+            currentWeek[new Date(year, month - 1, day).getDay()] = cellContent;
 
-                // 스타일 적용
-                for (let R = 0; R <= range.e.r; R++) {
-                    for (let C = 0; C <= range.e.c; C++) {
-                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                        if (!ws[cellRef]) continue;
-
-                        // 기본 셀 스타일
-                        ws[cellRef].s = {
-                            alignment: { vertical: 'center', horizontal: 'center' },
-                            border: {
-                                top: { style: 'thin' },
-                                bottom: { style: 'thin' },
-                                left: { style: 'thin' },
-                                right: { style: 'thin' }
-                            }
-                        };
-
-                        // 제목 행 스타일
-                        if (R === 0) {
-                            ws[cellRef].s = {
-                                ...ws[cellRef].s,
-                                font: { bold: true, sz: 14 },
-                                fill: { fgColor: { rgb: "4472C4" } },
-                                font: { color: { rgb: "FFFFFF" } }
-                            };
-                        }
-
-                        // 헤더 행 스타일
-                        if (R === 2) {
-                            ws[cellRef].s = {
-                                ...ws[cellRef].s,
-                                font: { bold: true },
-                                fill: { fgColor: { rgb: "E2EFDA" } }
-                            };
-                        }
-
-                        // 주말 날짜 스타일
-                        if (C === 0 && R > 2) {
-                            const date = ws[cellRef].v;
-                            if (date && typeof date === 'string') {
-                                const dayOfWeek = new Date(date).getDay();
-                                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                                    ws[cellRef].s = {
-                                        ...ws[cellRef].s,
-                                        font: { color: { rgb: dayOfWeek === 0 ? "FF0000" : "0000FF" } }
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return ws;
-            } catch (error) {
-                console.error('Error generating Excel data:', error);
-                return null;
+            // 주가 끝나면 새로운 주 시작
+            if (new Date(year, month - 1, day).getDay() === 6) {
+                weekData.push([...currentWeek]);
+                currentWeek = new Array(7).fill('');
             }
         }
+
+        // 마지막 주 추가
+        if (currentWeek.some(cell => cell !== '')) {
+            weekData.push([...currentWeek]);
+        }
+
+        // 주 데이터를 워크시트에 추가
+        weekData.forEach(week => {
+            wsData.push(week);
+        });
+
+        // 워크시트 생성
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // 스타일 설정
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        
+        // 열 너비 설정 (모든 열 동일하게)
+        ws['!cols'] = Array(7).fill({ wch: 25 });
+
+        // 행 높이 설정
+        ws['!rows'] = Array(range.e.r + 1).fill({ hpt: 100 }); // 높이 조정
+
+        // 제목 행 병합
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
+        ];
+
+        // 스타일 적용
+        for (let R = 0; R <= range.e.r; R++) {
+            for (let C = 0; C <= range.e.c; C++) {
+                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cellRef]) continue;
+
+                // 기본 셀 스타일
+                ws[cellRef].s = {
+                    alignment: { vertical: 'top', horizontal: 'left', wrapText: true },
+                    border: {
+                        top: { style: 'thin', color: { rgb: "000000" } },
+                        bottom: { style: 'thin', color: { rgb: "000000" } },
+                        left: { style: 'thin', color: { rgb: "000000" } },
+                        right: { style: 'thin', color: { rgb: "000000" } }
+                    },
+                    font: { sz: 10 }
+                };
+
+                // 제목 행 스타일
+                if (R === 0) {
+                    ws[cellRef].s = {
+                        ...ws[cellRef].s,
+                        font: { bold: true, sz: 14 },
+                        fill: { fgColor: { rgb: "4472C4" } },
+                        font: { color: { rgb: "FFFFFF" } },
+                        alignment: { horizontal: 'center', vertical: 'center' }
+                    };
+                }
+
+                // 요일 헤더 스타일
+                if (R === 2) {
+                    ws[cellRef].s = {
+                        ...ws[cellRef].s,
+                        font: { bold: true },
+                        fill: { fgColor: { rgb: "E2EFDA" } },
+                        alignment: { horizontal: 'center', vertical: 'center' }
+                    };
+                }
+
+                // 주말 색상
+                if (R > 2) {
+                    if (C === 0) { // 일요일
+                        ws[cellRef].s = {
+                            ...ws[cellRef].s,
+                            fill: { fgColor: { rgb: "FFE6E6" } }
+                        };
+                    }
+                    if (C === 6) { // 토요일
+                        ws[cellRef].s = {
+                            ...ws[cellRef].s,
+                            fill: { fgColor: { rgb: "E6F0FF" } }
+                        };
+                    }
+                }
+            }
+        }
+
+        return ws;
+    } catch (error) {
+        console.error('Error generating Excel data:', error);
+        return null;
+    }
+}
 
         // 날짜 포맷 함수
         function formatDate(dateStr) {
@@ -942,23 +953,23 @@
 
       // 예약 생성
       async function createBooking(bookingData) {
-          try {
-              const response = await apiRequest('/api/bookings', {
-                  method: 'POST',
-                  body: JSON.stringify(bookingData)
-              });
+    try {
+        const response = await apiRequest('/api/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+        });
 
-              if (response.success) {
-                  showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                  document.getElementById('bookingForm').reset();
-                  await loadBookings();
-                  await updateCalendarStatus();
-              }
-          } catch (error) {
-              console.error('Booking creation error:', error);
-              showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
-          }
-      }
+        if (response.success) {
+            showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            resetBookingForm(); // 여기에 추가
+            await loadBookings();
+            await updateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking creation error:', error);
+        showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+    }
+}
 
       // 예약 취소
       async function cancelBooking(bookingId) {
@@ -1177,32 +1188,47 @@
 
         // 예약 상태 조회 함수
         async function updateCalendarStatus() {
-            try {
-                const data = await apiRequest('/api/bookings/status');
-                bookingStatus = data.data;
+    try {
+        const data = await apiRequest('/api/bookings/status');
+        bookingStatus = data.data;
 
-                const monthlyCount = Object.values(bookingStatus)
-                    .filter(status => status.isCurrentMonth && status.isMyBooking)
-                    .length;
+        const monthlyCount = Object.values(bookingStatus)
+            .filter(status => status.isCurrentMonth && status.isMyBooking)
+            .length;
 
-                const remainingBookings = 4 - monthlyCount;
-                const bookingCountElement = document.getElementById('remainingBookings');
-                if (bookingCountElement) {
-                    bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
-                    bookingCountElement.className = remainingBookings > 0 ? 
-                        'text-sm font-medium text-green-600' : 'text-sm font-medium text-red-600';
-                }
-
-                const role = localStorage.getItem('role');
-                if (role === 'admin') {
-                    renderAdminCalendar(adminCurrentDate);
+        const remainingBookings = 4 - monthlyCount;
+        const bookingCountElement = document.getElementById('remainingBookings');
+        const submitButton = document.querySelector('#bookingForm button[type="submit"]');
+        
+        if (bookingCountElement) {
+            bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
+            bookingCountElement.className = remainingBookings > 0 ? 
+                'text-sm font-medium text-green-600' : 'text-sm font-medium text-red-600';
+            
+            // 예약 버튼 상태 업데이트
+            if (submitButton) {
+                if (remainingBookings <= 0) {
+                    submitButton.disabled = true;
+                    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    submitButton.classList.remove('hover:bg-blue-700');
                 } else {
-                    renderCalendar(currentDate);
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitButton.classList.add('hover:bg-blue-700');
                 }
-            } catch (error) {
-                console.error('Calendar status update error:', error);
             }
         }
+
+        const role = localStorage.getItem('role');
+        if (role === 'admin') {
+            renderAdminCalendar(adminCurrentDate);
+        } else {
+            renderCalendar(currentDate);
+        }
+    } catch (error) {
+        console.error('Calendar status update error:', error);
+    }
+}
 
         // 캘린더 관련 변수와 함수
         let currentDate = new Date();
@@ -1440,6 +1466,21 @@
             });
         }
 
+// 예약 폼 초기화 함수 추가
+function resetBookingForm() {
+    const form = document.getElementById('bookingForm');
+    if (form) {
+        form.reset();
+        document.querySelector('.selected')?.classList.remove('selected');
+        
+        // 시간 선택 초기화
+        const endTimeSelect = document.getElementById('endTime');
+        if (endTimeSelect) {
+            endTimeSelect.innerHTML = '<option value="">선택해주세요</option>';
+        }
+    }
+}
+
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', function() {
     // 로그인 폼 제출
@@ -1473,25 +1514,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 예약 폼 제출
     document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const selectedDateText = document.getElementById('selectedDate').value;
-        const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
-        
-        if (!dateParts) {
-            showAlert('날짜를 선택해주세요.', 'error');
-            return;
-        }
+    e.preventDefault();
+    const remainingBookingsElement = document.getElementById('remainingBookings');
+    const remainingText = remainingBookingsElement.textContent;
+    const remainingCount = parseInt(remainingText.match(/\d+/)[0]);
 
-        const bookingData = {
-            date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
-            startTime: document.getElementById('startTime').value,
-            endTime: document.getElementById('endTime').value,
-            people: document.getElementById('people').value,
-            place: document.getElementById('place').value
-        };
+    if (remainingCount <= 0) {
+        showAlert('이번 달 예약 가능 횟수(4회)를 모두 사용하셨습니다.', 'error');
+        return;
+    }
 
-        createBooking(bookingData);
-    });
+    const selectedDateText = document.getElementById('selectedDate').value;
+    const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
+    
+    if (!dateParts) {
+        showAlert('날짜를 선택해주세요.', 'error');
+        return;
+    }
+
+    const bookingData = {
+        date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
+        startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime').value,
+        people: document.getElementById('people').value,
+        place: document.getElementById('place').value
+    };
+
+    createBooking(bookingData);
+});
 
     // 로그아웃 버튼
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
