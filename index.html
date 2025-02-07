@@ -988,6 +988,54 @@ async function loadPendingUsers() {
     }
 }
 
+// 관리자 대시보드에서 대기 중인 예약 목록 로드
+async function loadPendingBookings() {
+    try {
+        const data = await apiRequest('/api/admin/pending-bookings');
+        const tbody = document.getElementById('pendingBookingsList');
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(booking => {
+                const isCancelRequest = booking.status === 'cancel_pending';
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.start_time} - ${booking.end_time}
+                            ${isCancelRequest ? '<span class="text-red-500 ml-2">(취소 요청)</span>' : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${isCancelRequest ? `
+                                <button onclick="approveCancelBooking(${booking.id})" 
+                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                                    취소 승인
+                                </button>
+                                <button onclick="rejectCancelBooking(${booking.id})" 
+                                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                    취소 거부
+                                </button>
+                            ` : `
+                                <button onclick="approveBooking(${booking.id})" 
+                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                                    승인
+                                </button>
+                                <button onclick="rejectBooking(${booking.id})" 
+                                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                    거부
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading pending bookings:', error);
+        showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
 // 주기적으로 목록 갱신 (5초마다)
 function initializeAdminDashboard() {
     loadPendingUsers();
