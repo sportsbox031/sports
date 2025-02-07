@@ -688,93 +688,117 @@
         }
 
         // 관리자 대시보드에서 loadPendingUsers 함수
-        async function loadPendingUsers() {
-            try {
-                const data = await apiRequest('/api/admin/pending-users');
-                const tbody = document.getElementById('pendingUsersList');
-                
-                if (data.success && data.data) {
-                    tbody.innerHTML = data.data.map(user => `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${user.group_name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${user.manager}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${user.contact}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <button onclick="approveUser(${user.id})" 
+async function loadPendingUsers() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.log('No token available');
+        return;
+    }
+    try {
+        const data = await apiRequest('/api/admin/pending-users');
+        const tbody = document.getElementById('pendingUsersList');
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(user => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.group_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.manager}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${user.contact}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="approveUser(${user.id})" 
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                            승인
+                        </button>
+                        <button onclick="rejectUser(${user.id})" 
+                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                            거부
+                        </button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 회원이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading pending users:', error);
+        if (error.message === '인증이 필요합니다.') {
+            return; // 조용히 실패
+        }
+        showAlert('가입 대기 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
+// 관리자 대시보드에서 대기 중인 예약 목록 로드
+async function loadPendingBookings() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.log('No token available');
+        return;
+    }
+    try {
+        const data = await apiRequest('/api/admin/pending-bookings');
+        const tbody = document.getElementById('pendingBookingsList');
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(booking => {
+                const isCancelRequest = booking.status === 'cancel_pending';
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.start_time} - ${booking.end_time}
+                            ${isCancelRequest ? '<span class="text-red-500 ml-2">(취소 요청)</span>' : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${isCancelRequest ? `
+                                <button onclick="approveCancelBooking(${booking.id})" 
+                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                                    취소 승인
+                                </button>
+                                <button onclick="rejectCancelBooking(${booking.id})" 
+                                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                    취소 거부
+                                </button>
+                            ` : `
+                                <button onclick="approveBooking(${booking.id})" 
                                     class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
                                     승인
                                 </button>
-                                <button onclick="rejectUser(${user.id})" 
+                                <button onclick="rejectBooking(${booking.id})" 
                                     class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                                     거부
                                 </button>
-                            </td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 회원이 없습니다.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error loading pending users:', error);
-                showAlert('가입 대기 목록을 불러오는데 실패했습니다.', 'error');
-            }
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
         }
-
-        // 관리자 대시보드에서 대기 중인 예약 목록 로드
-        async function loadPendingBookings() {
-            try {
-                const data = await apiRequest('/api/admin/pending-bookings');
-                const tbody = document.getElementById('pendingBookingsList');
-                
-                if (data.success && data.data) {
-                    tbody.innerHTML = data.data.map(booking => {
-                        const isCancelRequest = booking.status === 'cancel_pending';
-                        return `
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    ${booking.start_time} - ${booking.end_time}
-                                    ${isCancelRequest ? '<span class="text-red-500 ml-2">(취소 요청)</span>' : ''}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    ${isCancelRequest ? `
-                                        <button onclick="approveCancelBooking(${booking.id})" 
-                                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
-                                            취소 승인
-                                        </button>
-                                        <button onclick="rejectCancelBooking(${booking.id})" 
-                                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                            취소 거부
-                                        </button>
-                                    ` : `
-                                        <button onclick="approveBooking(${booking.id})" 
-                                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
-                                            승인
-                                        </button>
-                                        <button onclick="rejectBooking(${booking.id})" 
-                                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                            거부
-                                        </button>
-                                    `}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error loading pending bookings:', error);
-                showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
-            }
+    } catch (error) {
+        console.error('Error loading pending bookings:', error);
+        if (error.message === '인증이 필요합니다.') {
+            return; // 조용히 실패
         }
+        showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
 
-        // 주기적으로 목록 갱신 (5초마다)
-        function initializeAdminDashboard() {
+// 주기적으로 목록 갱신 (5초마다)
+function initializeAdminDashboard() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.log('No token available for admin dashboard');
+        return;
+    }
+    loadPendingUsers();
+    loadPendingBookings();
+    setInterval(() => {
+        const currentToken = localStorage.getItem('token');
+        if (currentToken) {
             loadPendingUsers();
             loadPendingBookings();
-            setInterval(() => {
-                loadPendingUsers();
-                loadPendingBookings();
-            }, 5000);
         }
+    }, 5000);
+}
 
         // 로그인/로그아웃 관련 함수
         async function login(username, password) {
@@ -811,26 +835,30 @@
         }
 
         function showDashboard(role) {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminDashboard').style.display = 'none';
-            document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
 
-            if (role === 'admin') {
-                document.getElementById('adminDashboard').style.display = 'block';
-                initializeAdminCalendar();
-                initializeAdminDashboard(); // 새로 추가된 함수 호출
-                updateCalendarStatus();
-            } else {
-                document.getElementById('userDashboard').style.display = 'block';
-                if (localStorage.getItem('username')) {
-                    document.getElementById('userGroupName').textContent = 
-                        localStorage.getItem('username');
-                }
-                initializeCalendar();
-                updateCalendarStatus();
-                loadBookings();
-            }
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminCalendar();
+        // 토큰이 있을 때만 관리자 대시보드 초기화
+        const token = localStorage.getItem('token');
+        if (token) {
+            initializeAdminDashboard();
         }
+        updateCalendarStatus();
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
+        }
+        initializeCalendar();
+        updateCalendarStatus();
+        loadBookings();
+    }
+}
 
         // 회원가입 관련 함수
         async function signup(formData) {
