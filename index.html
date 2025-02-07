@@ -427,8 +427,6 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장소</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                                 </tr>
                             </thead>
@@ -1052,56 +1050,54 @@
 
         // 관리자: 예약 승인 대기 목록 로드
         async function loadPendingBookings() {
-            try {
-                const data = await apiRequest('/api/admin/pending-bookings');
-                const tbody = document.getElementById('pendingBookingsList');
-                
-                if (data.success && data.data) {
-                    tbody.innerHTML = data.data.map(booking => {
-                        const createdAt = new Date(booking.created_at);
-                        const createdAtStr = new Intl.DateTimeFormat('ko-KR', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        }).format(createdAt);
+    try {
+        const data = await apiRequest('/api/admin/pending-bookings');
+        const tbody = document.getElementById('pendingBookingsList');
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data.map(booking => {
+                const createdAt = new Date(booking.created_at);
+                const createdAtStr = new Intl.DateTimeFormat('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(createdAt);
 
-                        return `
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm">
-                                        <div>시작: ${booking.start_time}</div>
-                                        <div>종료: ${booking.end_time}</div>
-                                        <div class="text-gray-500 text-xs mt-1">
-                                            신청: ${createdAtStr}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <button onclick="approveBooking(${booking.id})" 
-                                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
-                                        승인
-                                    </button>
-                                    <button onclick="rejectBooking(${booking.id})" 
-                                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                        거부
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error loading pending bookings:', error);
-                showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
-            }
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm">
+                                <div>시작: ${booking.start_time}</div>
+                                <div>종료: ${booking.end_time}</div>
+                                <div class="text-gray-500 text-xs mt-1">
+                                    신청: ${createdAtStr}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="approveBooking(${booking.id})" 
+                                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                                승인
+                            </button>
+                            <button onclick="rejectBooking(${booking.id})" 
+                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                거부
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
         }
+    } catch (error) {
+        console.error('Error loading pending bookings:', error);
+        showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
 
 // 날짜별 예약 조회 함수
         async function loadDateBookings(dateString) {
