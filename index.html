@@ -1265,40 +1265,46 @@ async function rejectCancelBooking(bookingId) {
         let adminCurrentDate = new Date();
 
         function initializeCalendar() {
-            const calendar = document.getElementById('calendar');
-            const currentMonthElement = document.getElementById('currentMonth');
+    const calendar = document.getElementById('calendar');
+    const currentMonthElement = document.getElementById('currentMonth');
 
-            document.getElementById('prevMonth').addEventListener('click', function() {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    currentDate = newDate;
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        currentDate = newDate;
+        renderCalendar(currentDate);
+        updateCalendarStatus();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        currentDate = newDate;
+        renderCalendar(currentDate);
+        updateCalendarStatus();
+    });
+
     renderCalendar(currentDate);
-    updateCalendarStatus();
-});
+}
 
-document.getElementById('nextMonth').addEventListener('click', function() {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-    currentDate = newDate;
-    renderCalendar(currentDate);
-    updateCalendarStatus();
-});
+function initializeAdminCalendar() {
+    const adminCalendar = document.getElementById('adminCalendar');
+    const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
 
-        function initializeAdminCalendar() {
-            const adminCalendar = document.getElementById('adminCalendar');
-            const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+    document.getElementById('adminPrevMonth').addEventListener('click', function() {
+        const newDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() - 1, 1);
+        adminCurrentDate = newDate;
+        renderAdminCalendar(adminCurrentDate);
+        updateCalendarStatus();
+    });
 
-            document.getElementById('adminPrevMonth').addEventListener('click', function() {
-    const newDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() - 1, 1);
-    adminCurrentDate = newDate;
+    document.getElementById('adminNextMonth').addEventListener('click', function() {
+        const newDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() + 1, 1);
+        adminCurrentDate = newDate;
+        renderAdminCalendar(adminCurrentDate);
+        updateCalendarStatus();
+    });
+
     renderAdminCalendar(adminCurrentDate);
-    updateCalendarStatus();
-});
-
-document.getElementById('adminNextMonth').addEventListener('click', function() {
-    const newDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() + 1, 1);
-    adminCurrentDate = newDate;
-    renderAdminCalendar(adminCurrentDate);
-    updateCalendarStatus();
-});
+}
 
         function renderCalendar(date) {
             const calendar = document.getElementById('calendar');
