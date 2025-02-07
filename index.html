@@ -345,10 +345,10 @@
                     <h2 class="text-2xl font-bold text-gray-800">예약 현황</h2>
                     <div class="flex items-center space-x-6">
                         <button id="downloadExcel" 
-    class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 flex items-center transition-colors duration-200">
-    <i class="fas fa-file-excel mr-2"></i>
-    월간 일정표 다운로드
-</button>
+                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 flex items-center transition-colors duration-200">
+                            <i class="fas fa-file-excel mr-2"></i>
+                            월간 일정표 다운로드
+                        </button>
                         <div class="flex items-center space-x-4 bg-gray-50 p-2 rounded-lg">
                             <button id="adminPrevMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
                                 <i class="fas fa-chevron-left text-blue-600"></i>
@@ -360,7 +360,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 캘린더 그리드 -->
                 <div class="mb-4">
                     <div class="grid grid-cols-7 gap-2 mb-2">
@@ -543,7 +543,7 @@
             document.getElementById('alert').classList.add('hidden');
         }
 
-        // API 요청 헬퍼 함수
+// API 요청 헬퍼 함수
         async function apiRequest(endpoint, options = {}) {
             showLoading();
             try {
@@ -585,131 +585,131 @@
 
         // 엑셀 데이터 생성
         async function generateExcelData(year, month) {
-    try {
-        const bookings = await fetchMonthlyBookings(year, month);
-        if (!bookings) return null;
+            try {
+                const bookings = await fetchMonthlyBookings(year, month);
+                if (!bookings) return null;
 
-        // 워크시트 데이터 생성
-        const wsData = [];
-        
-        // 제목 행 추가
-        wsData.push([`${year}년 ${month}월 스포츠박스 예약 현황`]);
-        wsData.push([]); // 빈 행 추가
+                // 워크시트 데이터 생성
+                const wsData = [];
+                
+                // 제목 행 추가
+                wsData.push([`${year}년 ${month}월 스포츠박스 예약 현황`]);
+                wsData.push([]); // 빈 행 추가
 
-        // 헤더 행
-        wsData.push(['날짜', '요일', '시간', '단체명', '인원', '장소', '상태']);
+                // 헤더 행
+                wsData.push(['날짜', '요일', '시간', '단체명', '인원', '장소', '상태']);
 
-        // 날짜별 데이터 정렬 및 추가
-        const sortedDates = Object.keys(bookings).sort();
-        const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+                // 날짜별 데이터 정렬 및 추가
+                const sortedDates = Object.keys(bookings).sort();
+                const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-        sortedDates.forEach(date => {
-            const dayOfWeek = weekDays[new Date(date).getDay()];
-            if (bookings[date].length === 0) {
-                wsData.push([
-                    date,
-                    dayOfWeek,
-                    '-',
-                    '-',
-                    '-',
-                    '-',
-                    '예약없음'
-                ]);
-            } else {
-                bookings[date].forEach((booking, index) => {
-                    wsData.push([
-                        index === 0 ? date : '',
-                        index === 0 ? dayOfWeek : '',
-                        `${booking.start_time}-${booking.end_time}`,
-                        booking.group_name,
-                        booking.people,
-                        booking.place,
-                        getStatusText(booking.status)
-                    ]);
-                });
-            }
-        });
-
-        // 워크시트 생성
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-        // 스타일 설정
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        
-        // 열 너비 설정
-        ws['!cols'] = [
-            { wch: 15 }, // 날짜
-            { wch: 8 },  // 요일
-            { wch: 15 }, // 시간
-            { wch: 20 }, // 단체명
-            { wch: 10 }, // 인원
-            { wch: 20 }, // 장소
-            { wch: 12 }  // 상태
-        ];
-
-        // 제목 행 병합
-        ws['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
-        ];
-
-        // 스타일 적용
-        for (let R = 0; R <= range.e.r; R++) {
-            for (let C = 0; C <= range.e.c; C++) {
-                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                if (!ws[cellRef]) continue;
-
-                // 기본 셀 스타일
-                ws[cellRef].s = {
-                    alignment: { vertical: 'center', horizontal: 'center' },
-                    border: {
-                        top: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        left: { style: 'thin' },
-                        right: { style: 'thin' }
+                sortedDates.forEach(date => {
+                    const dayOfWeek = weekDays[new Date(date).getDay()];
+                    if (bookings[date].length === 0) {
+                        wsData.push([
+                            date,
+                            dayOfWeek,
+                            '-',
+                            '-',
+                            '-',
+                            '-',
+                            '예약없음'
+                        ]);
+                    } else {
+                        bookings[date].forEach((booking, index) => {
+                            wsData.push([
+                                index === 0 ? date : '',
+                                index === 0 ? dayOfWeek : '',
+                                `${booking.start_time}-${booking.end_time}`,
+                                booking.group_name,
+                                booking.people,
+                                booking.place,
+                                getStatusText(booking.status)
+                            ]);
+                        });
                     }
-                };
+                });
 
-                // 제목 행 스타일
-                if (R === 0) {
-                    ws[cellRef].s = {
-                        ...ws[cellRef].s,
-                        font: { bold: true, sz: 14 },
-                        fill: { fgColor: { rgb: "4472C4" } },
-                        font: { color: { rgb: "FFFFFF" } }
-                    };
-                }
+                // 워크시트 생성
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-                // 헤더 행 스타일
-                if (R === 2) {
-                    ws[cellRef].s = {
-                        ...ws[cellRef].s,
-                        font: { bold: true },
-                        fill: { fgColor: { rgb: "E2EFDA" } }
-                    };
-                }
+                // 스타일 설정
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                
+                // 열 너비 설정
+                ws['!cols'] = [
+                    { wch: 15 }, // 날짜
+                    { wch: 8 },  // 요일
+                    { wch: 15 }, // 시간
+                    { wch: 20 }, // 단체명
+                    { wch: 10 }, // 인원
+                    { wch: 20 }, // 장소
+                    { wch: 12 }  // 상태
+                ];
 
-                // 주말 날짜 스타일
-                if (C === 0 && R > 2) {
-                    const date = ws[cellRef].v;
-                    if (date && typeof date === 'string') {
-                        const dayOfWeek = new Date(date).getDay();
-                        if (dayOfWeek === 0 || dayOfWeek === 6) {
+                // 제목 행 병합
+                ws['!merges'] = [
+                    { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
+                ];
+
+                // 스타일 적용
+                for (let R = 0; R <= range.e.r; R++) {
+                    for (let C = 0; C <= range.e.c; C++) {
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (!ws[cellRef]) continue;
+
+                        // 기본 셀 스타일
+                        ws[cellRef].s = {
+                            alignment: { vertical: 'center', horizontal: 'center' },
+                            border: {
+                                top: { style: 'thin' },
+                                bottom: { style: 'thin' },
+                                left: { style: 'thin' },
+                                right: { style: 'thin' }
+                            }
+                        };
+
+                        // 제목 행 스타일
+                        if (R === 0) {
                             ws[cellRef].s = {
                                 ...ws[cellRef].s,
-                                font: { color: { rgb: dayOfWeek === 0 ? "FF0000" : "0000FF" } }
+                                font: { bold: true, sz: 14 },
+                                fill: { fgColor: { rgb: "4472C4" } },
+                                font: { color: { rgb: "FFFFFF" } }
                             };
+                        }
+
+                        // 헤더 행 스타일
+                        if (R === 2) {
+                            ws[cellRef].s = {
+                                ...ws[cellRef].s,
+                                font: { bold: true },
+                                fill: { fgColor: { rgb: "E2EFDA" } }
+                            };
+                        }
+
+                        // 주말 날짜 스타일
+                        if (C === 0 && R > 2) {
+                            const date = ws[cellRef].v;
+                            if (date && typeof date === 'string') {
+                                const dayOfWeek = new Date(date).getDay();
+                                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                                    ws[cellRef].s = {
+                                        ...ws[cellRef].s,
+                                        font: { color: { rgb: dayOfWeek === 0 ? "FF0000" : "0000FF" } }
+                                    };
+                                }
+                            }
                         }
                     }
                 }
+
+                return ws;
+            } catch (error) {
+                console.error('Error generating Excel data:', error);
+                return null;
             }
         }
-
-        return ws;
-    } catch (error) {
-        console.error('Error generating Excel data:', error);
-        return null;
-    }
-}
 
         // 날짜 포맷 함수
         function formatDate(dateStr) {
@@ -719,35 +719,70 @@
 
         // 상태에 따른 스타일 클래스 반환
         function getStatusClass(status) {
-    switch(status) {
-        case 'approved':
-            return 'bg-green-100 text-green-800';
-        case 'pending':
-            return 'bg-yellow-100 text-yellow-800';
-        case 'rejected':
-            return 'bg-red-100 text-red-800';
-        case 'cancelled':
-            return 'bg-gray-100 text-gray-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
-    }
-}
+            switch(status) {
+                case 'approved':
+                    return 'bg-green-100 text-green-800';
+                case 'pending':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'rejected':
+                    return 'bg-red-100 text-red-800';
+                case 'cancelled':
+                    return 'bg-gray-100 text-gray-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
 
         // 상태 텍스트 변환
         function getStatusText(status) {
-    switch(status) {
-        case 'approved':
-            return '승인완료';
-        case 'pending':
-            return '승인대기';
-        case 'rejected':
-            return '거부됨';
-        case 'cancelled':
-            return '취소됨';
-        default:
-            return '알 수 없음';
-    }
-}
+            switch(status) {
+                case 'approved':
+                    return '승인완료';
+                case 'pending':
+                    return '승인대기';
+                case 'rejected':
+                    return '거부됨';
+                case 'cancelled':
+                    return '취소됨';
+                default:
+                    return '알 수 없음';
+            }
+        }
+
+        // 엑셀 다운로드 핸들러
+        async function handleExcelDownload() {
+            try {
+                const year = adminCurrentDate.getFullYear();
+                const month = adminCurrentDate.getMonth() + 1;
+                
+                // 다운로드 전 사용자 확인
+                if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
+                    return;
+                }
+
+                showLoading();
+                const ws = await generateExcelData(year, month);
+                
+                if (!ws) {
+                    throw new Error('엑셀 데이터 생성 실패');
+                }
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
+                
+                // 파일명에 타임스탬프 추가
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
+                
+                XLSX.writeFile(wb, fileName);
+                showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
+            } catch (error) {
+                console.error('Excel download error:', error);
+                showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
 
         // 로그인/로그아웃 관련 함수
         async function login(username, password) {
@@ -808,142 +843,142 @@
 
         // 회원가입 관련 함수
         async function signup(formData) {
-            try {
-                const response = await apiRequest('/api/signup', {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                });
+          try {
+              const response = await apiRequest('/api/signup', {
+                  method: 'POST',
+                  body: JSON.stringify(formData)
+              });
 
-                if (response.success) {
-                    showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                    document.getElementById('signupModal').classList.remove('show');
-                    document.getElementById('signupForm').reset();
-                }
-            } catch (error) {
-                console.error('Signup error:', error);
-                showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
-            }
-        }
+              if (response.success) {
+                  showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+                  document.getElementById('signupModal').classList.remove('show');
+                  document.getElementById('signupForm').reset();
+              }
+          } catch (error) {
+              console.error('Signup error:', error);
+              showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
+          }
+      }
 
-        // 날짜 마감/해제 함수
-        async function blockDate(date) {
-            try {
-                const response = await apiRequest('/api/admin/dates/block', {
-                    method: 'POST',
-                    body: JSON.stringify({ date })
-                });
-                if (response.success) {
-                    showAlert('날짜가 마감 처리되었습니다.', 'success');
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Date blocking error:', error);
-                showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error');
-            }
-        }
+      // 날짜 마감/해제 함수
+      async function blockDate(date) {
+          try {
+              const response = await apiRequest('/api/admin/dates/block', {
+                  method: 'POST',
+                  body: JSON.stringify({ date })
+              });
+              if (response.success) {
+                  showAlert('날짜가 마감 처리되었습니다.', 'success');
+                  await updateCalendarStatus();
+              }
+          } catch (error) {
+              console.error('Date blocking error:', error);
+              showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error');
+          }
+      }
 
-        async function unblockDate(date) {
-            try {
-                const response = await apiRequest('/api/admin/dates/unblock', {
-                    method: 'POST',
-                    body: JSON.stringify({ date })
-                });
-                if (response.success) {
-                    showAlert('날짜 마감이 해제되었습니다.', 'success');
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Date unblocking error:', error);
-                showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error');
-            }
-        }
+      async function unblockDate(date) {
+          try {
+              const response = await apiRequest('/api/admin/dates/unblock', {
+                  method: 'POST',
+                  body: JSON.stringify({ date })
+              });
+              if (response.success) {
+                  showAlert('날짜 마감이 해제되었습니다.', 'success');
+                  await updateCalendarStatus();
+              }
+          } catch (error) {
+              console.error('Date unblocking error:', error);
+              showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+          }
+      }
 
-        // 예약 관련 함수들
-        async function loadBookings() {
-    try {
-        const data = await apiRequest('/api/bookings');
-        const tbody = document.getElementById('bookingsList');
-        
-        if (data.success && data.data) {
-            tbody.innerHTML = data.data
-                .filter(booking => booking.status !== 'cancelled')  // 취소된 예약 필터링
-                .map(booking => {
-                    const bookingDate = new Date(booking.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    const canCancel = bookingDate >= today && 
-                        booking.status !== 'cancelled' && 
-                        booking.status !== 'rejected';
+      // 예약 관련 함수들
+      async function loadBookings() {
+          try {
+              const data = await apiRequest('/api/bookings');
+              const tbody = document.getElementById('bookingsList');
+              
+              if (data.success && data.data) {
+                  tbody.innerHTML = data.data
+                      .filter(booking => booking.status !== 'cancelled')
+                      .map(booking => {
+                          const bookingDate = new Date(booking.date);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          
+                          const canCancel = bookingDate >= today && 
+                              booking.status !== 'cancelled' && 
+                              booking.status !== 'rejected';
 
-                    return `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${canCancel ? `
-                                    <button onclick="cancelBooking(${booking.id})" 
-                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                        취소
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
-        }
-    } catch (error) {
-        console.error('Error loading bookings:', error);
-        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
-    }
-}
+                          return `
+                              <tr>
+                                  <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                          ${getStatusClass(booking.status)}">
+                                          ${getStatusText(booking.status)}
+                                      </span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      ${canCancel ? `
+                                          <button onclick="cancelBooking(${booking.id})" 
+                                              class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                              취소
+                                          </button>
+                                      ` : ''}
+                                  </td>
+                              </tr>
+                          `;
+                      }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+              }
+          } catch (error) {
+              console.error('Error loading bookings:', error);
+              showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
+          }
+      }
 
-// 예약 생성
-        async function createBooking(bookingData) {
-            try {
-                const response = await apiRequest('/api/bookings', {
-                    method: 'POST',
-                    body: JSON.stringify(bookingData)
-                });
+      // 예약 생성
+      async function createBooking(bookingData) {
+          try {
+              const response = await apiRequest('/api/bookings', {
+                  method: 'POST',
+                  body: JSON.stringify(bookingData)
+              });
 
-                if (response.success) {
-                    showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                    document.getElementById('bookingForm').reset();
-                    await loadBookings();
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Booking creation error:', error);
-                showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
-            }
-        }
+              if (response.success) {
+                  showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+                  document.getElementById('bookingForm').reset();
+                  await loadBookings();
+                  await updateCalendarStatus();
+              }
+          } catch (error) {
+              console.error('Booking creation error:', error);
+              showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+          }
+      }
 
-// 예약 취소 함수 추가
-async function cancelBooking(bookingId) {
-    try {
-        const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
-            method: 'PUT'
-        });
-        if (response.success) {
-            showAlert('예약이 취소되었습니다.', 'success');
-            await loadBookings();
-            await updateCalendarStatus();
-        }
-    } catch (error) {
-        console.error('Booking cancellation error:', error);
-        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error');
-    }
-}
+      // 예약 취소
+      async function cancelBooking(bookingId) {
+          try {
+              const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
+                  method: 'PUT'
+              });
+              if (response.success) {
+                  showAlert('예약이 취소되었습니다.', 'success');
+                  await loadBookings();
+                  await updateCalendarStatus();
+              }
+          } catch (error) {
+              console.error('Booking cancellation error:', error);
+              showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error');
+          }
+      }
 
-        // 관리자: 가입 대기 사용자 목록 로드
+// 관리자: 가입 대기 사용자 목록 로드
         async function loadPendingUsers() {
             try {
                 const data = await apiRequest('/api/admin/pending-users');
@@ -1058,7 +1093,7 @@ async function cancelBooking(bookingId) {
             }
         }
 
-        // 날짜별 예약 조회 함수
+// 날짜별 예약 조회 함수
         async function loadDateBookings(dateString) {
             try {
                 console.log('Loading bookings for date:', dateString);
@@ -1406,38 +1441,6 @@ async function cancelBooking(bookingId) {
             });
         }
 
-        async function handleExcelDownload() {
-    try {
-        const year = adminCurrentDate.getFullYear();
-        const month = adminCurrentDate.getMonth() + 1;
-        
-        if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
-            return;
-        }
-
-        showLoading();
-        const ws = await generateExcelData(year, month);
-        
-        if (!ws) {
-            throw new Error('엑셀 데이터 생성 실패');
-        }
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
-        
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
-        
-        XLSX.writeFile(wb, fileName);
-        showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
-    } catch (error) {
-        console.error('Excel download error:', error);
-        showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', function() {
     // 로그인 폼 제출
@@ -1501,31 +1504,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 엑셀 다운로드 버튼
-    document.getElementById('downloadExcel')?.addEventListener('click', () => {
-        handleExcelDownload();
+    document.getElementById('downloadExcel')?.addEventListener('click', function() {
+        const year = adminCurrentDate.getFullYear();
+        const month = adminCurrentDate.getMonth() + 1;
         
-    try {
-        showLoading();
-        const ws = await generateExcelData(year, month);
-        if (!ws) {
-            throw new Error('엑셀 데이터 생성 실패');
-        }
+        try {
+            showLoading();
+            if (!confirm(`${year}년 ${month}월 예약 현황을 다운로드하시겠습니까?`)) {
+                hideLoading();
+                return;
+            }
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '예약현황');
-        
-        // 파일명 설정
-        const fileName = `스포츠박스_예약현황_${year}년${month}월.xlsx`;
-        XLSX.writeFile(wb, fileName);
-        
-        showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
-    } catch (error) {
-        console.error('Excel download error:', error);
-        showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-});
+            generateExcelData(year, month)
+                .then(ws => {
+                    if (!ws) {
+                        throw new Error('엑셀 데이터 생성 실패');
+                    }
+
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, `${year}년 ${month}월`);
+                    
+                    const timestamp = new Date().toISOString().slice(0, 10);
+                    const fileName = `스포츠박스_예약현황_${year}년${month}월_${timestamp}.xlsx`;
+                    
+                    XLSX.writeFile(wb, fileName);
+                    showAlert('엑셀 파일이 다운로드되었습니다.', 'success');
+                })
+                .catch(error => {
+                    console.error('Excel download error:', error);
+                    showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        } catch (error) {
+            console.error('Excel download error:', error);
+            showAlert('엑셀 파일 다운로드 중 오류가 발생했습니다.', 'error');
+            hideLoading();
+        }
+    });
 
     // 시간 선택 초기화
     initializeTimeSelects();
@@ -1545,6 +1562,6 @@ if (DEBUG) {
         return false;
     };
 }
-</script>
+    </script>
 </body>
 </html>
