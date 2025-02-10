@@ -1293,7 +1293,7 @@ function renderAdminCalendar(date) {
             dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
             dayElement.title = '지난 날짜';
         } else {
-            // 관리자용 날짜 클릭 이벤트 설정
+            // 모든 날짜에 클릭 이벤트 추가 (관리자용)
             dayElement.addEventListener('click', async function() {
                 const modal = document.getElementById('dateBookingsModal');
                 await loadDateBookings(dateString);
@@ -1324,6 +1324,46 @@ function renderAdminCalendar(date) {
                     }
                 };
             });
+
+            // 날짜 상태에 따른 스타일 적용
+            if (dateStatus?.isFullyBlocked) {
+                dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = '전체 마감';
+            } else if (dateStatus?.isFull) {
+                dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = '예약 마감';
+            } else if (dateStatus?.hasBooking) {
+                dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            } else {
+                dayElement.className = 
+                    'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                dayElement.title = '예약 없음';
+            }
+
+            // 예약 수 표시 추가
+            if (dateStatus?.bookingCount > 0) {
+                const bookingCount = document.createElement('div');
+                bookingCount.className = 'absolute bottom-1 right-1 text-xs font-bold';
+                bookingCount.textContent = dateStatus.bookingCount;
+                dayElement.style.position = 'relative';
+                dayElement.appendChild(bookingCount);
+            }
+        }
+
+        dayElement.textContent = day;
+
+        if (
+            day === today.getDate() &&
+            adminCurrentDate.getMonth() === today.getMonth() &&
+            adminCurrentDate.getFullYear() === today.getFullYear()
+        ) {
+            dayElement.classList.add('font-bold');
+        }
+
+        adminCalendar.appendChild(dayElement);
+    }
+}
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
