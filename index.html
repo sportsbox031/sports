@@ -320,23 +320,78 @@
     </div>
 
     <!-- 관리자 대시보드 -->
-    <div id="adminDashboard" class="hidden">
-        <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-running text-2xl"></i>
-                        <span class="text-2xl font-bold">스포츠박스 관리자</span>
-                    </div>
-                    <div class="flex space-x-8">
-                        <button id="adminLogoutBtn" class="hover:text-blue-200 transition-colors duration-200 flex items-center space-x-1">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>로그아웃</span>
-                        </button>
-                    </div>
+<div id="adminDashboard" class="hidden">
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-running text-2xl"></i>
+                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <button id="adminLogoutBtn" class="hover:text-blue-200 transition-colors duration-200 flex items-center space-x-1">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>로그아웃</span>
+                    </button>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 탭 버튼 -->
+        <div class="flex space-x-4 mb-8">
+            <button id="showMembersTab" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                회원 관리
+            </button>
+            <button id="showBookingsTab" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                예약 관리
+            </button>
+        </div>
+
+        <!-- 회원 관리 탭 -->
+        <div id="membersTab" class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-user-plus text-blue-500 mr-2"></i>
+                회원가입 승인 대기
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">담당자</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingUsersList" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 예약 관리 탭 -->
+        <div id="bookingsTab" class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-calendar-check text-blue-500 mr-2"></i>
+                예약 승인 대기
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장소</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingBookingsList" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
 
         <main class="container mx-auto px-4 py-8">
             <!-- 캘린더 섹션 -->
@@ -1481,6 +1536,34 @@ async function generateExcelData(year, month) {
             document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
                 document.getElementById('dateBookingsModal').classList.remove('show');
             });
+
+// 탭 전환 기능
+const membersTab = document.getElementById('membersTab');
+const bookingsTab = document.getElementById('bookingsTab');
+const showMembersTabBtn = document.getElementById('showMembersTab');
+const showBookingsTabBtn = document.getElementById('showBookingsTab');
+
+showMembersTabBtn?.addEventListener('click', function() {
+    membersTab.classList.remove('hidden');
+    bookingsTab.classList.add('hidden');
+    showMembersTabBtn.classList.add('bg-blue-700');
+    showBookingsTabBtn.classList.remove('bg-blue-700');
+});
+
+showBookingsTabBtn?.addEventListener('click', function() {
+    bookingsTab.classList.remove('hidden');
+    membersTab.classList.add('hidden');
+    showBookingsTabBtn.classList.add('bg-blue-700');
+    showMembersTabBtn.classList.remove('bg-blue-700');
+});
+
+// 초기 상태 설정 (회원 관리 탭을 기본으로 표시)
+if (membersTab && bookingsTab) {
+    membersTab.classList.remove('hidden');
+    bookingsTab.classList.add('hidden');
+    showMembersTabBtn.classList.add('bg-blue-700');
+}
+
 
             // 엑셀 다운로드 버튼
             document.getElementById('downloadExcel')?.addEventListener('click', async function() {
