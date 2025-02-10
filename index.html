@@ -7,84 +7,108 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* 캘린더 날짜 스타일 */
+        .calendar-day {
+            @apply transition-all duration-300 rounded-lg hover:shadow-md;
+        }
+    
         .calendar-day:hover {
-            background-color: rgba(59, 130, 246, 0.1);
-            transition: all 0.3s;
+            @apply bg-blue-50 transform scale-105;
         }
+    
         .selected {
-            background-color: #3B82F6 !important;
-            color: white !important;
+            @apply bg-blue-500 text-white ring-2 ring-blue-300 ring-offset-2 !important;
         }
+    
+        /* 모달 스타일 */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            @apply fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none 
+            transition-opacity duration-300 ease-in-out;
         }
+    
         .modal.show {
-            display: flex;
+            @apply opacity-100 pointer-events-auto flex items-center justify-center;
         }
+    
+        /* 캘린더 상태별 스타일 */
         .calendar-day.booked {
-            background-color: #FEF3C7;
-            cursor: pointer;
+            @apply bg-amber-50 hover:bg-amber-100 border border-amber-200 cursor-pointer;
         }
+    
         .calendar-day.full {
-            background-color: #FEE2E2;
-            cursor: not-allowed;
+            @apply bg-red-50 hover:bg-red-100 border border-red-200 cursor-not-allowed;
         }
+    
         .calendar-day.past {
-            background-color: #F3F4F6;
-            cursor: not-allowed;
-            color: #9CA3AF;
+            @apply bg-gray-50 text-gray-400 cursor-not-allowed opacity-75;
         }
+    
         .calendar-day.blocked {
-            background-color: #4B5563 !important;
-            color: white !important;
-            cursor: not-allowed;
+            @apply bg-gray-700 text-white cursor-not-allowed !important;
         }
+    
         .calendar-day.today {
-            font-weight: bold;
-            background-color: transparent !important;
+            @apply font-bold ring-2 ring-blue-400 ring-offset-2 !important;
         }
+    
+        /* 관리자 캘린더 특수 스타일 */
         #adminCalendar .calendar-day.blocked,
         #adminCalendar .calendar-day.partially-blocked {
-            cursor: pointer;
+            @apply cursor-pointer hover:shadow-lg transition-all duration-300;
         }
+    
         .calendar-day.blocked:hover {
-            background-color: #374151 !important;
+            @apply bg-gray-800 transform scale-105 !important;
         }
+    
         .calendar-day.partially-blocked:hover {
-            background-color: #D97706 !important;
+            @apply bg-amber-600 transform scale-105 !important;
         }
+    
+        /* 로딩 인디케이터 스타일 */
         .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+            @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
+            transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none
+            flex items-center justify-center;
         }
+    
         .loading.show {
-            display: flex;
+            @apply opacity-100 pointer-events-auto;
         }
+    
+        /* 모던한 스피너 */
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+            @apply w-12 h-12 rounded-full;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            animation: spin 1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
         }
+    
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    
+        /* 호버 효과가 있는 버튼 */
+        .hover-button {
+            @apply transform transition-all duration-200 hover:scale-105 
+            hover:shadow-lg active:scale-95;
+        }
+    
+        /* 입력 필드 포커스 효과 */
+        .focus-ring {
+            @apply focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 
+            focus:outline-none transition-all duration-200;
+        }
+    
+        /* 카드 호버 효과 */
+        .hover-card {
+            @apply transition-all duration-300 hover:shadow-xl 
+            hover:transform hover:scale-[1.02];
         }
     </style>
 </head>
@@ -181,23 +205,28 @@
     <!-- 사용자 대시보드 -->
     <div id="userDashboard" class="hidden">
         <!-- 네비게이션 바 -->
-        <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-running text-2xl"></i>
-                        <span class="text-2xl font-bold">스포츠박스</span>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <span id="userGroupName" class="text-sm"></span>
-                        <button id="logoutBtn" class="hover:text-blue-200 transition-colors duration-200 flex items-center space-x-1">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>로그아웃</span>
-                        </button>
-                    </div>
+    <nav class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg backdrop-blur-lg bg-opacity-95 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- 로고 섹션 -->
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-running text-2xl transform hover:scale-110 transition-transform duration-200"></i>
+                    <span class="text-2xl font-bold tracking-tight">스포츠박스</span>
+                </div>
+                
+                <!-- 사용자 정보 및 로그아웃 섹션 -->
+                <div class="flex items-center space-x-6">
+                    <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                    <button id="logoutBtn" 
+                        class="flex items-center space-x-2 px-4 py-2 rounded-lg 
+                        hover:bg-white/10 transition-all duration-200 ease-in-out">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>로그아웃</span>
+                    </button>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
         <main class="container mx-auto px-4 py-8">
             <div class="grid md:grid-cols-2 gap-8">
@@ -326,19 +355,25 @@
 
 <!-- 관리자 대시보드 -->
 <div id="adminDashboard" class="hidden">
-    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+    <nav class="bg-gradient-to-r from-indigo-700 to-purple-600 text-white shadow-lg backdrop-blur-lg bg-opacity-95 sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-running text-2xl"></i>
-                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
+                <!-- 로고 섹션 -->
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-running text-2xl transform hover:scale-110 transition-transform duration-200"></i>
+                    <span class="text-2xl font-bold tracking-tight">스포츠박스 관리자</span>
+                    <span class="ml-2 px-3 py-1 bg-white/20 rounded-full text-xs font-medium">
+                        Admin
+                    </span>
                 </div>
-                <div class="flex space-x-8">
-                    <button id="adminLogoutBtn" class="hover:text-blue-200 transition-colors duration-200 flex items-center space-x-1">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>로그아웃</span>
-                    </button>
-                </div>
+                
+                <!-- 로그아웃 버튼 -->
+                <button id="adminLogoutBtn" 
+                    class="flex items-center space-x-2 px-4 py-2 rounded-lg 
+                    border border-white/20 hover:bg-white/10 transition-all duration-200">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
             </div>
         </div>
     </nav>
