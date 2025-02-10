@@ -715,6 +715,103 @@ async function loadPendingBookings() {
     }
 }
 
+// 관리자: 회원가입 승인/거부 함수
+async function approveUser(userId) {
+    try {
+        const response = await apiRequest(`/api/admin/users/${userId}/approve`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('사용자가 승인되었습니다.', 'success', 3000);
+            loadPendingUsers();
+        }
+    } catch (error) {
+        console.error('User approval error:', error);
+        showAlert('사용자 승인 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+async function rejectUser(userId) {
+    try {
+        const response = await apiRequest(`/api/admin/users/${userId}/reject`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('사용자가 거부되었습니다.', 'success', 3000);
+            loadPendingUsers();
+        }
+    } catch (error) {
+        console.error('User rejection error:', error);
+        showAlert('사용자 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+// 관리자: 예약 승인/거부 함수
+async function approveBooking(bookingId) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/approve`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약이 승인되었습니다.', 'success', 3000);
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking approval error:', error);
+        showAlert('예약 승인 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+async function rejectBooking(bookingId) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/reject`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약이 거부되었습니다.', 'success', 3000);
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking rejection error:', error);
+        showAlert('예약 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+async function approveBookingCancel(bookingId) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/approve-cancel`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약 취소가 승인되었습니다.', 'success', 3000);
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Cancel approval error:', error);
+        showAlert('예약 취소 승인 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+async function rejectBookingCancel(bookingId) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/reject-cancel`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약 취소가 거부되었습니다.', 'success', 3000);
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Cancel rejection error:', error);
+        showAlert('예약 취소 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+
 // API 요청 헬퍼 함수
 async function apiRequest(endpoint, options = {}) {
     showLoading();
