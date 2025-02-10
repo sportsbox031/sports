@@ -340,157 +340,178 @@
         </main>
     </div>
 
-<!-- 관리자 대시보드의 캘린더 섹션 -->
-<div class="container mx-auto px-4 py-8">
-    <!-- 예약 시스템 설정 섹션 -->
-    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
-        <form id="bookingSettingsForm" class="space-y-6">
-            <!-- 예약 시작/중지 토글 버튼 -->
-            <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
-                <div class="flex flex-col">
-                    <span class="text-lg font-semibold text-gray-700">예약 상태</span>
-                    <span id="bookingStatusText" class="text-sm text-gray-500">
-                        현재 예약을 받고 있지 않습니다
-                    </span>
+<!-- 관리자 대시보드 -->
+<div id="adminDashboard" class="hidden">
+    <!-- 관리자 네비게이션 바 -->
+    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-running text-2xl"></i>
+                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
                 </div>
-                <button type="button" id="toggleBookingStatus" 
-                    class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
-                    예약 시작하기
-                </button>
-            </div>
-
-            <!-- 예약 기간 설정 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">예약 시작일</label>
-                    <input type="date" id="bookingStartDate" 
-                        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">예약 종료일</label>
-                    <input type="date" id="bookingEndDate" 
-                        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
-                </div>
-            </div>
-
-            <!-- 안내 메시지 -->
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">예약 중지 시 안내 메시지</label>
-                <textarea id="bookingMessage" 
-                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent" 
-                    rows="3"
-                    placeholder="예약이 중지된 경우 사용자에게 표시될 메시지를 입력하세요"></textarea>
-            </div>
-
-            <button type="submit" 
-                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition duration-200 font-medium shadow-lg">
-                설정 저장
-            </button>
-        </form>
-    </div>
-
-    <!-- 캘린더 섹션 -->
-    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-bold text-gray-800">예약 현황</h2>
-            <div class="flex items-center space-x-6">
-                <button id="downloadExcel" 
-                    class="bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 flex items-center space-x-2 transition-colors duration-200 shadow-lg">
-                    <i class="fas fa-file-excel"></i>
-                    <span>월간 일정표 다운로드</span>
-                </button>
-                <div class="flex items-center space-x-4 bg-gray-50 p-2 rounded-xl">
-                    <button id="adminPrevMonth" class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
-                        <i class="fas fa-chevron-left text-indigo-600"></i>
-                    </button>
-                    <span id="adminCurrentMonth" class="text-lg font-medium text-gray-700 min-w-[120px] text-center"></span>
-                    <button id="adminNextMonth" class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
-                        <i class="fas fa-chevron-right text-indigo-600"></i>
+                <div class="flex items-center space-x-6">
+                    <button id="adminLogoutBtn" 
+                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>로그아웃</span>
                     </button>
                 </div>
             </div>
         </div>
-        
-        <!-- 캘린더 그리드 -->
-        <div class="mb-4">
-            <div class="grid grid-cols-7 gap-4 mb-4">
-                <div class="text-center font-semibold text-gray-600 py-2">일</div>
-                <div class="text-center font-semibold text-gray-600 py-2">월</div>
-                <div class="text-center font-semibold text-gray-600 py-2">화</div>
-                <div class="text-center font-semibold text-gray-600 py-2">수</div>
-                <div class="text-center font-semibold text-gray-600 py-2">목</div>
-                <div class="text-center font-semibold text-gray-600 py-2">금</div>
-                <div class="text-center font-semibold text-gray-600 py-2">토</div>
-            </div>
-            <div id="adminCalendar" class="grid grid-cols-7 gap-4"></div>
+    </nav>
+
+    <!-- 관리자 메인 컨텐츠 -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- 예약 시스템 설정 섹션 -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
+            <form id="bookingSettingsForm" class="space-y-6">
+                <!-- 예약 시작/중지 토글 버튼 -->
+                <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold text-gray-700">예약 상태</span>
+                        <span id="bookingStatusText" class="text-sm text-gray-500">
+                            현재 예약을 받고 있지 않습니다
+                        </span>
+                    </div>
+                    <button type="button" id="toggleBookingStatus" 
+                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                        예약 시작하기
+                    </button>
+                </div>
+
+                <!-- 예약 기간 설정 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">예약 시작일</label>
+                        <input type="date" id="bookingStartDate" 
+                            class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">예약 종료일</label>
+                        <input type="date" id="bookingEndDate" 
+                            class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- 안내 메시지 -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">예약 중지 시 안내 메시지</label>
+                    <textarea id="bookingMessage" 
+                        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent" 
+                        rows="3"
+                        placeholder="예약이 중지된 경우 사용자에게 표시될 메시지를 입력하세요"></textarea>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition duration-200 font-medium shadow-lg">
+                    설정 저장
+                </button>
+            </form>
         </div>
 
-        <!-- 캘린더 범례 -->
-        <div class="flex justify-end space-x-6 pt-6 border-t">
-            <div class="flex items-center">
-                <div class="w-4 h-4 bg-yellow-100 rounded-full mr-2"></div>
-                <span class="text-sm text-gray-600">예약가능</span>
+        <!-- 캘린더 섹션 -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">예약 현황</h2>
+                <div class="flex items-center space-x-6">
+                    <button id="downloadExcel" 
+                        class="bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 flex items-center space-x-2 transition-colors duration-200 shadow-lg">
+                        <i class="fas fa-file-excel"></i>
+                        <span>월간 일정표 다운로드</span>
+                    </button>
+                    <div class="flex items-center space-x-4 bg-gray-50 p-2 rounded-xl">
+                        <button id="adminPrevMonth" class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
+                            <i class="fas fa-chevron-left text-indigo-600"></i>
+                        </button>
+                        <span id="adminCurrentMonth" class="text-lg font-medium text-gray-700 min-w-[120px] text-center"></span>
+                        <button id="adminNextMonth" class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
+                            <i class="fas fa-chevron-right text-indigo-600"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center">
-                <div class="w-4 h-4 bg-red-100 rounded-full mr-2"></div>
-                <span class="text-sm text-gray-600">예약마감</span>
+            
+            <!-- 캘린더 그리드 -->
+            <div class="mb-4">
+                <div class="grid grid-cols-7 gap-4 mb-4">
+                    <div class="text-center font-semibold text-gray-600 py-2">일</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">월</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">화</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">수</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">목</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">금</div>
+                    <div class="text-center font-semibold text-gray-600 py-2">토</div>
+                </div>
+                <div id="adminCalendar" class="grid grid-cols-7 gap-4"></div>
             </div>
-            <div class="flex items-center">
-                <div class="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
-                <span class="text-sm text-gray-600">전체마감</span>
+
+            <!-- 캘린더 범례 -->
+            <div class="flex justify-end space-x-6 pt-6 border-t">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-yellow-100 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-600">예약가능</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-red-100 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-600">예약마감</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-600">전체마감</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 회원가입 승인 및 예약 승인 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- 회원가입 승인 목록 -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <i class="fas fa-user-plus text-indigo-600 mr-2"></i>
-                회원가입 승인 대기
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">담당자</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingUsersList" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
+        <!-- 회원가입 승인 및 예약 승인 섹션 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 회원가입 승인 목록 -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-user-plus text-indigo-600 mr-2"></i>
+                    회원가입 승인 대기
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">담당자</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingUsersList" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <!-- 예약 승인 목록 -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <i class="fas fa-calendar-check text-indigo-600 mr-2"></i>
-                예약 승인 대기
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장소</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingBookingsList" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
+            <!-- 예약 승인 목록 -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-calendar-check text-indigo-600 mr-2"></i>
+                    예약 승인 대기
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장소</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingBookingsList" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
 
 <!-- 날짜별 예약 내역 모달 -->
 <div id="dateBookingsModal" class="modal">
