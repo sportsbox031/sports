@@ -7,108 +7,84 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 캘린더 날짜 스타일 */
-        .calendar-day {
-            @apply transition-all duration-300 rounded-lg hover:shadow-md;
-        }
-    
         .calendar-day:hover {
-            @apply bg-blue-50 transform scale-105;
+            background-color: rgba(59, 130, 246, 0.1);
+            transition: all 0.3s;
         }
-    
         .selected {
-            @apply bg-blue-500 text-white ring-2 ring-blue-300 ring-offset-2 !important;
+            background-color: #3B82F6 !important;
+            color: white !important;
         }
-    
-        /* 모달 스타일 */
         .modal {
-            @apply fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none 
-            transition-opacity duration-300 ease-in-out;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
         }
-    
         .modal.show {
-            @apply opacity-100 pointer-events-auto flex items-center justify-center;
+            display: flex;
         }
-    
-        /* 캘린더 상태별 스타일 */
         .calendar-day.booked {
-            @apply bg-amber-50 hover:bg-amber-100 border border-amber-200 cursor-pointer;
+            background-color: #FEF3C7;
+            cursor: pointer;
         }
-    
         .calendar-day.full {
-            @apply bg-red-50 hover:bg-red-100 border border-red-200 cursor-not-allowed;
+            background-color: #FEE2E2;
+            cursor: not-allowed;
         }
-    
         .calendar-day.past {
-            @apply bg-gray-50 text-gray-400 cursor-not-allowed opacity-75;
+            background-color: #F3F4F6;
+            cursor: not-allowed;
+            color: #9CA3AF;
         }
-    
         .calendar-day.blocked {
-            @apply bg-gray-700 text-white cursor-not-allowed !important;
+            background-color: #4B5563 !important;
+            color: white !important;
+            cursor: not-allowed;
         }
-    
         .calendar-day.today {
-            @apply font-bold ring-2 ring-blue-400 ring-offset-2 !important;
+            font-weight: bold;
+            background-color: transparent !important;
         }
-    
-        /* 관리자 캘린더 특수 스타일 */
         #adminCalendar .calendar-day.blocked,
         #adminCalendar .calendar-day.partially-blocked {
-            @apply cursor-pointer hover:shadow-lg transition-all duration-300;
+            cursor: pointer;
         }
-    
         .calendar-day.blocked:hover {
-            @apply bg-gray-800 transform scale-105 !important;
+            background-color: #374151 !important;
         }
-    
         .calendar-day.partially-blocked:hover {
-            @apply bg-amber-600 transform scale-105 !important;
+            background-color: #D97706 !important;
         }
-    
-        /* 로딩 인디케이터 스타일 */
         .loading {
-            @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
-            transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none
-            flex items-center justify-center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         }
-    
         .loading.show {
-            @apply opacity-100 pointer-events-auto;
+            display: flex;
         }
-    
-        /* 모던한 스피너 */
         .spinner {
-            @apply w-12 h-12 rounded-full;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            animation: spin 1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-    
         @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    
-        /* 호버 효과가 있는 버튼 */
-        .hover-button {
-            @apply transform transition-all duration-200 hover:scale-105 
-            hover:shadow-lg active:scale-95;
-        }
-    
-        /* 입력 필드 포커스 효과 */
-        .focus-ring {
-            @apply focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 
-            focus:outline-none transition-all duration-200;
-        }
-    
-        /* 카드 호버 효과 */
-        .hover-card {
-            @apply transition-all duration-300 hover:shadow-xl 
-            hover:transform hover:scale-[1.02];
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -135,27 +111,37 @@
     </div>
 
     <!-- 로그인 화면 -->
-    <div id="loginScreen" class="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-md w-96">
-            <h1 class="text-2xl font-bold mb-6 text-center">스포츠박스 로그인</h1>
-            <form id="loginForm" class="space-y-4">
+    <div id="loginScreen" class="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <i class="fas fa-running text-4xl text-indigo-600 mb-4"></i>
+                <h1 class="text-2xl font-bold text-gray-800">스포츠박스 로그인</h1>
+                <p class="text-gray-500 mt-2">스포츠박스 예약 시스템에 오신 것을 환영합니다</p>
+            </div>
+            <form id="loginForm" class="space-y-6">
                 <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2">아이디</label>
-                    <input type="text" id="username" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">아이디</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="text" id="username" required
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2">비밀번호</label>
-                    <input type="password" id="password" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">비밀번호</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="password" id="password" required
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                    </div>
                 </div>
                 <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition duration-200 font-medium shadow-lg">
                     로그인
                 </button>
             </form>
             <button id="showSignup" 
-                class="w-full mt-4 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition duration-200">
+                class="w-full mt-4 bg-gray-50 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition duration-200 font-medium border border-gray-200">
                 회원가입
             </button>
         </div>
@@ -205,42 +191,40 @@
     <!-- 사용자 대시보드 -->
     <div id="userDashboard" class="hidden">
         <!-- 네비게이션 바 -->
-    <nav class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg backdrop-blur-lg bg-opacity-95 sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <!-- 로고 섹션 -->
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-running text-2xl transform hover:scale-110 transition-transform duration-200"></i>
-                    <span class="text-2xl font-bold tracking-tight">스포츠박스</span>
-                </div>
-                
-                <!-- 사용자 정보 및 로그아웃 섹션 -->
-                <div class="flex items-center space-x-6">
-                    <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
-                    <button id="logoutBtn" 
-                        class="flex items-center space-x-2 px-4 py-2 rounded-lg 
-                        hover:bg-white/10 transition-all duration-200 ease-in-out">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>로그아웃</span>
-                    </button>
+        <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-running text-2xl"></i>
+                        <span class="text-2xl font-bold">스포츠박스</span>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                        <button id="logoutBtn" 
+                            class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>로그아웃</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
         <main class="container mx-auto px-4 py-8">
             <div class="grid md:grid-cols-2 gap-8">
                 <!-- 캘린더 섹션 -->
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-700">예약 현황</h2>
-                        <div class="flex space-x-4">
-                            <button id="prevMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
-                                <i class="fas fa-chevron-left text-blue-600"></i>
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold text-gray-800">예약 현황</h2>
+                        <div class="flex items-center space-x-4 bg-gray-50 p-2 rounded-xl">
+                            <button id="prevMonth" 
+                                class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
+                                <i class="fas fa-chevron-left text-indigo-600"></i>
                             </button>
-                            <span id="currentMonth" class="p-2 font-medium text-gray-700"></span>
-                            <button id="nextMonth" class="p-2 hover:bg-blue-100 rounded-full transition-colors duration-200">
-                                <i class="fas fa-chevron-right text-blue-600"></i>
+                            <span id="currentMonth" class="text-lg font-medium text-gray-700 min-w-[120px] text-center"></span>
+                            <button id="nextMonth" 
+                                class="w-10 h-10 flex items-center justify-center hover:bg-white rounded-lg transition-colors duration-200">
+                                <i class="fas fa-chevron-right text-indigo-600"></i>
                             </button>
                         </div>
                     </div>
@@ -271,47 +255,50 @@
                 </div>
 
                 <!-- 예약 정보 섹션 -->
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-700">예약하기</h2>
-                        <div id="remainingBookings" class="text-sm font-medium text-green-600">
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold text-gray-800">예약하기</h2>
+                        <div id="remainingBookings" 
+                            class="px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
                             이번 달 남은 예약 가능 횟수: 4회
                         </div>
                     </div>
-                    <form id="bookingForm" class="space-y-6">
-                        <div>
+                    <form id="bookingForm" class="space-y-8">
+                        <div class="bg-gray-50 p-6 rounded-xl">
                             <label class="block text-gray-700 font-medium mb-2">선택된 날짜</label>
                             <input type="text" id="selectedDate" readonly required
-                                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
+                                class="w-full p-4 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
                                 <select id="startTime" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
+                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">종료 시간</label>
                                 <select id="endTime" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
+                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">인원</label>
                                 <input type="number" id="people" required min="1"
-                                    class="w-full p-3 border border-gray-300 rounded-lg">
-                                <p class="text-sm text-gray-500 mt-1">수업 인원을 입력하세요</p>
+                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                                <p class="text-sm text-gray-500 mt-2">수업 인원을 입력하세요</p>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">장소</label>
                                 <input type="text" id="place" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg"
+                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                                     placeholder="수업 장소를 입력하세요">
                             </div>
                         </div>
+                        
                         <button type="submit" 
-                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                            class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition duration-200 font-medium shadow-lg">
                             예약하기
                         </button>
                     </form>
@@ -355,25 +342,19 @@
 
 <!-- 관리자 대시보드 -->
 <div id="adminDashboard" class="hidden">
-    <nav class="bg-gradient-to-r from-indigo-700 to-purple-600 text-white shadow-lg backdrop-blur-lg bg-opacity-95 sticky top-0 z-50">
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <!-- 로고 섹션 -->
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-running text-2xl transform hover:scale-110 transition-transform duration-200"></i>
-                    <span class="text-2xl font-bold tracking-tight">스포츠박스 관리자</span>
-                    <span class="ml-2 px-3 py-1 bg-white/20 rounded-full text-xs font-medium">
-                        Admin
-                    </span>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-running text-2xl"></i>
+                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
                 </div>
-                
-                <!-- 로그아웃 버튼 -->
-                <button id="adminLogoutBtn" 
-                    class="flex items-center space-x-2 px-4 py-2 rounded-lg 
-                    border border-white/20 hover:bg-white/10 transition-all duration-200">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>로그아웃</span>
-                </button>
+                <div class="flex space-x-8">
+                    <button id="adminLogoutBtn" class="hover:text-blue-200 transition-colors duration-200 flex items-center space-x-1">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>로그아웃</span>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -450,32 +431,31 @@
             </div>
             
             <!-- 캘린더 그리드 -->
-            <div class="mb-4">
-                <div class="grid grid-cols-7 gap-2 mb-2">
-                    <div class="text-center font-semibold text-gray-600 py-2">일</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">월</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">화</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">수</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">목</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">금</div>
-                    <div class="text-center font-semibold text-gray-600 py-2">토</div>
-                </div>
-                <div id="adminCalendar" class="grid grid-cols-7 gap-2"></div>
+            <div class="grid grid-cols-7 gap-4 mb-4">
+                <div class="text-center font-medium text-gray-600 py-2">일</div>
+                <div class="text-center font-medium text-gray-600 py-2">월</div>
+                <div class="text-center font-medium text-gray-600 py-2">화</div>
+                <div class="text-center font-medium text-gray-600 py-2">수</div>
+                <div class="text-center font-medium text-gray-600 py-2">목</div>
+                <div class="text-center font-medium text-gray-600 py-2">금</div>
+                <div class="text-center font-medium text-gray-600 py-2">토</div>
+            </div>
+            <div id="calendar" class="grid grid-cols-7 gap-4"></div>
             </div>
 
             <!-- 캘린더 범례 -->
-            <div class="flex justify-end space-x-6 pt-4 border-t">
+            <div class="flex justify-end space-x-6 mt-6 pt-6 border-t">
                 <div class="flex items-center">
-                    <div class="w-4 h-4 bg-yellow-100 rounded mr-2"></div>
+                    <div class="w-4 h-4 bg-yellow-100 rounded-full mr-2"></div>
                     <span class="text-sm text-gray-600">예약가능</span>
                 </div>
                 <div class="flex items-center">
-                    <div class="w-4 h-4 bg-red-100 rounded mr-2"></div>
+                    <div class="w-4 h-4 bg-red-100 rounded-full mr-2"></div>
                     <span class="text-sm text-gray-600">예약마감</span>
                 </div>
                 <div class="flex items-center">
-                    <div class="w-4 h-4 bg-gray-600 rounded mr-2"></div>
-                    <span class="text-sm text-gray-600">전체마감</span>
+                    <div class="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-600">관리자마감</span>
                 </div>
             </div>
         </div>
