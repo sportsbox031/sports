@@ -45,11 +45,6 @@
             color: white !important;
             cursor: not-allowed;
         }
-        .calendar-day.partially-blocked {
-            background-color: #F59E0B !important;
-            color: white !important;
-            cursor: pointer;
-        }
         .calendar-day.today {
             font-weight: bold;
             background-color: transparent !important;
@@ -394,10 +389,6 @@
                 <div class="flex items-center">
                     <div class="w-4 h-4 bg-yellow-100 rounded mr-2"></div>
                     <span class="text-sm text-gray-600">예약가능</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-                    <span class="text-sm text-gray-600">부분마감 (1개만 가능)</span>
                 </div>
                 <div class="flex items-center">
                     <div class="w-4 h-4 bg-red-100 rounded mr-2"></div>
@@ -1222,29 +1213,35 @@ function renderCalendar(date) {
         const dateStatus = bookingStatus[dateString];
 
         if (selectedDateObj < today) {
-            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-            dayElement.title = '지난 날짜';
-        } else if (dateStatus?.isFullyBlocked) {
-            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-            dayElement.title = '전체 마감';
-        } else if (dateStatus?.isPartiallyBlocked) {
-            dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center';
-            dayElement.title = '부분 마감 (1개 예약만 가능)';
-            if (dateStatus.bookingCount < 1) {
-                addDateClickHandler(dayElement, year, month, day);
-            }
-        } else if (dateStatus?.isFull) {
-            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감';
-        } else if (dateStatus?.hasBooking) {
-            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-            addDateClickHandler(dayElement, year, month, day);
-        } else {
-            dayElement.className = 
-                'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-            addDateClickHandler(dayElement, year, month, day);
-        }
+    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+    dayElement.title = '지난 날짜';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+    dayElement.title = '전체 마감';
+} else if (dateStatus?.isPartiallyBlocked) {
+    // 부분 마감이어도 일반 예약 가능 상태처럼 보이도록 수정
+    if (dateStatus.bookingCount < 1) {
+        dayElement.className = 
+            'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+        dayElement.title = '예약 가능';
+        addDateClickHandler(dayElement, year, month, day);
+    } else {
+        dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+        dayElement.title = '예약 마감';
+    }
+} else if (dateStatus?.isFull) {
+    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+    dayElement.title = '예약 마감';
+} else if (dateStatus?.hasBooking) {
+    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+    addDateClickHandler(dayElement, year, month, day);
+} else {
+    dayElement.className = 
+        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+    dayElement.title = '예약 가능';
+    addDateClickHandler(dayElement, year, month, day);
+}
 
         dayElement.textContent = day;
 
@@ -1333,8 +1330,15 @@ function renderAdminCalendar(date) {
                 dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
                 dayElement.title = '전체 마감 (클릭하여 해제)';
             } else if (dateStatus?.isPartiallyBlocked) {
-                dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
-                dayElement.title = '부분 마감 (클릭하여 해제)';
+                // 부분 마감이어도 일반 예약 가능 상태처럼 보이도록 수정
+                if (dateStatus.bookingCount < 1) {
+                    dayElement.className = 
+                        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                    dayElement.title = '예약 가능 (부분 마감)';
+                } else {
+                    dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
+                    dayElement.title = '예약 마감';
+                }
             } else if (dateStatus?.isFull) {
                 dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
                 dayElement.title = '예약 마감';
@@ -1362,6 +1366,7 @@ function renderAdminCalendar(date) {
         adminCalendar.appendChild(dayElement);
     }
 }
+
 
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
