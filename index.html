@@ -1341,18 +1341,21 @@ function renderAdminCalendar(date) {
                 dayElement.title = '예약 없음';
             }
 
-            // 예약 수 표시 추가
+            // 예약 수 표시
             if (dateStatus?.bookingCount > 0) {
-                const bookingCount = document.createElement('div');
-                bookingCount.className = 'absolute bottom-1 right-1 text-xs font-bold';
-                bookingCount.textContent = dateStatus.bookingCount;
-                dayElement.style.position = 'relative';
-                dayElement.appendChild(bookingCount);
+                const countBadge = document.createElement('span');
+                countBadge.className = 'text-xs font-semibold';
+                countBadge.textContent = ` (${dateStatus.bookingCount})`;
+                dayElement.appendChild(countBadge);
             }
         }
 
-        dayElement.textContent = day;
+        // 날짜 텍스트 추가
+        const dateText = document.createElement('span');
+        dateText.textContent = day;
+        dayElement.insertBefore(dateText, dayElement.firstChild);
 
+        // 오늘 날짜 강조
         if (
             day === today.getDate() &&
             adminCurrentDate.getMonth() === today.getMonth() &&
@@ -1364,6 +1367,7 @@ function renderAdminCalendar(date) {
         adminCalendar.appendChild(dayElement);
     }
 }
+
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
