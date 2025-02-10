@@ -978,6 +978,10 @@ function getStatusText(status) {
                         </button>
                     `;
 
+                // 상태에 따른 추가 표시
+                const statusText = booking.status === 'cancel_pending' ? '취소 요청' : '승인 대기';
+                const statusClass = booking.status === 'cancel_pending' ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800';
+
                 return `
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
@@ -994,9 +998,8 @@ function getStatusText(status) {
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mb-2
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mb-2 ${statusClass}">
+                                ${statusText}
                             </span>
                             <div class="flex flex-col space-y-2">
                                 ${actionButtons}
