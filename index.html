@@ -346,40 +346,52 @@
     <main class="container mx-auto px-4 py-8">
         <!-- 여기에 새로운 예약 시스템 설정 섹션 추가 -->
         <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 설정</h2>
-            <form id="bookingSettingsForm" class="space-y-4">
-                <div class="flex items-center mb-4">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" id="bookingSystemActive" 
-                            class="form-checkbox h-5 w-5 text-blue-600">
-                        <span class="ml-2">예약 시스템 활성화</span>
-                    </label>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
+            <form id="bookingSettingsForm" class="space-y-6">
+                <!-- 예약 시작/중지 토글 버튼 -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold text-gray-700">예약 상태</span>
+                        <span id="bookingStatusText" class="text-sm text-gray-500">
+                            현재 예약을 받고 있지 않습니다
+                        </span>
+                    </div>
+                    <button type="button" id="toggleBookingStatus" 
+                        class="px-6 py-2 rounded-lg font-medium transition-all duration-200">
+                        예약 시작하기
+                    </button>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+        
+                <!-- 예약 기간 설정 -->
+                <div class="grid grid-cols-2 gap-6">
                     <div>
                         <label class="block text-gray-700 font-medium mb-2">예약 시작일</label>
                         <input type="date" id="bookingStartDate" 
-                            class="w-full p-2 border rounded">
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                     </div>
                     <div>
                         <label class="block text-gray-700 font-medium mb-2">예약 종료일</label>
                         <input type="date" id="bookingEndDate" 
-                            class="w-full p-2 border rounded">
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                     </div>
                 </div>
+        
+                <!-- 안내 메시지 -->
                 <div>
-                    <label class="block text-gray-700 font-medium mb-2">안내 메시지</label>
+                    <label class="block text-gray-700 font-medium mb-2">예약 중지 시 안내 메시지</label>
                     <textarea id="bookingMessage" 
-                        class="w-full p-2 border rounded" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent" 
                         rows="3"
-                        placeholder="예약 중지 시 표시될 메시지를 입력하세요"></textarea>
+                        placeholder="예약이 중지된 경우 사용자에게 표시될 메시지를 입력하세요"></textarea>
                 </div>
+        
                 <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
                     설정 저장
                 </button>
             </form>
-        </div>        
+        </div>
+
         <!-- 캘린더 섹션 -->
         <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
             <div class="flex justify-between items-center mb-8">
@@ -530,6 +542,27 @@
     </div>
 </div>
 
+ <!-- 여기에 예약 중지 알림 모달 추가 -->
+ <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <div class="mb-4">
+                <i class="fas fa-clock text-5xl text-blue-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">
+                예약이 중지되었습니다
+            </h3>
+            <p id="bookingClosedMessage" class="text-gray-600 mb-8">
+                지금은 예약 시간이 아닙니다.
+            </p>
+            <button onclick="logout()" 
+                class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+                확인
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Excel.js 라이브러리 추가 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 
@@ -581,6 +614,24 @@ function getStatusText(status) {
             return '취소대기';
         default:
             return '알 수 없음';
+    }
+}
+
+// 예약 상태 토글 버튼 관련 함수
+function updateBookingStatusUI(isActive) {
+    const toggleButton = document.getElementById('toggleBookingStatus');
+    const statusText = document.getElementById('bookingStatusText');
+    
+    if (isActive) {
+        toggleButton.textContent = '예약 중지하기';
+        toggleButton.className = 'px-6 py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-all duration-200';
+        statusText.textContent = '현재 예약을 받고 있습니다';
+        statusText.className = 'text-sm text-green-600';
+    } else {
+        toggleButton.textContent = '예약 시작하기';
+        toggleButton.className = 'px-6 py-2 rounded-lg font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-200';
+        statusText.textContent = '현재 예약을 받고 있지 않습니다';
+        statusText.className = 'text-sm text-red-600';
     }
 }
 
@@ -674,6 +725,33 @@ async function loadPendingUsers() {
                 </tr>
             `).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 회원이 없습니다.</td></tr>';
 
+// 예약 상태 토글 버튼 클릭 핸들러 함수 (새로 추가)
+async function toggleBookingStatus() {
+    const isCurrentlyActive = this.textContent.includes('중지');
+    try {
+        const response = await apiRequest('/api/admin/booking-settings', {
+            method: 'POST',
+            body: JSON.stringify({
+                is_active: !isCurrentlyActive,
+                start_date: document.getElementById('bookingStartDate').value,
+                end_date: document.getElementById('bookingEndDate').value,
+                message: document.getElementById('bookingMessage').value
+            })
+        });
+
+        if (response.success) {
+            updateBookingStatusUI(!isCurrentlyActive);
+            showAlert(
+                isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
+                'success'
+            );
+        }
+    } catch (error) {
+        console.error('Error toggling booking status:', error);
+        showAlert('설정 변경 중 오류가 발생했습니다.', 'error');
+    }
+}
+
             // 버튼 이벤트 리스너 추가
             const buttons = tbody.querySelectorAll('button[data-action]');
             buttons.forEach(button => {
@@ -695,19 +773,20 @@ async function loadPendingUsers() {
     }
 }
 
+// 예약 설정 로드
 async function loadBookingSettings() {
     try {
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
             const settings = response.data;
-            document.getElementById('bookingSystemActive').checked = settings.is_active;
             document.getElementById('bookingStartDate').value = settings.start_date || '';
             document.getElementById('bookingEndDate').value = settings.end_date || '';
             document.getElementById('bookingMessage').value = settings.message || '';
+            updateBookingStatusUI(settings.is_active);
         }
     } catch (error) {
         console.error('Error loading booking settings:', error);
-        showAlert('설정을 불러오는데 실패했습니다.', 'error');
+        updateBookingStatusUI(false);
     }
 }
 
@@ -845,6 +924,33 @@ window.rejectUser = async function(userId) {
     } catch (error) {
         console.error('User rejection error:', error);
         showAlert('사용자 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
+// 예약 상태 토글 버튼 클릭 핸들러 함수 (새로 추가)
+async function toggleBookingStatus() {
+    const isCurrentlyActive = this.textContent.includes('중지');
+    try {
+        const response = await apiRequest('/api/admin/booking-settings', {
+            method: 'POST',
+            body: JSON.stringify({
+                is_active: !isCurrentlyActive,
+                start_date: document.getElementById('bookingStartDate').value,
+                end_date: document.getElementById('bookingEndDate').value,
+                message: document.getElementById('bookingMessage').value
+            })
+        });
+
+        if (response.success) {
+            updateBookingStatusUI(!isCurrentlyActive);
+            showAlert(
+                isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
+                'success'
+            );
+        }
+    } catch (error) {
+        console.error('Error toggling booking status:', error);
+        showAlert('설정 변경 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -1024,7 +1130,7 @@ async function validateStoredToken() {
     }
 }
 
-function showDashboard(role) {
+async function showDashboard(role) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
@@ -1033,14 +1139,32 @@ function showDashboard(role) {
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
-        document.getElementById('userDashboard').style.display = 'block';
-        if (localStorage.getItem('username')) {
-            document.getElementById('userGroupName').textContent = 
-                localStorage.getItem('username');
+        // 일반 사용자인 경우 예약 상태 확인
+        try {
+            const settings = await apiRequest('/api/admin/booking-settings');
+            if (!settings.data?.is_active) {
+                // 예약이 중지된 경우 모달 표시
+                const modal = document.getElementById('bookingClosedModal');
+                const message = document.getElementById('bookingClosedMessage');
+                message.textContent = settings.data?.message || '지금은 예약 시간이 아닙니다.';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                return;
+            }
+
+            // 예약이 활성화된 경우 일반 대시보드 표시
+            document.getElementById('userDashboard').style.display = 'block';
+            if (localStorage.getItem('username')) {
+                document.getElementById('userGroupName').textContent = 
+                    localStorage.getItem('username');
+            }
+            initializeCalendar();
+            debouncedUpdateCalendarStatus();
+            loadBookings();
+        } catch (error) {
+            console.error('Error checking booking status:', error);
+            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
         }
-        initializeCalendar();
-        debouncedUpdateCalendarStatus();
-        loadBookings();
     }
 }
 
@@ -1527,8 +1651,15 @@ function initializeAdminDashboard() {
     // 예약 설정 폼 이벤트 리스너 추가
     const bookingSettingsForm = document.getElementById('bookingSettingsForm');
     if (bookingSettingsForm) {
-        bookingSettingsForm.removeEventListener('submit', saveBookingSettings); // 기존 리스너 제거
+        bookingSettingsForm.removeEventListener('submit', saveBookingSettings);
         bookingSettingsForm.addEventListener('submit', saveBookingSettings);
+    }
+
+    // 예약 상태 토글 버튼 이벤트 리스너 추가
+    const toggleButton = document.getElementById('toggleBookingStatus');
+    if (toggleButton) {
+        toggleButton.removeEventListener('click', toggleBookingStatus);
+        toggleButton.addEventListener('click', toggleBookingStatus);
     }
 }
 
