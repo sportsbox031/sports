@@ -185,6 +185,7 @@
 
     <!-- 사용자 대시보드 -->
     <div id="userDashboard" class="hidden">
+        <!-- 네비게이션 바 -->
         <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between">
@@ -511,6 +512,7 @@
 
 <!-- 메인 JavaScript 코드 -->
 <script>
+// 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
 
@@ -570,60 +572,6 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
-}
-
-// 남은 예약 횟수 표시 업데이트 함수
-function updateRemainingBookingsDisplay(remainingBookings) {
-    const bookingCountElement = document.getElementById('remainingBookings');
-    if (bookingCountElement) {
-        bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
-        bookingCountElement.className = remainingBookings > 0 ? 
-            'text-sm font-medium text-green-600' : 'text-sm font-medium text-red-600';
-    }
-}
-
-// 캘린더 상태 업데이트 함수
-const debouncedUpdateCalendarStatus = debounce(async () => {
-    try {
-        const data = await apiRequest('/api/bookings/status');
-        bookingStatus = data.data;
-        
-        // 현재 월의 예약 횟수 계산
-        const monthlyCount = Object.values(bookingStatus)
-            .filter(status => 
-                status.isCurrentMonth && 
-                status.isMyBooking && 
-                !status.isFullyBlocked && 
-                (!status.isPartiallyBlocked || status.bookingCount < 1)
-            ).length;
-
-        const remainingBookings = 4 - monthlyCount;
-        updateRemainingBookingsDisplay(remainingBookings);
-        
-        const role = localStorage.getItem('role');
-        if (role === 'admin') {
-            renderAdminCalendar(adminCurrentDate);
-        } else {
-            renderCalendar(currentDate);
-        }
-    } catch (error) {
-        console.error('Calendar status update error:', error);
-    }
-}, 500);
-
-// 토큰 검증 함수
-async function validateStoredToken() {
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-
-    try {
-        const response = await apiRequest('/api/validate-token');
-        return response.success;
-    } catch (error) {
-        console.error('Token validation error:', error);
-        logout();
-        return false;
-    }
 }
 
 // 로딩 인디케이터 제어
@@ -701,6 +649,7 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
+// 인증 관련 함수들
 async function login(username, password) {
     try {
         const response = await apiRequest('/api/login', {
@@ -732,6 +681,20 @@ function logout() {
     document.getElementById('loginScreen').style.display = 'flex';
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
+}
+
+async function validateStoredToken() {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+        const response = await apiRequest('/api/validate-token');
+        return response.success;
+    } catch (error) {
+        console.error('Token validation error:', error);
+        logout();
+        return false;
+    }
 }
 
 function showDashboard(role) {
@@ -775,7 +738,36 @@ async function signup(formData) {
     }
 }
 
-// 예약 관련 함수들
+// 캘린더 상태 업데이트 함수
+const debouncedUpdateCalendarStatus = debounce(async () => {
+    try {
+        const data = await apiRequest('/api/bookings/status');
+        bookingStatus = data.data;
+        
+        // 현재 월의 예약 횟수 계산
+        const monthlyCount = Object.values(bookingStatus)
+            .filter(status => 
+                status.isCurrentMonth && 
+                status.isMyBooking && 
+                !status.isFullyBlocked && 
+                (!status.isPartiallyBlocked || status.bookingCount < 1)
+            ).length;
+
+        const remainingBookings = 4 - monthlyCount;
+        updateRemainingBookingsDisplay(remainingBookings);
+        
+        const role = localStorage.getItem('role');
+        if (role === 'admin') {
+            renderAdminCalendar(adminCurrentDate);
+        } else {
+            renderCalendar(currentDate);
+        }
+    } catch (error) {
+        console.error('Calendar status update error:', error);
+    }
+}, 500);
+
+// 예약 생성 함수
 async function createBooking(bookingData) {
     try {
         // 날짜 상태 확인
@@ -806,6 +798,7 @@ async function createBooking(bookingData) {
     }
 }
 
+// 예약 목록 로드 함수
 async function loadBookings() {
     try {
         const data = await apiRequest('/api/bookings');
@@ -850,6 +843,28 @@ async function loadBookings() {
     } catch (error) {
         console.error('Error loading bookings:', error);
         showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+// 예약 취소 함수
+async function cancelBooking(bookingId) {
+    try {
+        if (!confirm('예약을 취소하시겠습니까?')) {
+            return;
+        }
+
+        const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
+            method: 'PUT'
+        });
+        
+        if (response.success) {
+            showAlert('예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
+            await loadBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking cancellation error:', error);
+        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error', 3000);
     }
 }
 
@@ -926,6 +941,18 @@ function initializeAdminCalendar() {
     });
 
     renderAdminCalendar(adminCurrentDate);
+}
+
+// 날짜 선택 핸들러 추가
+function addDateClickHandler(element, year, month, day) {
+    element.addEventListener('click', function() {
+        const selected = document.querySelector('.selected');
+        if (selected) {
+            selected.classList.remove('selected');
+        }
+        element.classList.add('selected');
+        document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+    });
 }
 
 function renderCalendar(date) {
@@ -1146,28 +1173,6 @@ async function loadDateBookings(dateString) {
     } catch (error) {
         console.error('Error loading date bookings:', error);
         showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
-    }
-}
-
-// 예약 취소 함수
-async function cancelBooking(bookingId) {
-    try {
-        if (!confirm('예약을 취소하시겠습니까?')) {
-            return;
-        }
-
-        const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
-            method: 'PUT'
-        });
-        
-        if (response.success) {
-            showAlert('예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
-            await loadBookings();
-            debouncedUpdateCalendarStatus();
-        }
-    } catch (error) {
-        console.error('Booking cancellation error:', error);
-        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error', 3000);
     }
 }
 
