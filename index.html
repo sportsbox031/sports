@@ -755,7 +755,7 @@ async function loadPendingBookings() {
 }
 
 // 관리자: 회원가입 승인/거부 함수
-async function approveUser(userId) {
+window.approveUser = async function(userId) {
     try {
         const response = await apiRequest(`/api/admin/users/${userId}/approve`, {
             method: 'PUT'
@@ -770,7 +770,7 @@ async function approveUser(userId) {
     }
 }
 
-async function rejectUser(userId) {
+window.rejectUser = async function(userId) {
     try {
         const response = await apiRequest(`/api/admin/users/${userId}/reject`, {
             method: 'PUT'
