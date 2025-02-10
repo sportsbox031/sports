@@ -344,6 +344,42 @@
     </nav>
 
     <main class="container mx-auto px-4 py-8">
+        <!-- 여기에 새로운 예약 시스템 설정 섹션 추가 -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 설정</h2>
+            <form id="bookingSettingsForm" class="space-y-4">
+                <div class="flex items-center mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="bookingSystemActive" 
+                            class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2">예약 시스템 활성화</span>
+                    </label>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">예약 시작일</label>
+                        <input type="date" id="bookingStartDate" 
+                            class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">예약 종료일</label>
+                        <input type="date" id="bookingEndDate" 
+                            class="w-full p-2 border rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">안내 메시지</label>
+                    <textarea id="bookingMessage" 
+                        class="w-full p-2 border rounded" 
+                        rows="3"
+                        placeholder="예약 중지 시 표시될 메시지를 입력하세요"></textarea>
+                </div>
+                <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                    설정 저장
+                </button>
+            </form>
+        </div>        
         <!-- 캘린더 섹션 -->
         <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
             <div class="flex justify-between items-center mb-8">
@@ -659,6 +695,46 @@ async function loadPendingUsers() {
     }
 }
 
+async function loadBookingSettings() {
+    try {
+        const response = await apiRequest('/api/admin/booking-settings');
+        if (response.success) {
+            const settings = response.data;
+            document.getElementById('bookingSystemActive').checked = settings.is_active;
+            document.getElementById('bookingStartDate').value = settings.start_date || '';
+            document.getElementById('bookingEndDate').value = settings.end_date || '';
+            document.getElementById('bookingMessage').value = settings.message || '';
+        }
+    } catch (error) {
+        console.error('Error loading booking settings:', error);
+        showAlert('설정을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
+async function saveBookingSettings(e) {
+    e.preventDefault();
+    try {
+        const settings = {
+            is_active: document.getElementById('bookingSystemActive').checked,
+            start_date: document.getElementById('bookingStartDate').value,
+            end_date: document.getElementById('bookingEndDate').value,
+            message: document.getElementById('bookingMessage').value
+        };
+
+        const response = await apiRequest('/api/admin/booking-settings', {
+            method: 'POST',
+            body: JSON.stringify(settings)
+        });
+
+        if (response.success) {
+            showAlert('예약 설정이 저장되었습니다.', 'success');
+        }
+    } catch (error) {
+        console.error('Error saving booking settings:', error);
+        showAlert('설정 저장에 실패했습니다.', 'error');
+    }
+}
+
 // 관리자: 대기 중인 예약 목록 로드
 async function loadPendingBookings() {
     try {
@@ -955,10 +1031,7 @@ function showDashboard(role) {
 
     if (role === 'admin') {
         document.getElementById('adminDashboard').style.display = 'block';
-        initializeAdminCalendar();
-        debouncedUpdateCalendarStatus();
-        loadPendingUsers();
-        loadPendingBookings();
+        initializeAdminDashboard();
     } else {
         document.getElementById('userDashboard').style.display = 'block';
         if (localStorage.getItem('username')) {
@@ -1441,6 +1514,22 @@ function initializeTimeSelects() {
         endTimeSelect.innerHTML = '<option value="">선택해주세요</option>' + 
             timeOptions.slice(selectedIndex + 1).map(time => `<option value="${time}">${time}</option>`).join('');
     });
+}
+
+// 관리자 대시보드 초기화 함수
+function initializeAdminDashboard() {
+    loadBookingSettings();  // 예약 설정 로드
+    initializeAdminCalendar();
+    debouncedUpdateCalendarStatus();
+    loadPendingUsers();
+    loadPendingBookings();
+    
+    // 예약 설정 폼 이벤트 리스너 추가
+    const bookingSettingsForm = document.getElementById('bookingSettingsForm');
+    if (bookingSettingsForm) {
+        bookingSettingsForm.removeEventListener('submit', saveBookingSettings); // 기존 리스너 제거
+        bookingSettingsForm.addEventListener('submit', saveBookingSettings);
+    }
 }
 
 // 날짜 포맷 함수
