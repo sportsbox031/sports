@@ -503,6 +503,57 @@
         let bookingStatus = {};
         let isLoading = false;
 
+        function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // 캘린더 상태 업데이트 함수 수정 (여기에 추가)
+    const debouncedUpdateCalendarStatus = debounce(async () => {
+        try {
+            const data = await apiRequest('/api/bookings/status');
+            bookingStatus = data.data;
+            
+            const monthlyCount = Object.values(bookingStatus)
+                .filter(status => status.isCurrentMonth && status.isMyBooking)
+                .length;
+
+            const remainingBookings = 4 - monthlyCount;
+            updateRemainingBookingsDisplay(remainingBookings);
+            
+            const role = localStorage.getItem('role');
+            if (role === 'admin') {
+                renderAdminCalendar(adminCurrentDate);
+            } else {
+                renderCalendar(currentDate);
+            }
+        } catch (error) {
+            console.error('Calendar status update error:', error);
+        }
+    }, 500);
+
+// 저장된 토큰 검증 함수 추가
+async function validateStoredToken() {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+        const response = await apiRequest('/api/validate-token');
+        return response.success;
+    } catch (error) {
+        console.error('Token validation error:', error);
+        logout();
+        return false;
+    }
+}
+
         // 로딩 인디케이터 제어
         function showLoading() {
             if (!isLoading) {
@@ -516,28 +567,44 @@
             document.getElementById('loading').classList.remove('show');
         }
 
-        // 알림 메시지 표시
-        function showAlert(message, type = 'info') {
-            const alert = document.getElementById('alert');
-            const alertMessage = document.getElementById('alertMessage');
-            const alertIcon = document.getElementById('alertIcon').firstElementChild;
+        async function validateStoredToken() {
+        const token = localStorage.getItem('token');
+        if (!token) return false;
 
-            alertMessage.textContent = message;
-            alert.classList.remove('hidden');
-
-            switch(type) {
-                case 'success':
-                    alertIcon.className = 'fas fa-check-circle text-green-500';
-                    break;
-                case 'error':
-                    alertIcon.className = 'fas fa-exclamation-circle text-red-500';
-                    break;
-                default:
-                    alertIcon.className = 'fas fa-info-circle text-blue-500';
-            }
-
-            setTimeout(hideAlert, 3000);
+        try {
+            const response = await apiRequest('/api/validate-token');
+            return response.success;
+        } catch (error) {
+            console.error('Token validation error:', error);
+            logout();
+            return false;
         }
+    }
+
+        // 알림 메시지 표시
+        function showAlert(message, type = 'info', duration = 3000) {
+    const alert = document.getElementById('alert');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertIcon = document.getElementById('alertIcon').firstElementChild;
+
+    alertMessage.textContent = message;
+    alert.classList.remove('hidden');
+
+    switch(type) {
+        case 'success':
+            alertIcon.className = 'fas fa-check-circle text-green-500';
+            break;
+        case 'error':
+            alertIcon.className = 'fas fa-exclamation-circle text-red-500';
+            break;
+        default:
+            alertIcon.className = 'fas fa-info-circle text-blue-500';
+    }
+
+    if (duration > 0) {
+        setTimeout(hideAlert, duration);
+    }
+}
 
         function hideAlert() {
             document.getElementById('alert').classList.add('hidden');
@@ -561,12 +628,12 @@
             }
         });
 
-        const data = await response.json();
-        
         if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
+        const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
@@ -1433,15 +1500,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 회원가입 폼 제출
     document.getElementById('signupForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = {
-            groupName: document.getElementById('groupName').value,
-            password: document.getElementById('signupPassword').value,
-            manager: document.getElementById('manager').value,
-            contact: document.getElementById('contact').value
-        };
-        signup(formData);
-    });
+    e.preventDefault();
+    const password = document.getElementById('signupPassword').value;
+    
+    // 비밀번호 정책 검증
+    if (password.length < 6) {
+        showAlert('비밀번호는 6자 이상이어야 합니다.', 'error');
+        return;
+    }
+
+    const formData = {
+        groupName: document.getElementById('groupName').value,
+        password: password,
+        manager: document.getElementById('manager').value,
+        contact: document.getElementById('contact').value
+    };
+    signup(formData);
+});
 
     // 예약 폼 제출
     document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
@@ -1509,7 +1584,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     if (token && role) {
-        showDashboard(role);
+        const isValid = await validateStoredToken();
+        if (isValid) {
+            showDashboard(role);
+        } else {
+            logout();
+            showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info');
+        }
     }
 });
 
