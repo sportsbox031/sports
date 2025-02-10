@@ -701,6 +701,80 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
+async function login(username, password) {
+    try {
+        const response = await apiRequest('/api/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        });
+
+        if (response.success) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('role', response.role);
+            localStorage.setItem('username', response.username);
+            
+            showDashboard(response.role);
+            showAlert('로그인되었습니다.', 'success', 3000);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showAlert(error.message || '로그인에 실패했습니다.', 'error', 3000);
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('username');
+    
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    
+    showAlert('로그아웃되었습니다.', 'info', 3000);
+}
+
+function showDashboard(role) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
+
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminCalendar();
+        debouncedUpdateCalendarStatus();
+        loadPendingUsers();
+        loadPendingBookings();
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
+        }
+        initializeCalendar();
+        debouncedUpdateCalendarStatus();
+        loadBookings();
+    }
+}
+
+async function signup(formData) {
+    try {
+        const response = await apiRequest('/api/signup', {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        });
+
+        if (response.success) {
+            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
+            document.getElementById('signupModal').classList.remove('show');
+            document.getElementById('signupForm').reset();
+        }
+    } catch (error) {
+        console.error('Signup error:', error);
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
+    }
+}
+
 // 예약 관련 함수들
 async function createBooking(bookingData) {
     try {
