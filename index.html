@@ -1369,6 +1369,46 @@ async function rejectBookingCancel(bookingId) {
             return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
         }
 
+// 엑셀 데이터 생성 함수
+async function generateExcelData(year, month) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`);
+        if (!response.success) {
+            throw new Error('데이터 조회 실패');
+        }
+
+        const bookings = response.data;
+        const ws = XLSX.utils.aoa_to_sheet([
+            ['날짜', '단체명', '시간', '장소'] // 헤더 행
+        ]);
+
+        const data = Object.entries(bookings).flatMap(([date, dayBookings]) =>
+            dayBookings.map(booking => [
+                formatDate(date),
+                booking.group_name,
+                `${booking.start_time} - ${booking.end_time}`,
+                booking.place
+            ])
+        );
+
+        XLSX.utils.sheet_add_aoa(ws, data, { origin: -1 });
+        
+        // 열 너비 자동 조정
+        const wscols = [
+            { wch: 15 }, // 날짜
+            { wch: 20 }, // 단체명
+            { wch: 15 }, // 시간
+            { wch: 20 }  // 장소
+        ];
+        ws['!cols'] = wscols;
+
+        return ws;
+    } catch (error) {
+        console.error('Excel data generation error:', error);
+        throw error;
+    }
+}
+
         // 이벤트 리스너 설정
         document.addEventListener('DOMContentLoaded', async function() {
             // 로그인 폼 제출
