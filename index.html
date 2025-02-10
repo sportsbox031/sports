@@ -550,12 +550,12 @@
                 <i class="fas fa-clock text-5xl text-blue-600"></i>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-4">
-                예약이 중지되었습니다
+                지금은 예약 기간이 아닙니다.
             </h3>
             <p id="bookingClosedMessage" class="text-gray-600 mb-8">
-                지금은 예약 시간이 아닙니다.
+                20일에 예약이 시작됩니다.
             </p>
-            <button onclick="logout()" 
+            <button id="closeBookingModal" 
                 class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
                 확인
             </button>
@@ -1104,6 +1104,54 @@ async function login(username, password) {
     }
 }
 
+// 모달 닫기 함수 추가
+function closeBookingModal() {
+    const modal = document.getElementById('bookingClosedModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    logout();  // 로그아웃 처리
+}
+
+// 대시보드 표시 함수
+async function showDashboard(role) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
+
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminDashboard();
+    } else {
+        // 예약이 중지된 경우 모달 표시
+        const modal = document.getElementById('bookingClosedModal');
+        const message = document.getElementById('bookingClosedMessage');
+        const closeButton = document.getElementById('closeBookingModal');
+        
+        message.textContent = '지금은 예약 기간이 아닙니다.';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // 모달 닫기 버튼에 이벤트 리스너 추가
+        closeButton.onclick = closeBookingModal;
+        
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBookingModal();
+            }
+        });
+
+        // 모달 외부 클릭 시 닫기
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                closeBookingModal();
+            }
+        };
+
+        return;
+    }
+}
+
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -1127,35 +1175,6 @@ async function validateStoredToken() {
         console.error('Token validation error:', error);
         logout();
         return false;
-    }
-}
-
-async function showDashboard(role) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('userDashboard').style.display = 'none';
-
-    if (role === 'admin') {
-        document.getElementById('adminDashboard').style.display = 'block';
-        initializeAdminDashboard();
-    } else {
-        // 예약이 중지된 경우 모달 표시
-        const modal = document.getElementById('bookingClosedModal');
-        const message = document.getElementById('bookingClosedMessage');
-        message.textContent = '지금은 예약 시간이 아닙니다.';
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        return;
-
-        // 아래 코드는 예약이 활성화될 때만 실행되도록 백엔드에서 처리
-        document.getElementById('userDashboard').style.display = 'block';
-        if (localStorage.getItem('username')) {
-            document.getElementById('userGroupName').textContent = 
-                localStorage.getItem('username');
-        }
-        initializeCalendar();
-        debouncedUpdateCalendarStatus();
-        loadBookings();
     }
 }
 
