@@ -339,16 +339,7 @@
     </nav>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- 탭 버튼 -->
-        <div class="flex space-x-4 mb-8">
-            <button id="showMembersTab" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                회원 관리
-            </button>
-            <button id="showBookingsTab" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                예약 관리
-            </button>
-        </div>
-
+        
         <!-- 회원 관리 탭 -->
         <div id="membersTab" class="bg-white rounded-lg shadow-lg p-8 mb-8">
             <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
@@ -1536,34 +1527,6 @@ async function generateExcelData(year, month) {
             document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
                 document.getElementById('dateBookingsModal').classList.remove('show');
             });
-
-// 탭 전환 기능
-const membersTab = document.getElementById('membersTab');
-const bookingsTab = document.getElementById('bookingsTab');
-const showMembersTabBtn = document.getElementById('showMembersTab');
-const showBookingsTabBtn = document.getElementById('showBookingsTab');
-
-showMembersTabBtn?.addEventListener('click', function() {
-    membersTab.classList.remove('hidden');
-    bookingsTab.classList.add('hidden');
-    showMembersTabBtn.classList.add('bg-blue-700');
-    showBookingsTabBtn.classList.remove('bg-blue-700');
-});
-
-showBookingsTabBtn?.addEventListener('click', function() {
-    bookingsTab.classList.remove('hidden');
-    membersTab.classList.add('hidden');
-    showBookingsTabBtn.classList.add('bg-blue-700');
-    showMembersTabBtn.classList.remove('bg-blue-700');
-});
-
-// 초기 상태 설정 (회원 관리 탭을 기본으로 표시)
-if (membersTab && bookingsTab) {
-    membersTab.classList.remove('hidden');
-    bookingsTab.classList.add('hidden');
-    showMembersTabBtn.classList.add('bg-blue-700');
-}
-
 
             // 엑셀 다운로드 버튼
             document.getElementById('downloadExcel')?.addEventListener('click', async function() {
