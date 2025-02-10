@@ -844,27 +844,27 @@ async function validateStoredToken() {
         }
 
         function showDashboard(role) {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminDashboard').style.display = 'none';
-            document.getElementById('userDashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
 
-            if (role === 'admin') {
-                document.getElementById('adminDashboard').style.display = 'block';
-                initializeAdminCalendar();
-                updateCalendarStatus();
-                loadPendingUsers();
-                loadPendingBookings();
-            } else {
-                document.getElementById('userDashboard').style.display = 'block';
-                if (localStorage.getItem('username')) {
-                    document.getElementById('userGroupName').textContent = 
-                        localStorage.getItem('username');
-                }
-                initializeCalendar();
-                updateCalendarStatus();
-                loadBookings();
-            }
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminCalendar();
+        debouncedUpdateCalendarStatus(); // 수정
+        loadPendingUsers();
+        loadPendingBookings();
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
         }
+        initializeCalendar();
+        debouncedUpdateCalendarStatus(); // 수정
+        loadBookings();
+    }
+}
 
         // 회원가입 관련 함수
         async function signup(formData) {
@@ -887,36 +887,36 @@ async function validateStoredToken() {
 
         // 날짜 마감/해제 함수
         async function blockDate(date) {
-            try {
-                const response = await apiRequest('/api/admin/dates/block', {
-                    method: 'POST',
-                    body: JSON.stringify({ date })
-                });
-                if (response.success) {
-                    showAlert('날짜가 마감 처리되었습니다.', 'success');
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Date blocking error:', error);
-                showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error');
-            }
+    try {
+        const response = await apiRequest('/api/admin/dates/block', {
+            method: 'POST',
+            body: JSON.stringify({ date })
+        });
+        if (response.success) {
+            showAlert('날짜가 마감 처리되었습니다.', 'success');
+            debouncedUpdateCalendarStatus(); // 수정
         }
+    } catch (error) {
+        console.error('Date blocking error:', error);
+        showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error');
+    }
+}
 
-        async function unblockDate(date) {
-            try {
-                const response = await apiRequest('/api/admin/dates/unblock', {
-                    method: 'POST',
-                    body: JSON.stringify({ date })
-                });
-                if (response.success) {
-                    showAlert('날짜 마감이 해제되었습니다.', 'success');
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Date unblocking error:', error);
-                showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error');
-            }
+async function unblockDate(date) {
+    try {
+        const response = await apiRequest('/api/admin/dates/unblock', {
+            method: 'POST',
+            body: JSON.stringify({ date })
+        });
+        if (response.success) {
+            showAlert('날짜 마감이 해제되었습니다.', 'success');
+            debouncedUpdateCalendarStatus(); // 수정
         }
+    } catch (error) {
+        console.error('Date unblocking error:', error);
+        showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+    }
+}
 
         // 예약 관련 함수들
         async function loadBookings() {
@@ -967,24 +967,24 @@ async function validateStoredToken() {
 }
 
 // 예약 생성
-        async function createBooking(bookingData) {
-            try {
-                const response = await apiRequest('/api/bookings', {
-                    method: 'POST',
-                    body: JSON.stringify(bookingData)
-                });
+async function createBooking(bookingData) {
+    try {
+        const response = await apiRequest('/api/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+        });
 
-                if (response.success) {
-                    showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                    document.getElementById('bookingForm').reset();
-                    await loadBookings();
-                    await updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Booking creation error:', error);
-                showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
-            }
+        if (response.success) {
+            showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('bookingForm').reset();
+            await loadBookings();
+            debouncedUpdateCalendarStatus(); // 수정
         }
+    } catch (error) {
+        console.error('Booking creation error:', error);
+        showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+    }
+}
 
 // 예약 취소 함수 추가
 async function cancelBooking(bookingId) {
@@ -995,7 +995,7 @@ async function cancelBooking(bookingId) {
         if (response.success) {
             showAlert('예약이 취소되었습니다.', 'success');
             await loadBookings();
-            await updateCalendarStatus();
+            debouncedUpdateCalendarStatus(); // 수정
         }
     } catch (error) {
         console.error('Booking cancellation error:', error);
@@ -1183,36 +1183,36 @@ async function cancelBooking(bookingId) {
 
         // 관리자: 예약 승인/거부
         async function approveBooking(bookingId) {
-            try {
-                const response = await apiRequest(`/api/admin/bookings/${bookingId}/approve`, {
-                    method: 'PUT'
-                });
-                if (response.success) {
-                    showAlert('예약이 승인되었습니다.', 'success');
-                    loadPendingBookings();
-                    updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Booking approval error:', error);
-                showAlert('예약 승인 처리 중 오류가 발생했습니다.', 'error');
-            }
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/approve`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약이 승인되었습니다.', 'success');
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus(); // 수정
         }
+    } catch (error) {
+        console.error('Booking approval error:', error);
+        showAlert('예약 승인 처리 중 오류가 발생했습니다.', 'error');
+    }
+}
 
-        async function rejectBooking(bookingId) {
-            try {
-                const response = await apiRequest(`/api/admin/bookings/${bookingId}/reject`, {
-                    method: 'PUT'
-                });
-                if (response.success) {
-                    showAlert('예약이 거부되었습니다.', 'success');
-                    loadPendingBookings();
-                    updateCalendarStatus();
-                }
-            } catch (error) {
-                console.error('Booking rejection error:', error);
-                showAlert('예약 거부 처리 중 오류가 발생했습니다.', 'error');
-            }
+async function rejectBooking(bookingId) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/reject`, {
+            method: 'PUT'
+        });
+        if (response.success) {
+            showAlert('예약이 거부되었습니다.', 'success');
+            loadPendingBookings();
+            debouncedUpdateCalendarStatus(); // 수정
         }
+    } catch (error) {
+        console.error('Booking rejection error:', error);
+        showAlert('예약 거부 처리 중 오류가 발생했습니다.', 'error');
+    }
+}
 
         // 예약 상태 조회 함수
         async function updateCalendarStatus() {
@@ -1401,29 +1401,29 @@ async function cancelBooking(bookingId) {
 
                 // 관리자용 날짜 클릭 이벤트 (미래 날짜만)
                 if (selectedDateObj >= today) {
-                    dayElement.addEventListener('click', async function() {
-                        const modal = document.getElementById('dateBookingsModal');
-                        await loadDateBookings(dateString);
-                        modal.classList.add('show');
+    dayElement.addEventListener('click', async function() {
+        const modal = document.getElementById('dateBookingsModal');
+        await loadDateBookings(dateString);
+        modal.classList.add('show');
 
-                        // 마감 처리 버튼 이벤트
-                        document.getElementById('blockDateBtn').onclick = async () => {
-                            if (confirm('이 날짜를 마감 처리하시겠습니까?')) {
-                                await blockDate(dateString);
-                                await loadDateBookings(dateString);
-                                await updateCalendarStatus();
-                            }
-                        };
+        // 마감 처리 버튼 이벤트
+        document.getElementById('blockDateBtn').onclick = async () => {
+            if (confirm('이 날짜를 마감 처리하시겠습니까?')) {
+                await blockDate(dateString);
+                await loadDateBookings(dateString);
+                debouncedUpdateCalendarStatus(); // 수정
+            }
+        };
 
-                        document.getElementById('unblockDateBtn').onclick = async () => {
-                            if (confirm('마감을 해제하시겠습니까?')) {
-                                await unblockDate(dateString);
-                                await loadDateBookings(dateString);
-                                await updateCalendarStatus();
-                            }
-                        };
-                    });
-                }
+        document.getElementById('unblockDateBtn').onclick = async () => {
+            if (confirm('마감을 해제하시겠습니까?')) {
+                await unblockDate(dateString);
+                await loadDateBookings(dateString);
+                debouncedUpdateCalendarStatus(); // 수정
+            }
+        };
+    });
+}
 
                 dayElement.textContent = day;
 
