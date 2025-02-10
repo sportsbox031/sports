@@ -1122,43 +1122,52 @@ async function showDashboard(role) {
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
-        // 예약이 중지된 경우 모달 표시
-        const modal = document.getElementById('bookingClosedModal');
-        const message = document.getElementById('bookingClosedMessage');
-        const closeButton = document.getElementById('closeBookingModal');
-        
-        message.textContent = '지금은 예약 기간이 아닙니다.';
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
-        // 모달 닫기 버튼에 이벤트 리스너 추가
-        closeButton.onclick = closeBookingModal;
-        
-        // ESC 키로 모달 닫기
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeBookingModal();
+        try {
+            // 예약 상태 확인
+            const settings = await apiRequest('/api/admin/booking-settings');
+            
+            if (!settings.data?.is_active) {
+                // 예약이 중지된 경우 모달 표시
+                const modal = document.getElementById('bookingClosedModal');
+                const message = document.getElementById('bookingClosedMessage');
+                const closeButton = document.getElementById('closeBookingModal');
+                
+                message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // 모달 닫기 버튼에 이벤트 리스너 추가
+                closeButton.onclick = closeBookingModal;
+                
+                // ESC 키로 모달 닫기
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeBookingModal();
+                    }
+                });
+
+                // 모달 외부 클릭 시 닫기
+                modal.onclick = function(e) {
+                    if (e.target === modal) {
+                        closeBookingModal();
+                    }
+                };
+            } else {
+                // 예약이 활성화된 경우 대시보드 표시
+                document.getElementById('userDashboard').style.display = 'block';
+                if (localStorage.getItem('username')) {
+                    document.getElementById('userGroupName').textContent = 
+                        localStorage.getItem('username');
+                }
+                initializeCalendar();
+                debouncedUpdateCalendarStatus();
+                loadBookings();
             }
-        });
-
-        // 모달 외부 클릭 시 닫기
-        modal.onclick = function(e) {
-            if (e.target === modal) {
-                closeBookingModal();
-            }
-        };
-
-        return; // 여기서 함수 종료
-
-        // 아래 코드는 실행되지 않음 (예약이 활성화될 때까지)
-        document.getElementById('userDashboard').style.display = 'block';
-        if (localStorage.getItem('username')) {
-            document.getElementById('userGroupName').textContent = 
-                localStorage.getItem('username');
+        } catch (error) {
+            console.error('Error checking booking status:', error);
+            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+            logout();
         }
-        initializeCalendar();
-        debouncedUpdateCalendarStatus();
-        loadBookings();
     }
 }
 
