@@ -1139,32 +1139,23 @@ async function showDashboard(role) {
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
-        // 일반 사용자인 경우 예약 상태 확인
-        try {
-            const settings = await apiRequest('/api/admin/booking-settings');
-            if (!settings.data?.is_active) {
-                // 예약이 중지된 경우 모달 표시
-                const modal = document.getElementById('bookingClosedModal');
-                const message = document.getElementById('bookingClosedMessage');
-                message.textContent = settings.data?.message || '지금은 예약 시간이 아닙니다.';
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                return;
-            }
+        // 예약이 중지된 경우 모달 표시
+        const modal = document.getElementById('bookingClosedModal');
+        const message = document.getElementById('bookingClosedMessage');
+        message.textContent = '지금은 예약 시간이 아닙니다.';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        return;
 
-            // 예약이 활성화된 경우 일반 대시보드 표시
-            document.getElementById('userDashboard').style.display = 'block';
-            if (localStorage.getItem('username')) {
-                document.getElementById('userGroupName').textContent = 
-                    localStorage.getItem('username');
-            }
-            initializeCalendar();
-            debouncedUpdateCalendarStatus();
-            loadBookings();
-        } catch (error) {
-            console.error('Error checking booking status:', error);
-            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+        // 아래 코드는 예약이 활성화될 때만 실행되도록 백엔드에서 처리
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
         }
+        initializeCalendar();
+        debouncedUpdateCalendarStatus();
+        loadBookings();
     }
 }
 
