@@ -1151,13 +1151,23 @@ function closeBookingModal() {
 // 대시보드 표시 함수
 async function showDashboard(role) {
     try {
-        // 모든 화면 숨기기
+        console.log('Showing dashboard for role:', role); // 디버깅 로그 추가
+
+        // 먼저 모든 화면을 숨김
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminDashboard').style.display = 'none';
         document.getElementById('userDashboard').style.display = 'none';
         document.getElementById('bookingClosedPage').style.display = 'none';
 
+        // 토큰이 없거나 role이 없는 경우 로그인 화면 표시
+        if (!localStorage.getItem('token') || !role) {
+            console.log('No token or role, showing login screen'); // 디버깅 로그 추가
+            document.getElementById('loginScreen').style.display = 'flex';
+            return;
+        }
+
         if (role === 'admin') {
+            console.log('Showing admin dashboard'); // 디버깅 로그 추가
             document.getElementById('adminDashboard').style.display = 'block';
             await initializeAdminDashboard();
             return;
@@ -1165,15 +1175,22 @@ async function showDashboard(role) {
 
         // 일반 사용자는 예약 상태 확인
         const settings = await apiRequest('/api/admin/booking-settings');
-        
+        console.log('Booking settings:', settings); // 디버깅 로그 추가
+
         if (!settings.data?.is_active) {
+            console.log('Booking is closed, showing closed page'); // 디버깅 로그 추가
             document.getElementById('bookingClosedPage').style.display = 'block';
-            document.getElementById('userGroupNameClosed').textContent = 
-                localStorage.getItem('username');
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('userGroupNameClosed').textContent = username;
+            }
         } else {
+            console.log('Booking is active, showing user dashboard'); // 디버깅 로그 추가
             document.getElementById('userDashboard').style.display = 'block';
-            document.getElementById('userGroupName').textContent = 
-                localStorage.getItem('username');
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('userGroupName').textContent = username;
+            }
             await initializeCalendar();
             await debouncedUpdateCalendarStatus();
             await loadBookings();
@@ -1768,26 +1785,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 초기 화면 설정
     async function initializeApp() {
-        const storedToken = localStorage.getItem('token');
-        const storedRole = localStorage.getItem('role');
-        
-        if (storedToken && storedRole) {
-            try {
-                const isValid = await validateStoredToken();
-                if (isValid) {
-                    await showDashboard(storedRole);
-                } else {
-                    logout();
-                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info');
-                }
-            } catch (error) {
-                console.error('Auto login error:', error);
+    console.log('Initializing app...'); // 디버깅 로그 추가
+    
+    const storedToken = localStorage.getItem('token');
+    const storedRole = localStorage.getItem('role');
+    
+    if (storedToken && storedRole) {
+        try {
+            const isValid = await validateToken(storedToken);
+            if (isValid) {
+                console.log('Token is valid, showing dashboard'); // 디버깅 로그 추가
+                await showDashboard(storedRole);
+            } else {
+                console.log('Token is invalid, showing login screen'); // 디버깅 로그 추가
                 logout();
+                document.getElementById('loginScreen').style.display = 'flex';
             }
-        } else {
+        } catch (error) {
+            console.error('Auto login error:', error);
+            logout();
             document.getElementById('loginScreen').style.display = 'flex';
         }
+    } else {
+        console.log('No stored token/role, showing login screen'); // 디버깅 로그 추가
+        document.getElementById('loginScreen').style.display = 'flex';
     }
+}
 
     // 앱 초기화 실행
     await initializeApp();
