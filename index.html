@@ -1827,14 +1827,14 @@ async function loadBookings() {
                             ${getStatusText(booking.status)}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        ${booking.status === 'approved' ? `
-                            <button onclick="cancelBooking(${booking.id})"
-                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                취소 요청
-                            </button>
-                        ` : ''}
-                    </td>
+                     <td class="px-6 py-4 whitespace-nowrap">
+        ${booking.status === 'approved' ? `
+            <button onclick="window.cancelBooking(${booking.id})"
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                취소 요청
+            </button>
+        ` : ''}
+    </td>
                 </tr>
             `).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
         }
@@ -1845,7 +1845,7 @@ async function loadBookings() {
 }
 
 // 예약 취소 함수 추가
-async function cancelBooking(bookingId) {
+window.cancelBooking = async function(bookingId) {
     if (!confirm('예약을 취소하시겠습니까?')) return;
 
     try {
@@ -1862,7 +1862,7 @@ async function cancelBooking(bookingId) {
         console.error('Booking cancellation error:', error);
         showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error');
     }
-}
+};
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
