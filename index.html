@@ -1151,7 +1151,9 @@ function closeBookingModal() {
 // 대시보드 표시 함수
 async function showDashboard(role) {
     try {
-        // 모든 화면 초기화
+        console.log('Showing dashboard for role:', role);
+
+        // 먼저 모든 화면을 숨김
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminDashboard').style.display = 'none';
         document.getElementById('userDashboard').style.display = 'none';
@@ -1159,35 +1161,53 @@ async function showDashboard(role) {
 
         // 토큰이 없거나 role이 없는 경우 로그인 화면 표시
         if (!localStorage.getItem('token') || !role) {
+            console.log('No token or role, showing login screen');
             document.getElementById('loginScreen').style.display = 'flex';
             return;
         }
 
-        // 관리자인 경우
         if (role === 'admin') {
+            console.log('Showing admin dashboard');
             document.getElementById('adminDashboard').style.display = 'block';
             await initializeAdminDashboard();
             return;
         }
 
-        // 일반 사용자인 경우 예약 상태 확인
+        // 일반 사용자는 예약 상태 확인
         const settings = await apiRequest('/api/admin/booking-settings');
+        console.log('Booking settings:', settings); // 디버깅 로그 추가
+
         const username = localStorage.getItem('username');
+        console.log('Current username:', username); // 디버깅 로그 추가
 
         if (!settings.data?.is_active) {
-            // 예약 중지 상태
+            console.log('Booking is closed, showing closed page'); // 디버깅 로그 추가
             document.getElementById('bookingClosedPage').style.display = 'block';
-            document.getElementById('userGroupNameClosed').textContent = username;
+            if (username) {
+                const userGroupNameClosed = document.getElementById('userGroupNameClosed');
+                if (userGroupNameClosed) {
+                    userGroupNameClosed.textContent = username;
+                    console.log('Updated closed page username:', username);
+                } else {
+                    console.error('userGroupNameClosed element not found');
+                }
+            }
         } else {
-            // 예약 가능 상태
+            console.log('Booking is active, showing user dashboard'); // 디버깅 로그 추가
             document.getElementById('userDashboard').style.display = 'block';
-            document.getElementById('userGroupName').textContent = username;
+            if (username) {
+                const userGroupName = document.getElementById('userGroupName');
+                if (userGroupName) {
+                    userGroupName.textContent = username;
+                }
+            }
             await initializeCalendar();
             await debouncedUpdateCalendarStatus();
             await loadBookings();
         }
     } catch (error) {
         console.error('Dashboard error:', error);
+        console.error('Error details:', error.stack); // 스택 트레이스 추가
         showAlert('오류가 발생했습니다.', 'error');
         logout();
     }
