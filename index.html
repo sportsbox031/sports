@@ -1788,6 +1788,82 @@ window.addEventListener('scroll', () => {
     lastScroll = currentScroll;
 });
 
+// 예약 생성 함수 추가
+async function createBooking(bookingData) {
+    try {
+        const response = await apiRequest('/api/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+        });
+
+        if (response.success) {
+            showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            // 예약 목록 새로고침
+            loadBookings();
+            // 캘린더 상태 업데이트
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking creation error:', error);
+        showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 예약 목록 로드 함수 추가
+async function loadBookings() {
+    try {
+        const response = await apiRequest('/api/bookings');
+        if (response.success) {
+            const tbody = document.getElementById('bookingsList');
+            tbody.innerHTML = response.data.map(booking => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${getStatusClass(booking.status)}">
+                            ${getStatusText(booking.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${booking.status === 'approved' ? `
+                            <button onclick="cancelBooking(${booking.id})"
+                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                취소 요청
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Load bookings error:', error);
+        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
+// 예약 취소 함수 추가
+async function cancelBooking(bookingId) {
+    if (!confirm('예약을 취소하시겠습니까?')) return;
+
+    try {
+        const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
+            method: 'PUT'
+        });
+
+        if (response.success) {
+            showAlert('예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            loadBookings();
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Booking cancellation error:', error);
+        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error');
+    }
+}
+
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
     // 로그인 폼 제출
