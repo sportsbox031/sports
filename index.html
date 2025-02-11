@@ -7,7 +7,6 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 캘린더 관련 스타일 */
         .calendar-day:hover {
             background-color: rgba(59, 130, 246, 0.1);
             transition: all 0.3s;
@@ -16,8 +15,6 @@
             background-color: #3B82F6 !important;
             color: white !important;
         }
-        
-        /* 일반 모달 스타일 */
         .modal {
             display: none;
             position: fixed;
@@ -30,8 +27,6 @@
         .modal.show {
             display: flex;
         }
-    
-        /* 캘린더 날짜 상태 스타일 */
         .calendar-day.booked {
             background-color: #FEF3C7;
             cursor: pointer;
@@ -50,17 +45,10 @@
             color: white !important;
             cursor: not-allowed;
         }
-        .calendar-day.partially-blocked {
-            background-color: #FCD34D !important;
-            color: white !important;
-            cursor: pointer;
-        }
         .calendar-day.today {
             font-weight: bold;
             background-color: transparent !important;
         }
-    
-        /* 관리자 캘린더 특수 스타일 */
         #adminCalendar .calendar-day.blocked,
         #adminCalendar .calendar-day.partially-blocked {
             cursor: pointer;
@@ -71,8 +59,6 @@
         .calendar-day.partially-blocked:hover {
             background-color: #D97706 !important;
         }
-    
-        /* 로딩 인디케이터 스타일 */
         .loading {
             position: fixed;
             top: 0;
@@ -100,33 +86,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-    
-        /* 예약 중지 페이지 스타일 추가 */
-        #bookingClosedPage {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: white;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-    
-        #bookingClosedPage.show {
-            display: block;
-            opacity: 1;
-            visibility: visible;
-        }
-    
-        /* z-index 관리 */
-        #loginScreen { z-index: 1000; }
-        #userDashboard { z-index: 1000; }
-        #adminDashboard { z-index: 1000; }
-        #bookingClosedPage { z-index: 1001; }
     </style>
 </head>
 
@@ -469,14 +428,11 @@
                     <span class="text-sm text-gray-600">예약마감</span>
                 </div>
                 <div class="flex items-center">
-                    <div class="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
-                    <span class="text-sm text-gray-600">부분마감</span>
-                </div>
-                <div class="flex items-center">
                     <div class="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
                     <span class="text-sm text-gray-600">전체마감</span>
                 </div>
             </div>
+        </div>
 
         <!-- 회원가입 승인 및 예약 승인 섹션 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -573,61 +529,23 @@
     </div>
 </div>
 
-<!-- 예약 중지 안내 페이지 -->
-<div id="bookingClosedPage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 9999;" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-    <!-- 네비게이션 바 -->
-    <nav class="bg-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-running text-2xl text-indigo-600"></i>
-                    <span class="text-2xl font-bold text-gray-800">스포츠박스</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span id="userGroupNameClosed" class="text-sm bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full"></span>
-                    <button id="logoutBtnClosed" 
-                        class="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-600 hover:bg-gray-100 transition-all duration-200">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>로그아웃</span>
-                    </button>
-                </div>
+ <!-- 여기에 예약 중지 알림 모달 추가 -->
+ <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <div class="mb-4">
+                <i class="fas fa-clock text-5xl text-blue-600"></i>
             </div>
-        </div>
-    </nav>
-
-    <!-- 메인 컨텐츠 -->
-    <div class="container mx-auto px-4 py-16">
-        <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div class="mb-8">
-                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-clock text-4xl text-indigo-600"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-4">
-                    지금은 예약 기간이 아닙니다
-                </h1>
-                <p class="text-gray-600 text-lg">
-                    현재 예약 시스템이 중지된 상태입니다.<br>
-                    예약 시작 시점에 다시 방문해 주세요.
-                </p>
-            </div>
-            <div class="border-t border-gray-200 pt-8">
-                <div class="bg-gray-50 rounded-xl p-6">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2">
-                        <i class="fas fa-info-circle text-indigo-500 mr-2"></i>
-                        안내사항
-                    </h2>
-                    <ul class="text-gray-600 space-y-2 text-left">
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
-                            <span>예약 시스템은 관리자 승인 후 시작됩니다.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
-                            <span>예약 시작 시 별도 공지사항을 확인해 주세요.</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">
+                지금은 예약 기간이 아닙니다.
+            </h3>
+            <p id="bookingClosedMessage" class="text-gray-600 mb-8">
+                20일에 예약이 시작됩니다.
+            </p>
+            <button id="closeBookingModal" 
+                class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+                확인
+            </button>
         </div>
     </div>
 </div>
@@ -812,8 +730,6 @@ async function toggleBookingStatus() {
                 isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
                 'success'
             );
-            // 여기서 즉시 모든 사용자의 화면을 업데이트해야 합니다
-            await checkBookingStatus(); // 즉시 상태 체크 추가
         }
     } catch (error) {
         console.error('Error toggling booking status:', error);
@@ -1069,8 +985,6 @@ async function apiRequest(endpoint, options = {}) {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
-        console.log('API Request:', endpoint, options); // 디버깅 로그 추가
-
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
@@ -1079,13 +993,12 @@ async function apiRequest(endpoint, options = {}) {
             }
         });
 
-        const data = await response.json();
-        console.log('API Response:', data); // 디버깅 로그 추가
-
         if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
+        const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
@@ -1118,48 +1031,18 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
 // 인증 관련 함수들
 async function login(username, password) {
     try {
-        const loginResponse = await apiRequest('/api/login', {
+        const response = await apiRequest('/api/login', {
             method: 'POST',
             body: JSON.stringify({ username, password })
         });
 
-        if (loginResponse.success) {
-            localStorage.setItem('token', loginResponse.token);
-            localStorage.setItem('role', loginResponse.role);
-            localStorage.setItem('username', loginResponse.username);
-
-            showAlert('로그인되었습니다.', 'success', 3000);
-
-            // 모든 화면 초기화
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminDashboard').style.display = 'none';
-            document.getElementById('userDashboard').style.display = 'none';
-            document.getElementById('bookingClosedPage').style.display = 'none';
-
-            // 관리자 로그인
-            if (loginResponse.role === 'admin') {
-                document.getElementById('adminDashboard').style.display = 'block';
-                await initializeAdminDashboard();
-                return;
-            }
-
-            // 일반 사용자 로그인 - 예약 상태 확인
-            const settingsResponse = await apiRequest('/api/admin/booking-settings');
+        if (response.success) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('role', response.role);
+            localStorage.setItem('username', response.username);
             
-            // 예약 중지 상태일 때
-            if (!settingsResponse.data?.is_active) {
-                document.getElementById('bookingClosedPage').style.display = 'block';
-                document.getElementById('userGroupNameClosed').textContent = loginResponse.username;
-            } else {
-                // 예약 가능 상태일 때
-                document.getElementById('userDashboard').style.display = 'block';
-                document.getElementById('userGroupName').textContent = loginResponse.username;
-                await Promise.all([
-                    initializeCalendar(),
-                    debouncedUpdateCalendarStatus(),
-                    loadBookings()
-                ]);
-            }
+            showDashboard(response.role);
+            showAlert('로그인되었습니다.', 'success', 3000);
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -1177,115 +1060,60 @@ function closeBookingModal() {
 
 // 대시보드 표시 함수
 async function showDashboard(role) {
-    try {
-        console.log('Showing dashboard for role:', role);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
 
-        // 현재 화면 상태 로깅
-        console.log('Current display states before:', {
-            loginScreen: document.getElementById('loginScreen').style.display,
-            adminDashboard: document.getElementById('adminDashboard').style.display,
-            userDashboard: document.getElementById('userDashboard').style.display,
-            bookingClosedPage: document.getElementById('bookingClosedPage').style.display
-        });
+    if (role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        initializeAdminDashboard();
+    } else {
+        try {
+            // 예약 상태 확인
+            const settings = await apiRequest('/api/admin/booking-settings');
+            
+            if (!settings.data?.is_active) {
+                // 예약이 중지된 경우 모달 표시
+                const modal = document.getElementById('bookingClosedModal');
+                const message = document.getElementById('bookingClosedMessage');
+                const closeButton = document.getElementById('closeBookingModal');
+                
+                message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // 모달 닫기 버튼에 이벤트 리스너 추가
+                closeButton.onclick = closeBookingModal;
+                
+                // ESC 키로 모달 닫기
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeBookingModal();
+                    }
+                });
 
-        // 먼저 모든 화면을 숨김
-        const screens = ['loginScreen', 'adminDashboard', 'userDashboard', 'bookingClosedPage'];
-        screens.forEach(screenId => {
-            const element = document.getElementById(screenId);
-            if (element) {
-                element.style.display = 'none';
-                element.style.opacity = '0';
-                element.style.visibility = 'hidden';
-            }
-        });
-
-        // 토큰이 없거나 role이 없는 경우 로그인 화면 표시
-        if (!localStorage.getItem('token') || !role) {
-            console.log('No token or role, showing login screen');
-            const loginScreen = document.getElementById('loginScreen');
-            loginScreen.style.display = 'flex';
-            loginScreen.style.opacity = '1';
-            loginScreen.style.visibility = 'visible';
-            return;
-        }
-
-        if (role === 'admin') {
-            console.log('Showing admin dashboard');
-            const adminDashboard = document.getElementById('adminDashboard');
-            adminDashboard.style.display = 'block';
-            adminDashboard.style.opacity = '1';
-            adminDashboard.style.visibility = 'visible';
-            await initializeAdminDashboard();
-            return;
-        }
-
-        // 일반 사용자는 예약 상태 확인
-        const settings = await apiRequest('/api/admin/booking-settings');
-        console.log('Booking settings:', settings);
-
-        const username = localStorage.getItem('username');
-        console.log('Current username:', username);
-
-        if (!settings.data?.is_active) {
-            console.log('Booking is closed, showing closed page');
-            const closedPage = document.getElementById('bookingClosedPage');
-            const userGroupNameClosed = document.getElementById('userGroupNameClosed');
-
-            if (!closedPage) {
-                console.error('bookingClosedPage element not found!');
-                return;
-            }
-
-            // 예약 중지 페이지 표시
-            closedPage.style.display = 'block';
-            closedPage.style.opacity = '1';
-            closedPage.style.visibility = 'visible';
-            closedPage.style.position = 'fixed';
-            closedPage.style.top = '0';
-            closedPage.style.left = '0';
-            closedPage.style.width = '100%';
-            closedPage.style.height = '100%';
-            closedPage.style.zIndex = '9999';
-
-            // 사용자 이름 표시
-            if (username && userGroupNameClosed) {
-                userGroupNameClosed.textContent = username;
-                console.log('Updated closed page username:', username);
+                // 모달 외부 클릭 시 닫기
+                modal.onclick = function(e) {
+                    if (e.target === modal) {
+                        closeBookingModal();
+                    }
+                };
             } else {
-                console.error('userGroupNameClosed element not found or username missing');
+                // 예약이 활성화된 경우 대시보드 표시
+                document.getElementById('userDashboard').style.display = 'block';
+                if (localStorage.getItem('username')) {
+                    document.getElementById('userGroupName').textContent = 
+                        localStorage.getItem('username');
+                }
+                initializeCalendar();
+                debouncedUpdateCalendarStatus();
+                loadBookings();
             }
-
-        } else {
-            console.log('Booking is active, showing user dashboard');
-            const userDashboard = document.getElementById('userDashboard');
-            const userGroupName = document.getElementById('userGroupName');
-
-            userDashboard.style.display = 'block';
-            userDashboard.style.opacity = '1';
-            userDashboard.style.visibility = 'visible';
-
-            if (username && userGroupName) {
-                userGroupName.textContent = username;
-            }
-
-            await initializeCalendar();
-            await debouncedUpdateCalendarStatus();
-            await loadBookings();
+        } catch (error) {
+            console.error('Error checking booking status:', error);
+            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+            logout();
         }
-
-        // 최종 화면 상태 로깅
-        console.log('Final display states:', {
-            loginScreen: document.getElementById('loginScreen').style.display,
-            adminDashboard: document.getElementById('adminDashboard').style.display,
-            userDashboard: document.getElementById('userDashboard').style.display,
-            bookingClosedPage: document.getElementById('bookingClosedPage').style.display
-        });
-
-    } catch (error) {
-        console.error('Dashboard error:', error);
-        console.error('Error details:', error.stack);
-        showAlert('오류가 발생했습니다.', 'error');
-        logout();
     }
 }
 
@@ -1553,26 +1381,35 @@ function renderCalendar(date) {
         const dateStatus = bookingStatus[dateString];
 
         if (selectedDateObj < today) {
-            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-            dayElement.title = '지난 날짜';
-        } else if (dateStatus?.isFull || (dateStatus?.isPartiallyBlocked && dateStatus.bookingCount >= 1)) {
-            // 예약 마감이거나 부분 마감이면서 예약이 찬 경우 핑크색으로 표시
-            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감';
-        } else if (dateStatus?.isFullyBlocked) {
-            // 관리자 전체 마감은 회색으로 표시
-            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-            dayElement.title = '전체 마감';
-        } else if (dateStatus?.hasBooking) {
-            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-            addDateClickHandler(dayElement, year, month, day);
-        } else {
-            dayElement.className = 
-                'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-            dayElement.title = '예약 가능';
-            addDateClickHandler(dayElement, year, month, day);
-        }
+    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+    dayElement.title = '지난 날짜';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+    dayElement.title = '전체 마감';
+} else if (dateStatus?.isPartiallyBlocked) {
+    // 부분 마감이어도 일반 예약 가능 상태처럼 보이도록 수정
+    if (dateStatus.bookingCount < 1) {
+        dayElement.className = 
+            'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+        dayElement.title = '예약 가능';
+        addDateClickHandler(dayElement, year, month, day);
+    } else {
+        dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+        dayElement.title = '예약 마감';
+    }
+} else if (dateStatus?.isFull) {
+    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+    dayElement.title = '예약 마감';
+} else if (dateStatus?.hasBooking) {
+    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+    addDateClickHandler(dayElement, year, month, day);
+} else {
+    dayElement.className = 
+        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+    dayElement.title = '예약 가능';
+    addDateClickHandler(dayElement, year, month, day);
+}
 
         dayElement.textContent = day;
 
@@ -1658,23 +1495,22 @@ function renderAdminCalendar(date) {
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
-    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = '전체 마감 (클릭하여 관리)';
-} else if (dateStatus?.isPartiallyBlocked) {
-    // 부분 마감 스타일 수정
-    dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer bg-yellow-400 text-white';
-    dayElement.title = '부분 마감 (클릭하여 관리)';
-} else if (dateStatus?.isFull) {
-    dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = '예약 마감';
-} else if (dateStatus?.hasBooking) {
-    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-} else {
-    dayElement.className = 
-        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-    dayElement.title = '클릭하여 마감 설정';
-}
+                dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = '전체 마감 (클릭하여 해제)';
+            } else if (dateStatus?.isPartiallyBlocked) {
+                dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = '부분 마감 (1개 예약만 가능)';
+            } else if (dateStatus?.isFull) {
+                dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = '예약 마감';
+            } else if (dateStatus?.hasBooking) {
+                dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            } else {
+                dayElement.className = 
+                    'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                dayElement.title = '클릭하여 마감 설정';
+            }
 
             // 예약 수 표시
             if (dateStatus?.bookingCount > 0) {
@@ -1841,77 +1677,9 @@ async function generateExcelData(year, month) {
     }
 }
 
-async function checkBookingStatus() {
-    try {
-        const response = await apiRequest('/api/admin/booking-settings');
-        if (response.success) {
-            const isActive = response.data?.is_active;
-            const role = localStorage.getItem('role');
-            
-            if (role !== 'admin') {
-                const userDashboard = document.getElementById('userDashboard');
-                const bookingClosedPage = document.getElementById('bookingClosedPage');
-                
-                if (!isActive && userDashboard.style.display !== 'none') {
-                    // 예약이 중지되었을 때 즉시 화면 전환
-                    userDashboard.style.display = 'none';
-                    bookingClosedPage.style.display = 'block';
-                    showAlert('예약이 중지되었습니다.', 'info');
-                } else if (isActive && bookingClosedPage.style.display !== 'none') {
-                    // 예약이 시작되었을 때 즉시 화면 전환
-                    bookingClosedPage.style.display = 'none';
-                    userDashboard.style.display = 'block';
-                    showAlert('예약이 시작되었습니다.', 'success');
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error checking booking status:', error);
-    }
-}
-
-// 주기적으로 예약 상태 확인 (예: 1분마다)
-setInterval(checkBookingStatus, 60000);
-
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Page loaded'); // 디버깅 로그 추가
-
-    // 초기 화면 설정
-    async function initializeApp() {
-    console.log('Initializing app...'); // 디버깅 로그 추가
-    
-    const storedToken = localStorage.getItem('token');
-    const storedRole = localStorage.getItem('role');
-    
-    if (storedToken && storedRole) {
-        try {
-            // validateToken을 validateStoredToken으로 수정
-            const isValid = await validateStoredToken();
-            if (isValid) {
-                console.log('Token is valid, showing dashboard'); // 디버깅 로그 추가
-                await showDashboard(storedRole);
-            } else {
-                console.log('Token is invalid, showing login screen'); // 디버깅 로그 추가
-                logout();
-                document.getElementById('loginScreen').style.display = 'flex';
-            }
-        } catch (error) {
-            console.error('Auto login error:', error);
-            logout();
-            document.getElementById('loginScreen').style.display = 'flex';
-        }
-    } else {
-        console.log('No stored token/role, showing login screen'); // 디버깅 로그 추가
-        document.getElementById('loginScreen').style.display = 'flex';
-    }
-}
-
-    // 앱 초기화 실행
-    await initializeApp();
-
-    // 이벤트 리스너들 설정
-    // 로그인 폼
+    // 로그인 폼 제출
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const username = document.getElementById('username').value;
@@ -1919,7 +1687,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         login(username, password);
     });
 
-    // 회원가입 모달
+    // 회원가입 모달 컨트롤
     document.getElementById('showSignup').addEventListener('click', function() {
         document.getElementById('signupModal').classList.add('show');
     });
@@ -1928,11 +1696,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('signupModal').classList.remove('show');
     });
 
-    // 회원가입 폼
+    // 회원가입 폼 제출
     document.getElementById('signupForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const password = document.getElementById('signupPassword').value;
         
+        // 비밀번호 정책 검증
         if (password.length < 6) {
             showAlert('비밀번호는 6자 이상이어야 합니다.', 'error', 3000);
             return;
@@ -1947,51 +1716,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         signup(formData);
     });
 
-    // 예약 폼
-    const bookingForm = document.getElementById('bookingForm');
-    if (bookingForm) {
-        bookingForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitButton = this.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = '예약 처리중...';
-            
-            try {
-                const selectedDateText = document.getElementById('selectedDate').value;
-                const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
-                
-                if (!dateParts) {
-                    showAlert('날짜를 선택해주세요.', 'error', 3000);
-                    return;
-                }
+    // 예약 폼 제출
+    document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const selectedDateText = document.getElementById('selectedDate').value;
+        const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
+        
+        if (!dateParts) {
+            showAlert('날짜를 선택해주세요.', 'error', 3000);
+            return;
+        }
 
-                const bookingData = {
-                    date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
-                    startTime: document.getElementById('startTime').value,
-                    endTime: document.getElementById('endTime').value,
-                    people: document.getElementById('people').value,
-                    place: document.getElementById('place').value
-                };
+        const bookingData = {
+            date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            people: document.getElementById('people').value,
+            place: document.getElementById('place').value
+        };
 
-                await createBooking(bookingData);
-            } catch (error) {
-                console.error('Booking error:', error);
-                showAlert('예약 중 오류가 발생했습니다.', 'error', 3000);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = '예약하기';
-            }
-        });
-    }
+        createBooking(bookingData);
+    });
 
     // 로그아웃 버튼
-    const logoutBtn = document.getElementById('logoutBtn');
-    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-    const logoutBtnClosed = document.getElementById('logoutBtnClosed');
-
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
-    if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', logout);
-    if (logoutBtnClosed) logoutBtnClosed.addEventListener('click', logout);
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+    document.getElementById('adminLogoutBtn')?.addEventListener('click', logout);
 
     // 날짜별 예약 모달 닫기
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
@@ -2042,6 +1791,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 시간 선택 초기화
     initializeTimeSelects();
+
+    // 저장된 토큰이 있으면 자동 로그인
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (token && role) {
+        try {
+            const isValid = await validateStoredToken();
+            if (isValid) {
+                showDashboard(role);
+            } else {
+                logout();
+                showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info', 3000);
+            }
+        } catch (error) {
+            logout();
+            console.error('Auto login error:', error);
+        }
+    }
 });
 
 // 개발 모드일 때 콘솔 로그 출력
