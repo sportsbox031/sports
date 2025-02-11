@@ -1086,17 +1086,33 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
 // 인증 관련 함수들
 async function login(username, password) {
     try {
-        const response = await apiRequest('/api/login', {
+        // 먼저 예약 상태 확인
+        const settingsResponse = await apiRequest('/api/admin/booking-settings');
+        const isBookingActive = settingsResponse.data?.is_active;
+
+        // 로그인 요청
+        const loginResponse = await apiRequest('/api/login', {
             method: 'POST',
             body: JSON.stringify({ username, password })
         });
 
-        if (response.success) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('role', response.role);
-            localStorage.setItem('username', response.username);
+        if (loginResponse.success) {
+            localStorage.setItem('token', loginResponse.token);
+            localStorage.setItem('role', loginResponse.role);
+            localStorage.setItem('username', loginResponse.username);
             
-            showDashboard(response.role);
+            // 일반 사용자이고 예약이 중지된 상태라면
+            if (loginResponse.role !== 'admin' && !isBookingActive) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('bookingClosedPage').style.display = 'block';
+                const userGroupNameClosed = document.getElementById('userGroupNameClosed');
+                if (userGroupNameClosed) {
+                    userGroupNameClosed.textContent = loginResponse.username;
+                }
+            } else {
+                // 관리자이거나 예약이 활성화된 상태라면 대시보드 표시
+                showDashboard(loginResponse.role);
+            }
             showAlert('로그인되었습니다.', 'success', 3000);
         }
     } catch (error) {
