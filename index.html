@@ -1717,8 +1717,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // 예약 폼 제출
-    document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.getElementById('bookingForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // 버튼 비활성화
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = '예약 처리중...';
+    
+    try {
         const selectedDateText = document.getElementById('selectedDate').value;
         const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
         
@@ -1735,8 +1742,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             place: document.getElementById('place').value
         };
 
-        createBooking(bookingData);
-    });
+        await createBooking(bookingData);
+        
+    } catch (error) {
+        console.error('Booking error:', error);
+        showAlert('예약 중 오류가 발생했습니다.', 'error', 3000);
+    } finally {
+        // 버튼 상태 복원
+        submitButton.disabled = false;
+        submitButton.textContent = '예약하기';
+    }
+});
 
     // 로그아웃 버튼
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
