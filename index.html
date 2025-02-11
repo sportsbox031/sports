@@ -7,6 +7,7 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* 기존 스타일 유지 */
         .calendar-day:hover {
             background-color: rgba(59, 130, 246, 0.1);
             transition: all 0.3s;
@@ -46,10 +47,10 @@
             cursor: not-allowed;
         }
         .calendar-day.partially-blocked {
-    background-color: #FCD34D !important; /* 노란색 계열 */
-    color: white !important;
-    cursor: pointer;
-}
+            background-color: #FCD34D !important;
+            color: white !important;
+            cursor: pointer;
+        }
         .calendar-day.today {
             font-weight: bold;
             background-color: transparent !important;
@@ -90,6 +91,89 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+    
+        /* 예약 중지 모달 관련 새로운 스타일 */
+        #bookingClosedModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+    
+        #bookingClosedModal.show {
+            display: flex;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+    
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    
+        #bookingClosedModal .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                       0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.2s ease-out;
+            max-width: 400px;
+            width: 90%;
+        }
+    
+        #bookingClosedModal .modal-content:hover {
+            transform: scale(1);
+        }
+    
+        #bookingClosedModal .icon-container {
+            width: 4rem;
+            height: 4rem;
+            background-color: #EBF5FF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+        }
+    
+        #bookingClosedModal .icon-container i {
+            font-size: 2rem;
+            color: #3B82F6;
+        }
+    
+        #bookingClosedModal button {
+            background: linear-gradient(to right, #3B82F6, #6366F1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+    
+        #bookingClosedModal button:hover {
+            background: linear-gradient(to right, #2563EB, #4F46E5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                       0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    
+        #bookingClosedModal button:active {
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -539,19 +623,23 @@
 
  <!-- 여기에 예약 중지 알림 모달 추가 -->
  <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 transform transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all scale-95 hover:scale-100">
         <div class="text-center">
-            <div class="mb-4">
-                <i class="fas fa-clock text-5xl text-blue-600"></i>
+            <div class="mb-6">
+                <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clock text-4xl text-blue-600"></i>
+                </div>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-4">
-                지금은 예약 기간이 아닙니다.
+                지금은 예약 기간이 아닙니다
             </h3>
             <p id="bookingClosedMessage" class="text-gray-600 mb-8">
-                20일에 예약이 시작됩니다.
+                현재 예약이 중지된 상태입니다.
             </p>
             <button id="closeBookingModal" 
-                class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-xl 
+                       hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 
+                       hover:shadow-lg active:scale-95 font-medium">
                 확인
             </button>
         </div>
@@ -1083,40 +1171,43 @@ async function showDashboard(role) {
             if (!settings.data?.is_active) {
                 // 예약이 중지된 경우 모달 표시
                 const modal = document.getElementById('bookingClosedModal');
-                const message = document.getElementById('bookingClosedMessage');
-                const closeButton = document.getElementById('closeBookingModal');
-                
-                message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 
                 // 모달 닫기 버튼에 이벤트 리스너 추가
-                closeButton.onclick = closeBookingModal;
+                const closeButton = document.getElementById('closeBookingModal');
+                closeButton.onclick = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    logout();  // 로그아웃 처리
+                };
                 
                 // ESC 키로 모달 닫기
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
-                        closeBookingModal();
+                        closeButton.click();
                     }
                 });
 
                 // 모달 외부 클릭 시 닫기
                 modal.onclick = function(e) {
                     if (e.target === modal) {
-                        closeBookingModal();
+                        closeButton.click();
                     }
                 };
-            } else {
-                // 예약이 활성화된 경우 대시보드 표시
-                document.getElementById('userDashboard').style.display = 'block';
-                if (localStorage.getItem('username')) {
-                    document.getElementById('userGroupName').textContent = 
-                        localStorage.getItem('username');
-                }
-                initializeCalendar();
-                debouncedUpdateCalendarStatus();
-                loadBookings();
+
+                return;  // 여기서 함수 종료
             }
+
+            // 예약이 활성화된 경우 대시보드 표시
+            document.getElementById('userDashboard').style.display = 'block';
+            if (localStorage.getItem('username')) {
+                document.getElementById('userGroupName').textContent = 
+                    localStorage.getItem('username');
+            }
+            initializeCalendar();
+            debouncedUpdateCalendarStatus();
+            loadBookings();
         } catch (error) {
             console.error('Error checking booking status:', error);
             showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
