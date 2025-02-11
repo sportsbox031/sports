@@ -366,20 +366,20 @@
         <!-- 예약 시스템 설정 섹션 -->
         <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
             <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
-            <form id="bookingSettingsForm" class="space-y-6">
-                <!-- 예약 시작/중지 토글 버튼 -->
-                <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-semibold text-gray-700">예약 상태</span>
-                        <span id="bookingStatusText" class="text-sm text-gray-500">
-                            현재 예약을 받고 있지 않습니다
-                        </span>
-                    </div>
-                    <button type="button" id="toggleBookingStatus" 
-                        class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
-                        예약 시작하기
-                    </button>
+            <!-- 예약 시작/중지 토글 버튼만 남김 -->
+            <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold text-gray-700">예약 상태</span>
+                    <span id="bookingStatusText" class="text-sm text-gray-500">
+                        현재 예약을 받고 있지 않습니다
+                    </span>
                 </div>
+                <button type="button" id="toggleBookingStatus" 
+                    class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                    예약 시작하기
+                </button>
+            </div>
+        </div>
 
                 <!-- 예약 기간 설정 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -634,7 +634,7 @@ function getStatusText(status) {
     }
 }
 
-// 예약 상태 토글 버튼 관련 함수
+// 예약 상태 UI 업데이트 함수
 function updateBookingStatusUI(isActive) {
     const toggleButton = document.getElementById('toggleBookingStatus');
     const statusText = document.getElementById('bookingStatusText');
@@ -742,7 +742,7 @@ async function loadPendingUsers() {
                 </tr>
             `).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 회원이 없습니다.</td></tr>';
 
-// 예약 상태 토글 버튼 클릭 핸들러 함수 (새로 추가)
+// 예약 상태 토글 버튼 관련 함수 수정
 async function toggleBookingStatus() {
     const isCurrentlyActive = this.textContent.includes('중지');
     try {
@@ -750,9 +750,7 @@ async function toggleBookingStatus() {
             method: 'POST',
             body: JSON.stringify({
                 is_active: !isCurrentlyActive,
-                start_date: document.getElementById('bookingStartDate').value,
-                end_date: document.getElementById('bookingEndDate').value,
-                message: document.getElementById('bookingMessage').value
+                message: isCurrentlyActive ? '현재 예약을 받고 있지 않습니다.' : '예약이 가능합니다.'
             })
         });
 
@@ -790,15 +788,12 @@ async function toggleBookingStatus() {
     }
 }
 
-// 예약 설정 로드
+// 예약 설정 로드 함수 수정
 async function loadBookingSettings() {
     try {
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
             const settings = response.data;
-            document.getElementById('bookingStartDate').value = settings.start_date || '';
-            document.getElementById('bookingEndDate').value = settings.end_date || '';
-            document.getElementById('bookingMessage').value = settings.message || '';
             updateBookingStatusUI(settings.is_active);
         }
     } catch (error) {
