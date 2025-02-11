@@ -1156,20 +1156,22 @@ function closeBookingModal() {
 
 // 대시보드 표시 함수
 async function showDashboard(role) {
+    // 먼저 모든 화면을 숨김
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
 
     if (role === 'admin') {
+        // 관리자는 바로 대시보드 표시
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
         try {
-            // 예약 상태 확인
+            // 일반 사용자는 먼저 예약 상태 확인
             const settings = await apiRequest('/api/admin/booking-settings');
             
             if (!settings.data?.is_active) {
-                // 예약이 중지된 경우 모달 표시
+                // 예약이 중지된 경우 예약 중지 모달만 표시
                 const modal = document.getElementById('bookingClosedModal');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -1195,19 +1197,17 @@ async function showDashboard(role) {
                         closeButton.click();
                     }
                 };
-
-                return;  // 여기서 함수 종료
+            } else {
+                // 예약이 활성화된 경우에만 대시보드 표시
+                document.getElementById('userDashboard').style.display = 'block';
+                if (localStorage.getItem('username')) {
+                    document.getElementById('userGroupName').textContent = 
+                        localStorage.getItem('username');
+                }
+                initializeCalendar();
+                debouncedUpdateCalendarStatus();
+                loadBookings();
             }
-
-            // 예약이 활성화된 경우 대시보드 표시
-            document.getElementById('userDashboard').style.display = 'block';
-            if (localStorage.getItem('username')) {
-                document.getElementById('userGroupName').textContent = 
-                    localStorage.getItem('username');
-            }
-            initializeCalendar();
-            debouncedUpdateCalendarStatus();
-            loadBookings();
         } catch (error) {
             console.error('Error checking booking status:', error);
             showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
