@@ -785,9 +785,8 @@ async function toggleBookingStatus() {
                 isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
                 'success'
             );
-            
-            // 모든 일반 사용자의 세션을 체크하고 상태를 업데이트
-            await broadcastBookingStatusChange(!isCurrentlyActive);
+            // 여기서 즉시 모든 사용자의 화면을 업데이트해야 합니다
+            await checkBookingStatus(); // 즉시 상태 체크 추가
         }
     } catch (error) {
         console.error('Error toggling booking status:', error);
@@ -1762,12 +1761,19 @@ async function checkBookingStatus() {
             const role = localStorage.getItem('role');
             
             if (role !== 'admin') {
-                if (!isActive) {
-                    document.getElementById('userDashboard').style.display = 'none';
-                    document.getElementById('bookingClosedPage').style.display = 'block';
-                } else {
-                    document.getElementById('bookingClosedPage').style.display = 'none';
-                    document.getElementById('userDashboard').style.display = 'block';
+                const userDashboard = document.getElementById('userDashboard');
+                const bookingClosedPage = document.getElementById('bookingClosedPage');
+                
+                if (!isActive && userDashboard.style.display !== 'none') {
+                    // 예약이 중지되었을 때 즉시 화면 전환
+                    userDashboard.style.display = 'none';
+                    bookingClosedPage.style.display = 'block';
+                    showAlert('예약이 중지되었습니다.', 'info');
+                } else if (isActive && bookingClosedPage.style.display !== 'none') {
+                    // 예약이 시작되었을 때 즉시 화면 전환
+                    bookingClosedPage.style.display = 'none';
+                    userDashboard.style.display = 'block';
+                    showAlert('예약이 시작되었습니다.', 'success');
                 }
             }
         }
