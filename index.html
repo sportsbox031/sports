@@ -785,6 +785,9 @@ async function toggleBookingStatus() {
                 isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
                 'success'
             );
+            
+            // 모든 일반 사용자의 세션을 체크하고 상태를 업데이트
+            await broadcastBookingStatusChange(!isCurrentlyActive);
         }
     } catch (error) {
         console.error('Error toggling booking status:', error);
@@ -1089,15 +1092,10 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
 // 인증 관련 함수들
 async function login(username, password) {
     try {
-        console.log('Login attempt:', username); // 디버깅 로그 추가
-
-        // 로그인 요청
         const loginResponse = await apiRequest('/api/login', {
             method: 'POST',
             body: JSON.stringify({ username, password })
         });
-
-        console.log('Login response:', loginResponse); // 디버깅 로그 추가
 
         if (loginResponse.success) {
             localStorage.setItem('token', loginResponse.token);
@@ -1106,7 +1104,7 @@ async function login(username, password) {
 
             showAlert('로그인되었습니다.', 'success', 3000);
 
-            // 관리자 로그인 시 바로 대시보드로 이동
+            // 관리자 로그인
             if (loginResponse.role === 'admin') {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'block';
@@ -1114,38 +1112,30 @@ async function login(username, password) {
                 return;
             }
 
-            // 일반 사용자 로그인 시 예약 상태 확인
+            // 일반 사용자 로그인 - 예약 상태 확인
             const settingsResponse = await apiRequest('/api/admin/booking-settings');
-            console.log('Settings response:', settingsResponse); // 디버깅 로그 추가
-
+            
+            // 예약 중지 상태일 때
             if (!settingsResponse.data?.is_active) {
-                // 예약이 중지된 경우
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('bookingClosedPage').style.display = 'block';
-                
-                const userGroupNameClosed = document.getElementById('userGroupNameClosed');
-                if (userGroupNameClosed) {
-                    userGroupNameClosed.textContent = loginResponse.username;
-                }
-            } else {
-                // 예약이 활성화된 경우
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('userDashboard').style.display = 'block';
-                
-                const userGroupName = document.getElementById('userGroupName');
-                if (userGroupName) {
-                    userGroupName.textContent = loginResponse.username;
-                }
-                
-                await Promise.all([
-                    initializeCalendar(),
-                    debouncedUpdateCalendarStatus(),
-                    loadBookings()
-                ]);
+                document.getElementById('userGroupNameClosed').textContent = loginResponse.username;
+                return;
             }
+
+            // 예약 가능 상태일 때
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'block';
+            document.getElementById('userGroupName').textContent = loginResponse.username;
+            
+            await Promise.all([
+                initializeCalendar(),
+                debouncedUpdateCalendarStatus(),
+                loadBookings()
+            ]);
         }
     } catch (error) {
-        console.error('Login error:', error); // 디버깅 로그 추가
+        console.error('Login error:', error);
         showAlert(error.message || '로그인에 실패했습니다.', 'error', 3000);
     }
 }
@@ -1175,20 +1165,15 @@ async function showDashboard(role) {
 
         // 일반 사용자는 예약 상태 확인
         const settings = await apiRequest('/api/admin/booking-settings');
-        console.log('Booking settings:', settings);
-
+        
         if (!settings.data?.is_active) {
             document.getElementById('bookingClosedPage').style.display = 'block';
-            const username = localStorage.getItem('username');
-            if (username) {
-                document.getElementById('userGroupNameClosed').textContent = username;
-            }
+            document.getElementById('userGroupNameClosed').textContent = 
+                localStorage.getItem('username');
         } else {
             document.getElementById('userDashboard').style.display = 'block';
-            const username = localStorage.getItem('username');
-            if (username) {
-                document.getElementById('userGroupName').textContent = username;
-            }
+            document.getElementById('userGroupName').textContent = 
+                localStorage.getItem('username');
             await initializeCalendar();
             await debouncedUpdateCalendarStatus();
             await loadBookings();
@@ -1751,6 +1736,31 @@ async function generateExcelData(year, month) {
         throw error;
     }
 }
+
+async function checkBookingStatus() {
+    try {
+        const response = await apiRequest('/api/admin/booking-settings');
+        if (response.success) {
+            const isActive = response.data?.is_active;
+            const role = localStorage.getItem('role');
+            
+            if (role !== 'admin') {
+                if (!isActive) {
+                    document.getElementById('userDashboard').style.display = 'none';
+                    document.getElementById('bookingClosedPage').style.display = 'block';
+                } else {
+                    document.getElementById('bookingClosedPage').style.display = 'none';
+                    document.getElementById('userDashboard').style.display = 'block';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking booking status:', error);
+    }
+}
+
+// 주기적으로 예약 상태 확인 (예: 1분마다)
+setInterval(checkBookingStatus, 60000);
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
