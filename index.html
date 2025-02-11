@@ -1782,7 +1782,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 앱 초기화 실행
     await initializeApp();
 
-    // 로그인 폼 이벤트 리스너
+    // 이벤트 리스너들 설정
+    setupEventListeners();
+});
+
+// 이벤트 리스너 설정 함수
+function setupEventListeners() {
+    // 로그인 폼
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const username = document.getElementById('username').value;
@@ -1790,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         login(username, password);
     });
 
-    // 회원가입 모달 컨트롤
+    // 회원가입 모달
     document.getElementById('showSignup').addEventListener('click', function() {
         document.getElementById('signupModal').classList.add('show');
     });
@@ -1799,7 +1805,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('signupModal').classList.remove('show');
     });
 
-    // 회원가입 폼 이벤트 리스너
+    // 회원가입 폼
     document.getElementById('signupForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const password = document.getElementById('signupPassword').value;
@@ -1818,12 +1824,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         signup(formData);
     });
 
-    // 예약 폼 이벤트 리스너
+    // 예약 폼
     const bookingForm = document.getElementById('bookingForm');
     if (bookingForm) {
         bookingForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const submitButton = this.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             submitButton.textContent = '예약 처리중...';
@@ -1846,7 +1851,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 };
 
                 await createBooking(bookingData);
-                
             } catch (error) {
                 console.error('Booking error:', error);
                 showAlert('예약 중 오류가 발생했습니다.', 'error', 3000);
@@ -1856,11 +1860,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
-});
 
     // 로그아웃 버튼
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
-    document.getElementById('adminLogoutBtn')?.addEventListener('click', logout);
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    const logoutBtnClosed = document.getElementById('logoutBtnClosed');
+
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', logout);
+    if (logoutBtnClosed) logoutBtnClosed.addEventListener('click', logout);
 
     // 날짜별 예약 모달 닫기
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
