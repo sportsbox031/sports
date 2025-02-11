@@ -734,8 +734,7 @@ async function toggleBookingStatus() {
         const response = await apiRequest('/api/admin/booking-settings', {
             method: 'POST',
             body: JSON.stringify({
-                is_active: !isCurrentlyActive,
-                message: isCurrentlyActive ? '현재 예약을 받고 있지 않습니다.' : '예약이 가능합니다.'
+                is_active: !isCurrentlyActive
             })
         });
 
