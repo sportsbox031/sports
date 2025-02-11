@@ -100,6 +100,33 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+    
+        /* 예약 중지 페이지 스타일 추가 */
+        #bookingClosedPage {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+    
+        #bookingClosedPage.show {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+        }
+    
+        /* z-index 관리 */
+        #loginScreen { z-index: 1000; }
+        #userDashboard { z-index: 1000; }
+        #adminDashboard { z-index: 1000; }
+        #bookingClosedPage { z-index: 1001; }
     </style>
 </head>
 
@@ -546,12 +573,8 @@
     </div>
 </div>
 
-로그를 보니 모든 로직은 정상적으로 실행되고 있습니다. 문제는 CSS 스타일링에 있을 수 있습니다. bookingClosedPage가 표시되도록 설정되었지만 실제로 보이지 않는 것 같네요.
-
-HTML의 bookingClosedPage 부분을 다음과 같이 수정해보세요:
-
-Copy<!-- 예약 중지 안내 페이지 -->
-<div id="bookingClosedPage" class="hidden min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
+<!-- 예약 중지 안내 페이지 -->
+<div id="bookingClosedPage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 9999;" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
     <!-- 네비게이션 바 -->
     <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4 py-4">
@@ -1157,63 +1180,110 @@ async function showDashboard(role) {
     try {
         console.log('Showing dashboard for role:', role);
 
+        // 현재 화면 상태 로깅
+        console.log('Current display states before:', {
+            loginScreen: document.getElementById('loginScreen').style.display,
+            adminDashboard: document.getElementById('adminDashboard').style.display,
+            userDashboard: document.getElementById('userDashboard').style.display,
+            bookingClosedPage: document.getElementById('bookingClosedPage').style.display
+        });
+
         // 먼저 모든 화면을 숨김
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminDashboard').style.display = 'none';
-        document.getElementById('userDashboard').style.display = 'none';
-        document.getElementById('bookingClosedPage').style.display = 'none';
+        const screens = ['loginScreen', 'adminDashboard', 'userDashboard', 'bookingClosedPage'];
+        screens.forEach(screenId => {
+            const element = document.getElementById(screenId);
+            if (element) {
+                element.style.display = 'none';
+                element.style.opacity = '0';
+                element.style.visibility = 'hidden';
+            }
+        });
 
         // 토큰이 없거나 role이 없는 경우 로그인 화면 표시
         if (!localStorage.getItem('token') || !role) {
             console.log('No token or role, showing login screen');
-            document.getElementById('loginScreen').style.display = 'flex';
+            const loginScreen = document.getElementById('loginScreen');
+            loginScreen.style.display = 'flex';
+            loginScreen.style.opacity = '1';
+            loginScreen.style.visibility = 'visible';
             return;
         }
 
         if (role === 'admin') {
             console.log('Showing admin dashboard');
-            document.getElementById('adminDashboard').style.display = 'block';
+            const adminDashboard = document.getElementById('adminDashboard');
+            adminDashboard.style.display = 'block';
+            adminDashboard.style.opacity = '1';
+            adminDashboard.style.visibility = 'visible';
             await initializeAdminDashboard();
             return;
         }
 
         // 일반 사용자는 예약 상태 확인
         const settings = await apiRequest('/api/admin/booking-settings');
-        console.log('Booking settings:', settings); // 디버깅 로그 추가
+        console.log('Booking settings:', settings);
 
         const username = localStorage.getItem('username');
-        console.log('Current username:', username); // 디버깅 로그 추가
+        console.log('Current username:', username);
 
         if (!settings.data?.is_active) {
-    console.log('Booking is closed, showing closed page');
-    document.getElementById('bookingClosedPage').style.display = 'block';
-    document.getElementById('bookingClosedPage').style.opacity = '1';
-    document.getElementById('bookingClosedPage').style.visibility = 'visible';
-    if (username) {
-        const userGroupNameClosed = document.getElementById('userGroupNameClosed');
-        if (userGroupNameClosed) {
-            userGroupNameClosed.textContent = username;
-            console.log('Updated closed page username:', username);
-        } else {
-            console.error('userGroupNameClosed element not found');
-        }
-    }
-        } else {
-            console.log('Booking is active, showing user dashboard'); // 디버깅 로그 추가
-            document.getElementById('userDashboard').style.display = 'block';
-            if (username) {
-                const userGroupName = document.getElementById('userGroupName');
-                if (userGroupName) {
-                    userGroupName.textContent = username;
-                }
+            console.log('Booking is closed, showing closed page');
+            const closedPage = document.getElementById('bookingClosedPage');
+            const userGroupNameClosed = document.getElementById('userGroupNameClosed');
+
+            if (!closedPage) {
+                console.error('bookingClosedPage element not found!');
+                return;
             }
+
+            // 예약 중지 페이지 표시
+            closedPage.style.display = 'block';
+            closedPage.style.opacity = '1';
+            closedPage.style.visibility = 'visible';
+            closedPage.style.position = 'fixed';
+            closedPage.style.top = '0';
+            closedPage.style.left = '0';
+            closedPage.style.width = '100%';
+            closedPage.style.height = '100%';
+            closedPage.style.zIndex = '9999';
+
+            // 사용자 이름 표시
+            if (username && userGroupNameClosed) {
+                userGroupNameClosed.textContent = username;
+                console.log('Updated closed page username:', username);
+            } else {
+                console.error('userGroupNameClosed element not found or username missing');
+            }
+
+        } else {
+            console.log('Booking is active, showing user dashboard');
+            const userDashboard = document.getElementById('userDashboard');
+            const userGroupName = document.getElementById('userGroupName');
+
+            userDashboard.style.display = 'block';
+            userDashboard.style.opacity = '1';
+            userDashboard.style.visibility = 'visible';
+
+            if (username && userGroupName) {
+                userGroupName.textContent = username;
+            }
+
             await initializeCalendar();
             await debouncedUpdateCalendarStatus();
             await loadBookings();
         }
+
+        // 최종 화면 상태 로깅
+        console.log('Final display states:', {
+            loginScreen: document.getElementById('loginScreen').style.display,
+            adminDashboard: document.getElementById('adminDashboard').style.display,
+            userDashboard: document.getElementById('userDashboard').style.display,
+            bookingClosedPage: document.getElementById('bookingClosedPage').style.display
+        });
+
     } catch (error) {
         console.error('Dashboard error:', error);
-        console.error('Error details:', error.stack); // 스택 트레이스 추가
+        console.error('Error details:', error.stack);
         showAlert('오류가 발생했습니다.', 'error');
         logout();
     }
