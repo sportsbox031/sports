@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>스포츠박스 예약시스템</title>
+        <!-- 파비콘 추가 -->
+        <link rel="icon" type="image/x-icon" href="data:image/x-icon;,">
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -663,6 +665,31 @@ let currentUser = null;
 let bookingStatus = {};
 let isLoading = false;
 
+// 개선된 전역 에러 핸들러
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    // 상세한 에러 로깅 (DEBUG 모드일 때)
+    if (DEBUG) {
+        console.error('Error details:', {
+            message: msg,
+            url: url,
+            lineNo: lineNo,
+            columnNo: columnNo,
+            error: error,
+            stack: error?.stack
+        });
+    }
+    
+    // 사용자에게 알림 표시
+    showAlert('예기치 않은 오류가 발생했습니다.', 'error');
+    return false;
+};
+
+// Promise 에러 핸들러
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    showAlert('요청 처리 중 오류가 발생했습니다.', 'error');
+});
+
 // 상태 관련 유틸리티 함수들
 function getStatusClass(status) {
     switch(status) {
@@ -1116,10 +1143,10 @@ async function rejectBookingCancel(bookingId) {
 }
 
 
-// API 요청 헬퍼 함수
+// API 요청 함수 개선
 async function apiRequest(endpoint, options = {}) {
-    showLoading();
     try {
+        showLoading();
         const token = localStorage.getItem('token');
         const defaultHeaders = {
             'Content-Type': 'application/json',
@@ -1134,12 +1161,12 @@ async function apiRequest(endpoint, options = {}) {
             }
         });
 
+        const data = await response.json();
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
@@ -1192,11 +1219,13 @@ async function login(username, password) {
             localStorage.setItem('username', response.username);
             
             showDashboard(response.role);
-            showAlert('로그인되었습니다.', 'success', 3000);
+            showAlert('로그인되었습니다.', 'success');
+        } else {
+            throw new Error(response.message || '로그인에 실패했습니다.');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showAlert(error.message || '로그인에 실패했습니다.', 'error', 3000);
+        throw error;
     }
 }
 
@@ -1872,12 +1901,23 @@ window.addEventListener('scroll', () => {
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
     // 로그인 폼 제출
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        login(username, password);
-    });
+        
+        if (!username || !password) {
+            showAlert('아이디와 비밀번호를 입력해주세요.', 'error');
+            return;
+        }
+        
+        await login(username, password);
+    } catch (error) {
+        console.error('Login error:', error);
+        showAlert(error.message || '로그인에 실패했습니다.', 'error');
+    }
+});
 
     // 회원가입 모달 컨트롤
     document.getElementById('showSignup').addEventListener('click', function() {
@@ -2025,9 +2065,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 // 개발 모드일 때 콘솔 로그 출력
 if (DEBUG) {
     window.onerror = function(msg, url, lineNo, columnNo, error) {
-        console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
-        return false;
-    };
+    console.error('Global error:', {
+        message: msg,
+        url: url,
+        lineNo: lineNo,
+        columnNo: columnNo,
+        error: error
+    });
+    
+    showAlert('예기치 않은 오류가 발생했습니다.', 'error');
+    return false;
+};
 }
 </script>
 </body>
