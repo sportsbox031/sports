@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>스포츠박스 예약시스템</title>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -86,6 +86,25 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+        
+        .grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .calendar-day {
+            height: 3rem;
+            font-size: 0.875rem;
+        }
+        
+        .nav-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
     </style>
 </head>
 
@@ -198,17 +217,35 @@
                         <i class="fas fa-running text-2xl"></i>
                         <span class="text-2xl font-bold">스포츠박스</span>
                     </div>
-                    <div class="flex items-center space-x-6">
-                        <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
-                        <button id="logoutBtn" 
-                            class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>로그아웃</span>
-                        </button>
-                    </div>
-                </div>
+            <!-- 햄버거 메뉴 버튼 (모바일) -->
+            <button class="md:hidden" onclick="toggleUserMenu()">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+
+            <!-- 데스크톱 메뉴 -->
+            <div class="hidden md:flex items-center space-x-6">
+                <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                <button id="logoutBtn" 
+                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
             </div>
-        </nav>
+        </div>
+
+        <!-- 모바일 메뉴 -->
+        <div id="userMobileMenu" class="hidden md:hidden mt-4">
+            <div class="flex flex-col space-y-4">
+                <span id="userGroupNameMobile" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                <button id="logoutBtnMobile" 
+                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
 
         <main class="container mx-auto px-4 py-8">
             <div class="grid md:grid-cols-2 gap-8">
@@ -273,8 +310,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">시작 시간</label>
-                                <select id="startTime" required
-                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                                <input type="time" 
+    id="startTime"
+    required
+    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+/>
                                 </select>
                             </div>
                             <div>
@@ -285,8 +325,13 @@
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">인원</label>
-                                <input type="number" id="people" required min="1"
-                                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                                <input type="tel" 
+    pattern="[0-9]*"
+    inputmode="numeric"
+    id="people"
+    required min="1"
+    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+/>
                                 <p class="text-sm text-gray-500 mt-2">수업 인원을 입력하세요</p>
                             </div>
                             <div>
@@ -350,16 +395,33 @@
                     <i class="fas fa-running text-2xl"></i>
                     <span class="text-2xl font-bold">스포츠박스 관리자</span>
                 </div>
-                <div class="flex items-center space-x-6">
-                    <button id="adminLogoutBtn" 
-                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>로그아웃</span>
-                    </button>
-                </div>
+            <!-- 햄버거 메뉴 버튼 (모바일) -->
+            <button class="md:hidden" onclick="toggleAdminMenu()">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+
+            <!-- 데스크톱 메뉴 -->
+            <div class="hidden md:flex items-center space-x-6">
+                <button id="adminLogoutBtn" 
+                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
             </div>
         </div>
-    </nav>
+
+        <!-- 모바일 메뉴 -->
+        <div id="adminMobileMenu" class="hidden md:hidden mt-4">
+            <div class="flex flex-col space-y-4">
+                <button id="adminLogoutBtnMobile" 
+                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
 
     <!-- 관리자 메인 컨텐츠 -->
     <div class="container mx-auto px-4 py-8">
@@ -671,13 +733,17 @@ function debounce(func, wait) {
 function showLoading() {
     if (!isLoading) {
         isLoading = true;
-        document.getElementById('loading').classList.add('show');
+        const loader = document.getElementById('loading');
+        loader.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 }
 
 function hideLoading() {
     isLoading = false;
-    document.getElementById('loading').classList.remove('show');
+    const loader = document.getElementById('loading');
+    loader.classList.remove('show');
+    document.body.style.overflow = '';
 }
 
 // 알림 메시지 표시
@@ -707,6 +773,17 @@ function showAlert(message, type = 'info', duration = 3000) {
 
 function hideAlert() {
     document.getElementById('alert').classList.add('hidden');
+}
+
+// 모바일 메뉴 토글 함수들 추가
+function toggleUserMenu() {
+    const menu = document.getElementById('userMobileMenu');
+    menu.classList.toggle('hidden');
+}
+
+function toggleAdminMenu() {
+    const menu = document.getElementById('adminMobileMenu');
+    menu.classList.toggle('hidden');
 }
 
 // 남은 예약 횟수 표시 업데이트 함수
@@ -1376,6 +1453,27 @@ async function unblockDate(date) {
 let currentDate = new Date();
 let adminCurrentDate = new Date();
 
+function addTouchHandlers(element) {
+    let touchStartX = 0;
+    
+    element.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+    
+    element.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+                document.getElementById('nextMonth').click();
+            } else {
+                document.getElementById('prevMonth').click();
+            }
+        }
+    });
+}
+
 function initializeCalendar() {
     const calendar = document.getElementById('calendar');
     const currentMonthElement = document.getElementById('currentMonth');
@@ -1391,6 +1489,7 @@ function initializeCalendar() {
     });
 
     renderCalendar(currentDate);
+    addTouchHandlers(document.getElementById('calendar'));
 }
 
 function initializeAdminCalendar() {
@@ -1757,6 +1856,19 @@ async function generateExcelData(year, month) {
     }
 }
 
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    const currentScroll = window.pageYOffset;
+    
+    if (currentScroll > lastScroll) {
+        nav.style.transform = 'translateY(-100%)';
+    } else {
+        nav.style.transform = 'translateY(0)';
+    }
+    lastScroll = currentScroll;
+});
+
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
     // 로그인 폼 제출
@@ -1818,9 +1930,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         createBooking(bookingData);
     });
 
-    // 로그아웃 버튼
+    // 로그아웃 버튼 (데스크톱)
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
     document.getElementById('adminLogoutBtn')?.addEventListener('click', logout);
+
+    // 로그아웃 버튼 (모바일)
+    document.getElementById('logoutBtnMobile')?.addEventListener('click', logout);
+    document.getElementById('adminLogoutBtnMobile')?.addEventListener('click', logout);
+    
+    // 모바일에서 그룹명 동기화
+    const userGroupName = localStorage.getItem('username');
+    if (userGroupName) {
+        document.getElementById('userGroupNameMobile')?.textContent = userGroupName;
+    }
 
     // 날짜별 예약 모달 닫기
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
@@ -1890,6 +2012,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Auto login error:', error);
         }
     }
+
+    // 화면 크기 변경 시 모바일 메뉴 처리
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) { // md 브레이크포인트
+            document.getElementById('userMobileMenu')?.classList.add('hidden');
+            document.getElementById('adminMobileMenu')?.classList.add('hidden');
+        }
+    });
 });
 
 // 개발 모드일 때 콘솔 로그 출력
