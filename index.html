@@ -1103,9 +1103,14 @@ async function login(username, password) {
 
             showAlert('로그인되었습니다.', 'success', 3000);
 
+            // 모든 화면 초기화
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminDashboard').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'none';
+            document.getElementById('bookingClosedPage').style.display = 'none';
+
             // 관리자 로그인
             if (loginResponse.role === 'admin') {
-                document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'block';
                 await initializeAdminDashboard();
                 return;
@@ -1116,22 +1121,18 @@ async function login(username, password) {
             
             // 예약 중지 상태일 때
             if (!settingsResponse.data?.is_active) {
-                document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('bookingClosedPage').style.display = 'block';
                 document.getElementById('userGroupNameClosed').textContent = loginResponse.username;
-                return;
+            } else {
+                // 예약 가능 상태일 때
+                document.getElementById('userDashboard').style.display = 'block';
+                document.getElementById('userGroupName').textContent = loginResponse.username;
+                await Promise.all([
+                    initializeCalendar(),
+                    debouncedUpdateCalendarStatus(),
+                    loadBookings()
+                ]);
             }
-
-            // 예약 가능 상태일 때
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('userDashboard').style.display = 'block';
-            document.getElementById('userGroupName').textContent = loginResponse.username;
-            
-            await Promise.all([
-                initializeCalendar(),
-                debouncedUpdateCalendarStatus(),
-                loadBookings()
-            ]);
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -1150,9 +1151,7 @@ function closeBookingModal() {
 // 대시보드 표시 함수
 async function showDashboard(role) {
     try {
-        console.log('Showing dashboard for role:', role); // 디버깅 로그 추가
-
-        // 먼저 모든 화면을 숨김
+        // 모든 화면 초기화
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminDashboard').style.display = 'none';
         document.getElementById('userDashboard').style.display = 'none';
@@ -1160,36 +1159,29 @@ async function showDashboard(role) {
 
         // 토큰이 없거나 role이 없는 경우 로그인 화면 표시
         if (!localStorage.getItem('token') || !role) {
-            console.log('No token or role, showing login screen'); // 디버깅 로그 추가
             document.getElementById('loginScreen').style.display = 'flex';
             return;
         }
 
+        // 관리자인 경우
         if (role === 'admin') {
-            console.log('Showing admin dashboard'); // 디버깅 로그 추가
             document.getElementById('adminDashboard').style.display = 'block';
             await initializeAdminDashboard();
             return;
         }
 
-        // 일반 사용자는 예약 상태 확인
+        // 일반 사용자인 경우 예약 상태 확인
         const settings = await apiRequest('/api/admin/booking-settings');
-        console.log('Booking settings:', settings); // 디버깅 로그 추가
+        const username = localStorage.getItem('username');
 
         if (!settings.data?.is_active) {
-            console.log('Booking is closed, showing closed page'); // 디버깅 로그 추가
+            // 예약 중지 상태
             document.getElementById('bookingClosedPage').style.display = 'block';
-            const username = localStorage.getItem('username');
-            if (username) {
-                document.getElementById('userGroupNameClosed').textContent = username;
-            }
+            document.getElementById('userGroupNameClosed').textContent = username;
         } else {
-            console.log('Booking is active, showing user dashboard'); // 디버깅 로그 추가
+            // 예약 가능 상태
             document.getElementById('userDashboard').style.display = 'block';
-            const username = localStorage.getItem('username');
-            if (username) {
-                document.getElementById('userGroupName').textContent = username;
-            }
+            document.getElementById('userGroupName').textContent = username;
             await initializeCalendar();
             await debouncedUpdateCalendarStatus();
             await loadBookings();
