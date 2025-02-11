@@ -1790,7 +1790,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     if (storedToken && storedRole) {
         try {
-            const isValid = await validateToken(storedToken);
+            // validateToken을 validateStoredToken으로 수정
+            const isValid = await validateStoredToken();
             if (isValid) {
                 console.log('Token is valid, showing dashboard'); // 디버깅 로그 추가
                 await showDashboard(storedRole);
