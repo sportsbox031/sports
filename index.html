@@ -786,30 +786,6 @@ async function loadBookingSettings() {
     }
 }
 
-async function saveBookingSettings(e) {
-    e.preventDefault();
-    try {
-        const settings = {
-            is_active: document.getElementById('bookingSystemActive').checked,
-            start_date: document.getElementById('bookingStartDate').value,
-            end_date: document.getElementById('bookingEndDate').value,
-            message: document.getElementById('bookingMessage').value
-        };
-
-        const response = await apiRequest('/api/admin/booking-settings', {
-            method: 'POST',
-            body: JSON.stringify(settings)
-        });
-
-        if (response.success) {
-            showAlert('예약 설정이 저장되었습니다.', 'success');
-        }
-    } catch (error) {
-        console.error('Error saving booking settings:', error);
-        showAlert('설정 저장에 실패했습니다.', 'error');
-    }
-}
-
 // 관리자: 대기 중인 예약 목록 로드
 async function loadPendingBookings() {
     try {
@@ -923,17 +899,14 @@ window.rejectUser = async function(userId) {
     }
 }
 
-// 예약 상태 토글 버튼 클릭 핸들러 함수 (새로 추가)
+// 예약 상태 토글 버튼 관련 함수
 async function toggleBookingStatus() {
     const isCurrentlyActive = this.textContent.includes('중지');
     try {
         const response = await apiRequest('/api/admin/booking-settings', {
             method: 'POST',
             body: JSON.stringify({
-                is_active: !isCurrentlyActive,
-                start_date: document.getElementById('bookingStartDate').value,
-                end_date: document.getElementById('bookingEndDate').value,
-                message: document.getElementById('bookingMessage').value
+                is_active: !isCurrentlyActive
             })
         });
 
@@ -1673,13 +1646,6 @@ function initializeAdminDashboard() {
     loadPendingUsers();
     loadPendingBookings();
     
-    // 예약 설정 폼 이벤트 리스너 추가
-    const bookingSettingsForm = document.getElementById('bookingSettingsForm');
-    if (bookingSettingsForm) {
-        bookingSettingsForm.removeEventListener('submit', saveBookingSettings);
-        bookingSettingsForm.addEventListener('submit', saveBookingSettings);
-    }
-
     // 예약 상태 토글 버튼 이벤트 리스너 추가
     const toggleButton = document.getElementById('toggleBookingStatus');
     if (toggleButton) {
