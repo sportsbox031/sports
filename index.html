@@ -500,8 +500,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단체명</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">장소</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                             </tr>
                         </thead>
@@ -842,7 +840,9 @@ async function loadPendingBookings() {
         if (data.success && data.data) {
             tbody.innerHTML = data.data.map(booking => {
                 const statusText = booking.status === 'cancel_pending' ? '취소 요청' : '승인 대기';
-                const statusClass = booking.status === 'cancel_pending' ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800';
+                const statusClass = booking.status === 'cancel_pending' ? 
+                    'bg-orange-100 text-orange-800' : 
+                    'bg-yellow-100 text-yellow-800';
                 
                 const actionButtons = booking.status === 'cancel_pending' 
                     ? `
@@ -871,8 +871,6 @@ async function loadPendingBookings() {
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mb-2 ${statusClass}">
                                 ${statusText}
@@ -883,7 +881,7 @@ async function loadPendingBookings() {
                         </td>
                     </tr>
                 `;
-            }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
+            }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
 
             // 버튼 이벤트 리스너 추가
             const buttons = tbody.querySelectorAll('button[data-action]');
