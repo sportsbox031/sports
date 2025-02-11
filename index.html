@@ -683,7 +683,8 @@ function updateRemainingBookingsDisplay(remainingBookings) {
     if (bookingCountElement) {
         bookingCountElement.textContent = `이번 달 남은 예약 가능 횟수: ${remainingBookings}회`;
         bookingCountElement.className = remainingBookings > 0 ? 
-            'text-sm font-medium text-green-600' : 'text-sm font-medium text-red-600';
+            'px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium' : 
+            'px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm font-medium';
     }
 }
 
@@ -1013,17 +1014,8 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
         const data = await apiRequest('/api/bookings/status');
         bookingStatus = data.data;
         
-        // 현재 월의 예약 횟수 계산
-        const monthlyCount = Object.values(bookingStatus)
-            .filter(status => 
-                status.isCurrentMonth && 
-                status.isMyBooking && 
-                !status.isFullyBlocked && 
-                (!status.isPartiallyBlocked || status.bookingCount < 1)
-            ).length;
-
-        const remainingBookings = 4 - monthlyCount;
-        updateRemainingBookingsDisplay(remainingBookings);
+        // 서버에서 받은 남은 예약 횟수 사용
+        updateRemainingBookingsDisplay(data.remainingBookings);
         
         const role = localStorage.getItem('role');
         if (role === 'admin') {
