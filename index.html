@@ -7,14 +7,20 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* 캘린더 기본 스타일 */
         .calendar-day:hover {
             background-color: rgba(59, 130, 246, 0.1);
             transition: all 0.3s;
         }
+    
         .selected {
             background-color: #3B82F6 !important;
             color: white !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
         }
+    
+        /* 모달 스타일 */
         .modal {
             display: none;
             position: fixed;
@@ -24,56 +30,89 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 50;
+            backdrop-filter: blur(4px);
         }
+    
         .modal.show {
             display: flex;
         }
+    
         .modal-content {
             background-color: white;
             padding: 2rem;
-            border-radius: 0.5rem;
+            border-radius: 1rem;
             width: 100%;
             max-width: 32rem;
             margin: auto;
             position: relative;
             z-index: 51;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
         }
+    
+        /* 캘린더 날짜 상태 스타일 */
+        .calendar-day {
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+    
         .calendar-day.booked {
             background-color: #FEF3C7;
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(251, 191, 36, 0.1);
         }
+    
         .calendar-day.full {
             background-color: #FEE2E2;
             cursor: not-allowed;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
         }
+    
         .calendar-day.past {
             background-color: #F3F4F6;
             cursor: not-allowed;
             color: #9CA3AF;
         }
+    
         .calendar-day.blocked {
             background-color: #4B5563 !important;
             color: white !important;
             cursor: not-allowed;
+            box-shadow: 0 2px 4px rgba(75, 85, 99, 0.2);
         }
+    
         .calendar-day.partially-blocked {
-            background-color: #F97316 !important; /* orange-500 색상 */
+            background-color: #F97316 !important;
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
         }
+    
         .calendar-day.today {
             font-weight: bold;
             background-color: transparent !important;
+            border: 2px solid #3B82F6;
         }
+    
+        /* 관리자 캘린더 특수 스타일 */
         #adminCalendar .calendar-day.blocked,
         #adminCalendar .calendar-day.partially-blocked {
             cursor: pointer;
         }
+    
         .calendar-day.blocked:hover {
             background-color: #374151 !important;
+            transform: translateY(-1px);
         }
+    
         .calendar-day.partially-blocked:hover {
-            background-color: #EA580C !important; /* orange-600 색상 */
+            background-color: #EA580C !important;
+            transform: translateY(-1px);
         }
+    
+        /* 로딩 인디케이터 */
         .loading {
             position: fixed;
             top: 0;
@@ -85,29 +124,39 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            backdrop-filter: blur(4px);
         }
+    
         .loading.show {
             display: flex;
         }
+    
         .spinner {
             width: 50px;
             height: 50px;
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
+            border-top: 5px solid #3B82F6;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
         }
+    
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+    
+        /* 캘린더 컨테이너 */
         .calendar-container {
             position: relative;
             z-index: 1;
         }
+    
         .modal-open {
             pointer-events: none;
         }
+    
+        /* 배지 스타일 */
         .badge {
             position: absolute;
             top: 1px;
@@ -117,10 +166,55 @@
             font-size: 0.75rem;
             font-weight: 600;
             background-color: white;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 2;
         }
+    
         .badge.partial {
             background-color: #FEF3C7;
+        }
+    
+        /* 입력 필드 및 버튼 개선 */
+        input, select, button {
+            transition: all 0.2s ease;
+        }
+    
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+    
+        /* 테이블 스타일 개선 */
+        table {
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+    
+        thead th {
+            background-color: #F9FAFB;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+    
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+    
+        ::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 4px;
+        }
+    
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+    
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
         }
     </style>    
 </head>
@@ -454,24 +548,24 @@
             </div>
 
             <!-- 캘린더 범례 -->
-<div class="flex justify-end space-x-6 pt-6 border-t">
-    <div class="flex items-center">
-        <div class="w-4 h-4 bg-yellow-100 rounded-full mr-2"></div>
-        <span class="text-sm text-gray-600">예약가능</span>
-    </div>
-    <div class="flex items-center">
-        <div class="w-4 h-4" style="background-color: #F97316;" rounded-full mr-2"></div>
-        <span class="text-sm text-gray-600">부분마감</span>
-    </div>
-    <div class="flex items-center">
-        <div class="w-4 h-4 bg-red-100 rounded-full mr-2"></div>
-        <span class="text-sm text-gray-600">예약마감</span>
-    </div>
-    <div class="flex items-center">
-        <div class="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
-        <span class="text-sm text-gray-600">전체마감</span>
-    </div>
-</div>
+            <div class="flex justify-end space-x-6 pt-6 border-t">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-yellow-100 rounded-full mr-2 shadow-sm"></div>
+                    <span class="text-sm text-gray-600 font-medium">예약가능</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 rounded-full mr-2 shadow-sm" style="background-color: #F97316;"></div>
+                    <span class="text-sm text-gray-600 font-medium">부분마감</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-red-100 rounded-full mr-2 shadow-sm"></div>
+                    <span class="text-sm text-gray-600 font-medium">예약마감</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-600 rounded-full mr-2 shadow-sm"></div>
+                    <span class="text-sm text-gray-600 font-medium">전체마감</span>
+                </div>
+            </div>
 
         <!-- 회원가입 승인 및 예약 승인 섹션 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
