@@ -189,29 +189,26 @@
     </div>
 
     <!-- 사용자 대시보드 -->
-    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-2">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <img src="https://raw.githubusercontent.com/sportsbox031/sports/main/%EC%83%88%20%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8.png" 
-                         alt="스포츠박스 로고" 
-                         class="h-12 w-auto object-contain rounded-lg" />
+    <div id="userDashboard" class="hidden">
+        <!-- 네비게이션 바 -->
+        <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-running text-2xl"></i>
                         <span class="text-2xl font-bold">스포츠박스</span>
                     </div>
-                </div>
-                <div class="flex items-center space-x-6">
-                    <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
-                    <button id="logoutBtn" 
-                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>로그아웃</span>
-                    </button>
+                    <div class="flex items-center space-x-6">
+                        <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                        <button id="logoutBtn" 
+                            class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>로그아웃</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
         <main class="container mx-auto px-4 py-8">
             <div class="grid md:grid-cols-2 gap-8">
@@ -347,16 +344,11 @@
 <div id="adminDashboard" class="hidden">
     <!-- 관리자 네비게이션 바 -->
     <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-2">
+        <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <img src="https://raw.githubusercontent.com/sportsbox031/sports/main/%EC%83%88%20%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8.png" 
-                         alt="스포츠박스 로고" 
-                         class="h-12 w-auto object-contain rounded-lg" />
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-running text-2xl"></i>
-                        <span class="text-2xl font-bold">스포츠박스 관리자</span>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-running text-2xl"></i>
+                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
                 </div>
                 <div class="flex items-center space-x-6">
                     <button id="adminLogoutBtn" 
