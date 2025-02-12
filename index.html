@@ -807,6 +807,23 @@ function debounce(func, wait) {
     };
 }
 
+// 모달 관련 유틸리티 함수들
+function showBookingClosedModal(message) {
+    const modal = document.getElementById('bookingClosedModal');
+    const messageEl = document.getElementById('bookingClosedMessage');
+    if (modal && messageEl) {
+        messageEl.textContent = message || '지금은 예약을 받고 있지 않습니다.';
+        modal.style.display = 'flex';
+    }
+}
+
+function hideBookingClosedModal() {
+    const modal = document.getElementById('bookingClosedModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 // 로딩 인디케이터 제어
 function showLoading() {
     if (!isLoading) {
@@ -1263,36 +1280,43 @@ async function showDashboard(role) {
 
             if (!settings.success || !settings.data?.is_active) {
                 // 예약이 중지된 경우
-                showBookingClosedModal(settings.data?.message);
-                
-                // 모달 닫기 이벤트 리스너 설정
-                const closeButton = document.getElementById('closeBookingModal');
-                if (closeButton) {
-                    closeButton.onclick = () => {
-                        hideBookingClosedModal();
-                        logout();
-                    };
-                }
-
-                // ESC 키 이벤트 리스너
-                const escHandler = (e) => {
-                    if (e.key === 'Escape') {
-                        hideBookingClosedModal();
-                        logout();
-                        document.removeEventListener('keydown', escHandler);
-                    }
-                };
-                document.addEventListener('keydown', escHandler);
-
-                // 모달 외부 클릭 이벤트
                 const modal = document.getElementById('bookingClosedModal');
-                if (modal) {
+                const message = document.getElementById('bookingClosedMessage');
+                
+                if (modal && message) {
+                    message.textContent = settings.data?.message || '지금은 예약을 받고 있지 않습니다.';
+                    modal.style.display = 'flex';
+
+                    // 모달 닫기 이벤트 리스너 설정
+                    const closeButton = document.getElementById('closeBookingModal');
+                    if (closeButton) {
+                        closeButton.onclick = () => {
+                            modal.style.display = 'none';
+                            logout();
+                        };
+                    }
+
+                    // ESC 키 이벤트 리스너
+                    const escHandler = (e) => {
+                        if (e.key === 'Escape') {
+                            modal.style.display = 'none';
+                            logout();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    };
+                    document.addEventListener('keydown', escHandler);
+
+                    // 모달 외부 클릭 이벤트
                     modal.onclick = (e) => {
                         if (e.target === modal) {
-                            hideBookingClosedModal();
+                            modal.style.display = 'none';
                             logout();
                         }
                     };
+                } else {
+                    console.error('Modal elements not found');
+                    showAlert('예약이 중지되었습니다.', 'error');
+                    logout();
                 }
             } else {
                 // 예약이 활성화된 경우
