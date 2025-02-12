@@ -1291,19 +1291,19 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
-function toggleDropdown(event, bookingId) {
+window.toggleDropdown = function(event, bookingId) {
     event.stopPropagation();
     closeAllDropdowns();
     document.getElementById(`dropdown-${bookingId}`).classList.toggle('show');
-}
+};
 
-function closeAllDropdowns() {
+window.closeAllDropdowns = function() {
     document.querySelectorAll('.dropdown-content').forEach(dropdown => {
         dropdown.classList.remove('show');
     });
-}
+};
 
-window.confirmForceCancel = async function(event, bookingId) {  // async 추가
+window.confirmForceCancel = async function(event, bookingId) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -1315,23 +1315,17 @@ window.confirmForceCancel = async function(event, bookingId) {  // async 추가
             });
             
             if (response.success) {
-                // 1. 알림 표시
                 showAlert('예약이 강제 취소되었습니다.', 'success', 3000);
                 
-                // 2. 날짜별 예약 목록 새로고침
                 const modalDate = document.getElementById('modalDate').textContent;
                 const dateString = formatDateForAPI(modalDate);
                 await loadDateBookings(dateString);
-                
-                // 3. 캘린더 상태 업데이트 (관리자 및 사용자)
                 await debouncedUpdateCalendarStatus();
                 
-                // 4. 사용자의 예약 목록 새로고침
                 if (typeof loadBookings === 'function') {
                     await loadBookings();
                 }
                 
-                // 5. 남은 예약 횟수 업데이트
                 await updateRemainingBookingsCount();
             }
         } catch (error) {
@@ -1342,7 +1336,7 @@ window.confirmForceCancel = async function(event, bookingId) {  // async 추가
             closeAllDropdowns();
         }
     }
-}
+};
 
 // 캘린더 상태 업데이트 함수
 const debouncedUpdateCalendarStatus = debounce(async () => {
@@ -1953,19 +1947,19 @@ async function loadDateBookings(dateString) {
                                 </span>
                                 ${booking.status === 'approved' ? `
                                     <div class="dropdown ml-2">
-                                        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
-                                                onclick="toggleDropdown(event, ${booking.id})">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <div id="dropdown-${booking.id}" class="dropdown-content">
-                                            <a href="#" class="dropdown-item danger" 
-                                               onclick="confirmForceCancel(event, ${booking.id})">
-                                                <i class="fas fa-ban"></i>
-                                                <span>강제 취소</span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                ` : ''}
+        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
+                onclick="window.toggleDropdown(event, ${booking.id})">
+            <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <div id="dropdown-${booking.id}" class="dropdown-content">
+            <a href="#" class="dropdown-item danger" 
+               onclick="window.confirmForceCancel(event, ${booking.id})">
+                <i class="fas fa-ban"></i>
+                <span>강제 취소</span>
+            </a>
+        </div>
+    </div>
+` : ''}
                             </div>
                         </td>
                     </tr>
