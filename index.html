@@ -650,7 +650,7 @@ thead.sticky {
 
 <!-- 날짜별 예약 내역 모달 -->
 <div id="dateBookingsModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] flex flex-col"> <!-- max-h-[80vh] 추가 -->
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] flex flex-col overflow-hidden">
         <div class="flex justify-between items-center mb-6">
             <h2 id="modalDate" class="text-xl font-bold text-gray-700"></h2>
             <button id="closeDateBookingsModal" class="text-gray-500 hover:text-gray-700">
@@ -668,30 +668,32 @@ thead.sticky {
                 마감 해제
             </button>
         </div>
-        <div class="flex-1 overflow-y-auto min-h-0"> <!-- 수정된 부분 -->
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-white sticky top-0"> <!-- sticky 헤더 추가 -->
-                    <tr>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            단체명
-                        </th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            시간
-                        </th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            장소
-                        </th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            인원
-                        </th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            상태
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="dateBookingsList" class="bg-white divide-y divide-gray-200">
-                </tbody>
-            </table>
+        <div class="flex-1 overflow-y-auto min-h-0"> <!-- 이 부분이 중요합니다 -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 z-10"> <!-- sticky 헤더 추가 -->
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                단체명
+                            </th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                시간
+                            </th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                장소
+                            </th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                인원
+                            </th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                상태
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="dateBookingsList" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
