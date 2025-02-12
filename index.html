@@ -1753,63 +1753,6 @@ document.getElementById('unblockDateBtn').onclick = async () => {
     }
 }
 
-// 날짜별 예약 조회 함수
-async function loadDateBookings(dateString) {
-    try {
-        console.log('Loading bookings for date:', dateString);
-        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
-        console.log('Received booking data:', data);
-
-        const tbody = document.getElementById('dateBookingsList');
-        const modalDate = document.getElementById('modalDate');
-        const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
-        const fullBlockDateBtn = document.getElementById('fullBlockDateBtn');
-        const unblockDateBtn = document.getElementById('unblockDateBtn');
-        
-        modalDate.textContent = formatDate(dateString);
-
-        const dateStatus = bookingStatus[dateString];
-        if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
-            partialBlockDateBtn.classList.add('hidden');
-            fullBlockDateBtn.classList.add('hidden');
-            unblockDateBtn.classList.remove('hidden');
-        } else {
-            partialBlockDateBtn.classList.remove('hidden');
-            fullBlockDateBtn.classList.remove('hidden');
-            unblockDateBtn.classList.add('hidden');
-        }
-
-        if (data.success && data.data) {
-            // 유효한 예약만 필터링 (취소되지 않은 예약)
-            const activeBookings = data.data.filter(booking => 
-                booking.status !== 'cancelled' && 
-                booking.status !== 'rejected' &&
-                booking.status !== 'cancel_pending'
-            );
-
-            tbody.innerHTML = activeBookings.length > 0 
-                ? activeBookings.map(booking => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('')
-                : '<tr><td colspan="5" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
-        }
-    } catch (error) {
-        console.error('Error loading date bookings:', error);
-        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
-    }
-}
-
 // 시간 선택 초기화
 function initializeTimeSelects() {
     const startTimeSelect = document.getElementById('startTime');
@@ -1912,6 +1855,105 @@ function closeDateBookingsModal() {
     const calendarContainer = document.getElementById('adminCalendar').parentElement;
     modal.classList.remove('show');
     calendarContainer.classList.remove('modal-open');
+}
+
+// 날짜별 예약 조회 함수
+async function loadDateBookings(dateString) {
+    try {
+        console.log('Loading bookings for date:', dateString);
+        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
+        console.log('Received booking data:', data);
+
+        const tbody = document.getElementById('dateBookingsList');
+        const modalDate = document.getElementById('modalDate');
+        const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
+        const fullBlockDateBtn = document.getElementById('fullBlockDateBtn');
+        const unblockDateBtn = document.getElementById('unblockDateBtn');
+        
+        modalDate.textContent = formatDate(dateString);
+
+        const dateStatus = bookingStatus[dateString];
+        if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
+            partialBlockDateBtn.classList.add('hidden');
+            fullBlockDateBtn.classList.add('hidden');
+            unblockDateBtn.classList.remove('hidden');
+        } else {
+            partialBlockDateBtn.classList.remove('hidden');
+            fullBlockDateBtn.classList.remove('hidden');
+            unblockDateBtn.classList.add('hidden');
+        }
+
+        if (data.success && data.data) {
+            // 유효한 예약만 필터링 (취소되지 않은 예약)
+            const activeBookings = data.data.filter(booking => 
+                booking.status !== 'cancelled' && 
+                booking.status !== 'rejected' &&
+                booking.status !== 'cancel_pending'
+            );
+
+            tbody.innerHTML = activeBookings.length > 0 
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.status === 'approved' ? `
+                                <button onclick="forceCancel(${booking.id})" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                    강제취소
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading date bookings:', error);
+        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+async function forceCancel(bookingId) {
+    if (!confirm('이 예약을 강제로 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
+            method: 'PUT'
+        });
+
+        if (response.success) {
+            showAlert('예약이 강제 취소되었습니다.', 'success');
+            
+            // 현재 표시된 날짜의 예약 목록 새로고침
+            const currentDate = document.getElementById('modalDate').textContent;
+            await loadDateBookings(formatDateForAPI(currentDate));
+            
+            // 캘린더 상태 업데이트
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Force cancel error:', error);
+        showAlert('예약 강제 취소 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+function formatDateForAPI(dateStr) {
+    const match = dateStr.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
+    if (match) {
+        return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+    }
+    return dateStr;
 }
 
 // 이벤트 리스너 설정
