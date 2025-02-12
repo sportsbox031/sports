@@ -1176,13 +1176,15 @@ async function apiRequest(endpoint, options = {}) {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            console.error('API Error:', errorData);
+            throw new Error(errorData.message || `요청 실패 (${response.status})`);
         }
 
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
+        showAlert(error.message || '서버 연결 중 오류가 발생했습니다.', 'error');
         throw error;
     } finally {
         hideLoading();
@@ -1239,8 +1241,8 @@ function closeBookingModal() {
     logout();  // 로그아웃 처리
 }
 
-// 대시보드 표시 함수
 async function showDashboard(role) {
+    // 모든 화면 숨기기
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
@@ -1253,42 +1255,32 @@ async function showDashboard(role) {
             // 예약 상태 확인
             const settings = await apiRequest('/api/admin/booking-settings');
             
-            if (!settings.data?.is_active) {
-                // 예약이 중지된 경우 모달 표시
+            if (!settings.success || !settings.data?.is_active) {
+                // 예약이 중지된 경우 모달만 표시
                 const modal = document.getElementById('bookingClosedModal');
                 const message = document.getElementById('bookingClosedMessage');
                 const closeButton = document.getElementById('closeBookingModal');
+                
+                if (!modal || !message || !closeButton) {
+                    throw new Error('필수 모달 요소를 찾을 수 없습니다.');
+                }
                 
                 message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 
-                // 모달 닫기 버튼에 이벤트 리스너 추가
-                closeButton.onclick = closeBookingModal;
-                
-                // ESC 키로 모달 닫기
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        closeBookingModal();
-                    }
-                });
-
-                // 모달 외부 클릭 시 닫기
-                modal.onclick = function(e) {
-                    if (e.target === modal) {
-                        closeBookingModal();
-                    }
+                // 모달 닫기 버튼 이벤트
+                closeButton.onclick = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    logout(); // 로그아웃 처리
                 };
+                
+                // ESC 키와 외부 클릭 이벤트는 그대로 유지
             } else {
-                // 예약이 활성화된 경우 대시보드 표시
+                // 예약이 활성화된 경우에만 대시보드 표시
                 document.getElementById('userDashboard').style.display = 'block';
-                if (localStorage.getItem('username')) {
-                    document.getElementById('userGroupName').textContent = 
-                        localStorage.getItem('username');
-                }
-                initializeCalendar();
-                debouncedUpdateCalendarStatus();
-                loadBookings();
+                await initializeUserDashboard();
             }
         } catch (error) {
             console.error('Error checking booking status:', error);
@@ -1753,63 +1745,6 @@ document.getElementById('unblockDateBtn').onclick = async () => {
     }
 }
 
-// 날짜별 예약 조회 함수
-async function loadDateBookings(dateString) {
-    try {
-        console.log('Loading bookings for date:', dateString);
-        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
-        console.log('Received booking data:', data);
-
-        const tbody = document.getElementById('dateBookingsList');
-        const modalDate = document.getElementById('modalDate');
-        const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
-        const fullBlockDateBtn = document.getElementById('fullBlockDateBtn');
-        const unblockDateBtn = document.getElementById('unblockDateBtn');
-        
-        modalDate.textContent = formatDate(dateString);
-
-        const dateStatus = bookingStatus[dateString];
-        if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
-            partialBlockDateBtn.classList.add('hidden');
-            fullBlockDateBtn.classList.add('hidden');
-            unblockDateBtn.classList.remove('hidden');
-        } else {
-            partialBlockDateBtn.classList.remove('hidden');
-            fullBlockDateBtn.classList.remove('hidden');
-            unblockDateBtn.classList.add('hidden');
-        }
-
-        if (data.success && data.data) {
-            // 유효한 예약만 필터링 (취소되지 않은 예약)
-            const activeBookings = data.data.filter(booking => 
-                booking.status !== 'cancelled' && 
-                booking.status !== 'rejected' &&
-                booking.status !== 'cancel_pending'
-            );
-
-            tbody.innerHTML = activeBookings.length > 0 
-                ? activeBookings.map(booking => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('')
-                : '<tr><td colspan="5" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
-        }
-    } catch (error) {
-        console.error('Error loading date bookings:', error);
-        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
-    }
-}
-
 // 시간 선택 초기화
 function initializeTimeSelects() {
     const startTimeSelect = document.getElementById('startTime');
@@ -1851,6 +1786,24 @@ function initializeAdminDashboard() {
     if (toggleButton) {
         toggleButton.removeEventListener('click', toggleBookingStatus);
         toggleButton.addEventListener('click', toggleBookingStatus);
+    }
+}
+
+async function initializeUserDashboard() {
+    try {
+        document.getElementById('userDashboard').style.display = 'block';
+        if (localStorage.getItem('username')) {
+            document.getElementById('userGroupName').textContent = localStorage.getItem('username');
+        }
+        
+        await Promise.all([
+            initializeCalendar(),
+            debouncedUpdateCalendarStatus(),
+            loadBookings()
+        ]);
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -1912,6 +1865,105 @@ function closeDateBookingsModal() {
     const calendarContainer = document.getElementById('adminCalendar').parentElement;
     modal.classList.remove('show');
     calendarContainer.classList.remove('modal-open');
+}
+
+// 날짜별 예약 조회 함수
+async function loadDateBookings(dateString) {
+    try {
+        console.log('Loading bookings for date:', dateString);
+        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
+        console.log('Received booking data:', data);
+
+        const tbody = document.getElementById('dateBookingsList');
+        const modalDate = document.getElementById('modalDate');
+        const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
+        const fullBlockDateBtn = document.getElementById('fullBlockDateBtn');
+        const unblockDateBtn = document.getElementById('unblockDateBtn');
+        
+        modalDate.textContent = formatDate(dateString);
+
+        const dateStatus = bookingStatus[dateString];
+        if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
+            partialBlockDateBtn.classList.add('hidden');
+            fullBlockDateBtn.classList.add('hidden');
+            unblockDateBtn.classList.remove('hidden');
+        } else {
+            partialBlockDateBtn.classList.remove('hidden');
+            fullBlockDateBtn.classList.remove('hidden');
+            unblockDateBtn.classList.add('hidden');
+        }
+
+        if (data.success && data.data) {
+            // 유효한 예약만 필터링 (취소되지 않은 예약)
+            const activeBookings = data.data.filter(booking => 
+                booking.status !== 'cancelled' && 
+                booking.status !== 'rejected' &&
+                booking.status !== 'cancel_pending'
+            );
+
+            tbody.innerHTML = activeBookings.length > 0 
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.status === 'approved' ? `
+                                <button onclick="forceCancel(${booking.id})" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                    강제취소
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading date bookings:', error);
+        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+async function forceCancel(bookingId) {
+    if (!confirm('이 예약을 강제로 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
+            method: 'PUT'
+        });
+
+        if (response.success) {
+            showAlert('예약이 강제 취소되었습니다.', 'success');
+            
+            // 현재 표시된 날짜의 예약 목록 새로고침
+            const currentDate = document.getElementById('modalDate').textContent;
+            await loadDateBookings(formatDateForAPI(currentDate));
+            
+            // 캘린더 상태 업데이트
+            debouncedUpdateCalendarStatus();
+        }
+    } catch (error) {
+        console.error('Force cancel error:', error);
+        showAlert('예약 강제 취소 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+function formatDateForAPI(dateStr) {
+    const match = dateStr.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
+    if (match) {
+        return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+    }
+    return dateStr;
 }
 
 // 이벤트 리스너 설정
