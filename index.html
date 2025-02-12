@@ -148,87 +148,6 @@ thead.sticky {
             transform: translateY(-1px);
         }
     
-/* 드롭다운 메뉴 스타일 */
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: white;
-    min-width: 160px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border-radius: 0.5rem;
-    z-index: 60;
-    margin-top: 0.5rem;
-    border: 1px solid #E5E7EB;
-}
-
-.dropdown-content.show {
-    display: block;
-    animation: dropdownFadeIn 0.2s ease-out;
-}
-
-@keyframes dropdownFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.dropdown-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #4B5563;
-    transition: all 0.2s;
-    font-size: 0.875rem;
-}
-
-.dropdown-item:first-child {
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
-}
-
-.dropdown-item:last-child {
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-}
-
-.dropdown-item:hover {
-    background-color: #F3F4F6;
-}
-
-.dropdown-item.danger {
-    color: #DC2626;
-}
-
-.dropdown-item.danger:hover {
-    background-color: #FEE2E2;
-}
-
-/* 드롭다운 토글 버튼 스타일 */
-.dropdown-toggle {
-    padding: 0.25rem;
-    border-radius: 0.375rem;
-    transition: all 0.2s;
-}
-
-.dropdown-toggle:hover {
-    background-color: #F3F4F6;
-}
-
-
         /* 로딩 인디케이터 */
         .loading {
             position: fixed;
@@ -803,10 +722,10 @@ thead.sticky {
 </div>
 
 <!-- Excel.js 라이브러리 추가 -->
-<script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 
 <!-- 메인 JavaScript 코드 -->
-<script type="module">
+<script>
 // 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
@@ -938,27 +857,6 @@ function updateRemainingBookingsDisplay(remainingBookings) {
             'px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium' : 
             'px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm font-medium';
     }
-}
-
-// 남은 예약 횟수 업데이트 함수도 추가
-async function updateRemainingBookingsCount() {
-    try {
-        const response = await apiRequest('/api/bookings/remaining-count');
-        if (response.success) {
-            updateRemainingBookingsDisplay(response.data.remainingBookings);
-        }
-    } catch (error) {
-        console.error('Error updating remaining bookings count:', error);
-    }
-}
-
-// 날짜 형식 변환 함수 추가
-function formatDateForAPI(dateStr) {
-    const matches = dateStr.match(/(\d+)년\s+(\d+)월\s+(\d+)일/);
-    if (matches) {
-        return `${matches[1]}-${String(matches[2]).padStart(2, '0')}-${String(matches[3]).padStart(2, '0')}`;
-    }
-    return dateStr;
 }
 
 // 관리자: 대기 중인 회원 목록 로드
@@ -1290,53 +1188,6 @@ async function apiRequest(endpoint, options = {}) {
         hideLoading();
     }
 }
-
-window.toggleDropdown = function(event, bookingId) {
-    event.stopPropagation();
-    closeAllDropdowns();
-    document.getElementById(`dropdown-${bookingId}`).classList.toggle('show');
-};
-
-window.closeAllDropdowns = function() {
-    document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-        dropdown.classList.remove('show');
-    });
-};
-
-window.confirmForceCancel = async function(event, bookingId) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    if (confirm('이 예약을 강제 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-        try {
-            showLoading();
-            const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
-                method: 'PUT'
-            });
-            
-            if (response.success) {
-                showAlert('예약이 강제 취소되었습니다.', 'success', 3000);
-                
-                const modalDate = document.getElementById('modalDate').textContent;
-                const dateString = formatDateForAPI(modalDate);
-                await loadDateBookings(dateString);
-                await debouncedUpdateCalendarStatus();
-                
-                if (typeof loadBookings === 'function') {
-                    await loadBookings();
-                }
-                
-                await updateRemainingBookingsCount();
-            }
-        } catch (error) {
-            console.error('Force cancel error:', error);
-            showAlert('강제 취소 처리 중 오류가 발생했습니다.', 'error', 3000);
-        } finally {
-            hideLoading();
-            closeAllDropdowns();
-        }
-    }
-};
 
 // 캘린더 상태 업데이트 함수
 const debouncedUpdateCalendarStatus = debounce(async () => {
@@ -1814,54 +1665,39 @@ function renderAdminCalendar(date) {
             dayElement.title = '지난 날짜';
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
-            dayElement.addEventListener('click', function() {
+            dayElement.addEventListener('click', async function() {
     const modal = document.getElementById('dateBookingsModal');
-    
-    // 비동기 함수를 즉시 실행하는 패턴 사용
-    (async function() {
-        try {
-            await loadDateBookings(dateString);
-            showDateBookingsModal();
+    await loadDateBookings(dateString);
+    showDateBookingsModal();
 
-            // 마감 처리 버튼 이벤트
-            document.getElementById('partialBlockDateBtn').onclick = () => {
-                if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
-                    (async () => {
-                        await blockDate(dateString, 'partial');
-                        await loadDateBookings(dateString);
-                        await debouncedUpdateCalendarStatus();
-                        closeDateBookingsModal();
-                    })();
-                }
-            };
+                // 마감 처리 버튼 이벤트
+                document.getElementById('partialBlockDateBtn').onclick = async () => {
+    if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
+        await blockDate(dateString, 'partial');
+        await loadDateBookings(dateString);
+        debouncedUpdateCalendarStatus();
+        closeDateBookingsModal(); // 팝업 닫기 추가
+    }
+};
 
-            document.getElementById('fullBlockDateBtn').onclick = () => {
-                if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
-                    (async () => {
-                        await blockDate(dateString, 'full');
-                        await loadDateBookings(dateString);
-                        await debouncedUpdateCalendarStatus();
-                        closeDateBookingsModal();
-                    })();
-                }
-            };
+document.getElementById('fullBlockDateBtn').onclick = async () => {
+    if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
+        await blockDate(dateString, 'full');
+        await loadDateBookings(dateString);
+        debouncedUpdateCalendarStatus();
+        closeDateBookingsModal(); // 팝업 닫기 추가
+    }
+};
 
-            document.getElementById('unblockDateBtn').onclick = () => {
-                if (confirm('마감을 해제하시겠습니까?')) {
-                    (async () => {
-                        await unblockDate(dateString);
-                        await loadDateBookings(dateString);
-                        await debouncedUpdateCalendarStatus();
-                        closeDateBookingsModal();
-                    })();
-                }
-            };
-        } catch (error) {
-            console.error('Error handling date click:', error);
-            showAlert('날짜 처리 중 오류가 발생했습니다.', 'error');
-        }
-    })();
-});
+document.getElementById('unblockDateBtn').onclick = async () => {
+    if (confirm('마감을 해제하시겠습니까?')) {
+        await unblockDate(dateString);
+        await loadDateBookings(dateString);
+        debouncedUpdateCalendarStatus();
+        closeDateBookingsModal(); // 팝업 닫기 추가
+    }
+};
+            });
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
@@ -1920,7 +1756,10 @@ function renderAdminCalendar(date) {
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
     try {
+        console.log('Loading bookings for date:', dateString);
         const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
+        console.log('Received booking data:', data);
+
         const tbody = document.getElementById('dateBookingsList');
         const modalDate = document.getElementById('modalDate');
         const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
@@ -1941,6 +1780,7 @@ async function loadDateBookings(dateString) {
         }
 
         if (data.success && data.data) {
+            // 유효한 예약만 필터링 (취소되지 않은 예약)
             const activeBookings = data.data.filter(booking => 
                 booking.status !== 'cancelled' && 
                 booking.status !== 'rejected' &&
@@ -1955,45 +1795,14 @@ async function loadDateBookings(dateString) {
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center justify-between">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                                ${booking.status === 'approved' ? `
-                                    <div class="dropdown ml-2">
-                                        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
-                                                data-booking-id="${booking.id}">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <div id="dropdown-${booking.id}" class="dropdown-content">
-                                            <a href="#" class="dropdown-item danger" data-action="force-cancel" data-booking-id="${booking.id}">
-                                                <i class="fas fa-ban"></i>
-                                                <span>강제 취소</span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
                         </td>
                     </tr>
                 `).join('')
                 : '<tr><td colspan="5" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
-
-            // 이벤트 리스너 추가
-            tbody.querySelectorAll('.dropdown-toggle').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const bookingId = e.currentTarget.dataset.bookingId;
-                    toggleDropdown(e, bookingId);
-                });
-            });
-
-            tbody.querySelectorAll('[data-action="force-cancel"]').forEach(link => {
-                link.addEventListener('click', async (e) => {
-                    const bookingId = e.currentTarget.dataset.bookingId;
-                    await confirmForceCancel(e, bookingId);
-                });
-            });
         }
     } catch (error) {
         console.error('Error loading date bookings:', error);
@@ -2107,10 +1916,6 @@ function closeDateBookingsModal() {
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
-    // 드롭다운 외부 클릭 시 닫기
-        document.addEventListener('click', closeAllDropdowns);
-});
-    
     // 로그인 폼 제출
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
