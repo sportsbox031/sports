@@ -1780,20 +1780,29 @@ async function loadDateBookings(dateString) {
         }
 
         if (data.success && data.data) {
-            tbody.innerHTML = data.data.map(booking => `
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${getStatusClass(booking.status)}">
-                            ${getStatusText(booking.status)}
-                        </span>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+            // 유효한 예약만 필터링 (취소되지 않은 예약)
+            const activeBookings = data.data.filter(booking => 
+                booking.status !== 'cancelled' && 
+                booking.status !== 'rejected' &&
+                booking.status !== 'cancel_pending'
+            );
+
+            tbody.innerHTML = activeBookings.length > 0 
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="5" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading date bookings:', error);
