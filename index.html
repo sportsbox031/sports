@@ -1947,24 +1947,38 @@ async function loadDateBookings(dateString) {
                                 </span>
                                 ${booking.status === 'approved' ? `
                                     <div class="dropdown ml-2">
-        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
-                onclick="window.toggleDropdown(event, ${booking.id})">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
-        <div id="dropdown-${booking.id}" class="dropdown-content">
-            <a href="#" class="dropdown-item danger" 
-               onclick="window.confirmForceCancel(event, ${booking.id})">
-                <i class="fas fa-ban"></i>
-                <span>강제 취소</span>
-            </a>
-        </div>
-    </div>
-` : ''}
+                                        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
+                                                data-booking-id="${booking.id}">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <div id="dropdown-${booking.id}" class="dropdown-content">
+                                            <a href="#" class="dropdown-item danger" data-action="force-cancel" data-booking-id="${booking.id}">
+                                                <i class="fas fa-ban"></i>
+                                                <span>강제 취소</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </td>
                     </tr>
                 `).join('')
                 : '<tr><td colspan="5" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+
+            // 이벤트 리스너 추가
+            tbody.querySelectorAll('.dropdown-toggle').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const bookingId = e.currentTarget.dataset.bookingId;
+                    toggleDropdown(e, bookingId);
+                });
+            });
+
+            tbody.querySelectorAll('[data-action="force-cancel"]').forEach(link => {
+                link.addEventListener('click', async (e) => {
+                    const bookingId = e.currentTarget.dataset.bookingId;
+                    await confirmForceCancel(e, bookingId);
+                });
+            });
         }
     } catch (error) {
         console.error('Error loading date bookings:', error);
