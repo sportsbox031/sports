@@ -956,6 +956,10 @@ async function loadPendingBookings() {
                     'bg-orange-100 text-orange-800' : 
                     'bg-yellow-100 text-yellow-800';
                 
+                // 예약 신청 시점 포맷팅
+                const createdAt = new Date(booking.created_at);
+                const formattedCreatedAt = `${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')} ${String(createdAt.getHours()).padStart(2, '0')}:${String(createdAt.getMinutes()).padStart(2, '0')}`;
+                
                 const actionButtons = booking.status === 'cancel_pending' 
                     ? `
                         <button data-action="approve-cancel" data-booking-id="${booking.id}"
@@ -982,7 +986,12 @@ async function loadPendingBookings() {
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col">
+                                <span>${booking.start_time} - ${booking.end_time}</span>
+                                <span class="text-xs text-gray-500 mt-1">신청: ${formattedCreatedAt}</span>
+                            </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mb-2 ${statusClass}">
                                 ${statusText}
@@ -1024,6 +1033,7 @@ async function loadPendingBookings() {
         showAlert('예약 승인 대기 목록을 불러오는데 실패했습니다.', 'error', 3000);
     }
 }
+
 
 // 관리자: 회원가입 승인/거부 함수
 window.approveUser = async function(userId) {
