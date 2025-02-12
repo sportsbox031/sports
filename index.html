@@ -1380,12 +1380,31 @@ async function cancelBooking(bookingId) {
             return;
         }
 
-        const response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
-            method: 'PUT'
-        });
+        // 먼저 예약 상태 확인
+        const bookingStatus = await apiRequest(`/api/bookings/${bookingId}`);
+        const status = bookingStatus.data.status;
+
+        let response;
+        if (status === 'pending') {
+            // 승인대기 상태일 경우 즉시 취소
+            response = await apiRequest(`/api/bookings/${bookingId}/cancel-pending`, {
+                method: 'PUT'
+            });
+        } else {
+            // 승인완료 상태일 경우 취소 요청
+            response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
+                method: 'PUT'
+            });
+        }
         
         if (response.success) {
-            showAlert('예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
+            showAlert(
+                status === 'pending' ? 
+                '예약이 취소되었습니다.' : 
+                '예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 
+                'success', 
+                3000
+            );
             await loadBookings();
             debouncedUpdateCalendarStatus();
         }
