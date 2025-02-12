@@ -148,6 +148,87 @@ thead.sticky {
             transform: translateY(-1px);
         }
     
+/* 드롭다운 메뉴 스타일 */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 0.5rem;
+    z-index: 60;
+    margin-top: 0.5rem;
+    border: 1px solid #E5E7EB;
+}
+
+.dropdown-content.show {
+    display: block;
+    animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4B5563;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.dropdown-item:first-child {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.dropdown-item:last-child {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #F3F4F6;
+}
+
+.dropdown-item.danger {
+    color: #DC2626;
+}
+
+.dropdown-item.danger:hover {
+    background-color: #FEE2E2;
+}
+
+/* 드롭다운 토글 버튼 스타일 */
+.dropdown-toggle {
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.dropdown-toggle:hover {
+    background-color: #F3F4F6;
+}
+
+
         /* 로딩 인디케이터 */
         .loading {
             position: fixed;
@@ -859,6 +940,27 @@ function updateRemainingBookingsDisplay(remainingBookings) {
     }
 }
 
+// 남은 예약 횟수 업데이트 함수도 추가
+async function updateRemainingBookingsCount() {
+    try {
+        const response = await apiRequest('/api/bookings/remaining-count');
+        if (response.success) {
+            updateRemainingBookingsDisplay(response.data.remainingBookings);
+        }
+    } catch (error) {
+        console.error('Error updating remaining bookings count:', error);
+    }
+}
+
+// 날짜 형식 변환 함수 추가
+function formatDateForAPI(dateStr) {
+    const matches = dateStr.match(/(\d+)년\s+(\d+)월\s+(\d+)일/);
+    if (matches) {
+        return `${matches[1]}-${String(matches[2]).padStart(2, '0')}-${String(matches[3]).padStart(2, '0')}`;
+    }
+    return dateStr;
+}
+
 // 관리자: 대기 중인 회원 목록 로드
 async function loadPendingUsers() {
     try {
@@ -1186,6 +1288,59 @@ async function apiRequest(endpoint, options = {}) {
         throw error;
     } finally {
         hideLoading();
+    }
+}
+
+function toggleDropdown(event, bookingId) {
+    event.stopPropagation();
+    closeAllDropdowns();
+    document.getElementById(`dropdown-${bookingId}`).classList.toggle('show');
+}
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+        dropdown.classList.remove('show');
+    });
+}
+
+async function confirmForceCancel(event, bookingId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (confirm('이 예약을 강제 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        try {
+            showLoading();
+            const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
+                method: 'PUT'
+            });
+            
+            if (response.success) {
+                // 1. 알림 표시
+                showAlert('예약이 강제 취소되었습니다.', 'success', 3000);
+                
+                // 2. 날짜별 예약 목록 새로고침
+                const modalDate = document.getElementById('modalDate').textContent;
+                const dateString = formatDateForAPI(modalDate);
+                await loadDateBookings(dateString);
+                
+                // 3. 캘린더 상태 업데이트 (관리자 및 사용자)
+                await debouncedUpdateCalendarStatus();
+                
+                // 4. 사용자의 예약 목록 새로고침
+                if (typeof loadBookings === 'function') {
+                    await loadBookings();
+                }
+                
+                // 5. 남은 예약 횟수 업데이트
+                await updateRemainingBookingsCount();
+            }
+        } catch (error) {
+            console.error('Force cancel error:', error);
+            showAlert('강제 취소 처리 중 오류가 발생했습니다.', 'error', 3000);
+        } finally {
+            hideLoading();
+            closeAllDropdowns();
+        }
     }
 }
 
@@ -1756,10 +1911,7 @@ document.getElementById('unblockDateBtn').onclick = async () => {
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
     try {
-        console.log('Loading bookings for date:', dateString);
         const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
-        console.log('Received booking data:', data);
-
         const tbody = document.getElementById('dateBookingsList');
         const modalDate = document.getElementById('modalDate');
         const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
@@ -1780,7 +1932,6 @@ async function loadDateBookings(dateString) {
         }
 
         if (data.success && data.data) {
-            // 유효한 예약만 필터링 (취소되지 않은 예약)
             const activeBookings = data.data.filter(booking => 
                 booking.status !== 'cancelled' && 
                 booking.status !== 'rejected' &&
@@ -1795,10 +1946,27 @@ async function loadDateBookings(dateString) {
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${getStatusClass(booking.status)}">
+                                    ${getStatusText(booking.status)}
+                                </span>
+                                ${booking.status === 'approved' ? `
+                                    <div class="dropdown ml-2">
+                                        <button class="dropdown-toggle text-gray-400 hover:text-gray-600 focus:outline-none" 
+                                                onclick="toggleDropdown(event, ${booking.id})">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <div id="dropdown-${booking.id}" class="dropdown-content">
+                                            <a href="#" class="dropdown-item danger" 
+                                               onclick="confirmForceCancel(event, ${booking.id})">
+                                                <i class="fas fa-ban"></i>
+                                                <span>강제 취소</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>
                 `).join('')
@@ -1916,6 +2084,10 @@ function closeDateBookingsModal() {
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
+    // 드롭다운 외부 클릭 시 닫기
+        document.addEventListener('click', closeAllDropdowns);
+});
+    
     // 로그인 폼 제출
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
