@@ -701,7 +701,7 @@ thead.sticky {
 </div>
 
  <!-- 여기에 예약 중지 알림 모달 추가 -->
- <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+ <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50" style="display: none;">
     <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 transform transition-all">
         <div class="text-center">
             <div class="mb-4">
@@ -711,7 +711,7 @@ thead.sticky {
                 지금은 예약 기간이 아닙니다.
             </h3>
             <p id="bookingClosedMessage" class="text-gray-600 mb-8">
-                20일에 예약이 시작됩니다.
+                관리자에게 문의해주세요.
             </p>
             <button id="closeBookingModal" 
                 class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
@@ -720,6 +720,7 @@ thead.sticky {
         </div>
     </div>
 </div>
+
 
 <!-- Excel.js 라이브러리 추가 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
@@ -1166,6 +1167,8 @@ async function apiRequest(endpoint, options = {}) {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
+        console.log(`Making API request to: ${endpoint}`); // 디버깅용
+        
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
@@ -1174,13 +1177,13 @@ async function apiRequest(endpoint, options = {}) {
             }
         });
 
+        const data = await response.json();
+        console.log(`API Response for ${endpoint}:`, data); // 디버깅용
+
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API Error:', errorData);
-            throw new Error(errorData.message || `요청 실패 (${response.status})`);
+            throw new Error(data.message || `요청 실패 (${response.status})`);
         }
 
-        const data = await response.json();
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
@@ -1242,48 +1245,66 @@ function closeBookingModal() {
 }
 
 async function showDashboard(role) {
-    // 모든 화면 숨기기
+    // 모든 화면 초기 숨김
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
 
     if (role === 'admin') {
+        // 관리자의 경우
         document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
+        // 일반 사용자의 경우
         try {
-            // 예약 상태 확인
+            console.log('Checking booking settings...'); // 디버깅용
             const settings = await apiRequest('/api/admin/booking-settings');
-            
+            console.log('Booking settings response:', settings); // 디버깅용
+
             if (!settings.success || !settings.data?.is_active) {
-                // 예약이 중지된 경우 모달만 표시
-                const modal = document.getElementById('bookingClosedModal');
-                const message = document.getElementById('bookingClosedMessage');
+                // 예약이 중지된 경우
+                showBookingClosedModal(settings.data?.message);
+                
+                // 모달 닫기 이벤트 리스너 설정
                 const closeButton = document.getElementById('closeBookingModal');
-                
-                if (!modal || !message || !closeButton) {
-                    throw new Error('필수 모달 요소를 찾을 수 없습니다.');
+                if (closeButton) {
+                    closeButton.onclick = () => {
+                        hideBookingClosedModal();
+                        logout();
+                    };
                 }
-                
-                message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                
-                // 모달 닫기 버튼 이벤트
-                closeButton.onclick = () => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    logout(); // 로그아웃 처리
+
+                // ESC 키 이벤트 리스너
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        hideBookingClosedModal();
+                        logout();
+                        document.removeEventListener('keydown', escHandler);
+                    }
                 };
-                
-                // ESC 키와 외부 클릭 이벤트는 그대로 유지
+                document.addEventListener('keydown', escHandler);
+
+                // 모달 외부 클릭 이벤트
+                const modal = document.getElementById('bookingClosedModal');
+                if (modal) {
+                    modal.onclick = (e) => {
+                        if (e.target === modal) {
+                            hideBookingClosedModal();
+                            logout();
+                        }
+                    };
+                }
             } else {
-                // 예약이 활성화된 경우에만 대시보드 표시
+                // 예약이 활성화된 경우
                 document.getElementById('userDashboard').style.display = 'block';
+                if (localStorage.getItem('username')) {
+                    document.getElementById('userGroupName').textContent = 
+                        localStorage.getItem('username');
+                }
                 await initializeUserDashboard();
             }
         } catch (error) {
-            console.error('Error checking booking status:', error);
+            console.error('Dashboard initialization error:', error);
             showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
             logout();
         }
@@ -1298,6 +1319,7 @@ function logout() {
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('userDashboard').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
+    hideBookingClosedModal(); // 모달이 표시되어 있을 경우 숨김
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
 }
@@ -2049,7 +2071,34 @@ document.addEventListener('keydown', function(e) {
         closeDateBookingsModal();  
         document.getElementById('signupModal').classList.remove('show');
     }
-});
+
+ // 예약 중지 모달이 열려있는 경우 처리 추가
+ const bookingClosedModal = document.getElementById('bookingClosedModal');
+        if (bookingClosedModal && bookingClosedModal.style.display === 'flex') {
+            hideBookingClosedModal();
+            logout();
+        }
+    });
+
+// 예약 중지 모달 관련 이벤트 리스너 추가
+const bookingClosedModal = document.getElementById('bookingClosedModal');
+const closeModalBtn = document.getElementById('closeBookingModal');
+
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', function() {
+        hideBookingClosedModal();
+        logout();
+    });
+}
+
+if (bookingClosedModal) {
+    bookingClosedModal.addEventListener('click', function(e) {
+        if (e.target === bookingClosedModal) {
+            hideBookingClosedModal();
+            logout();
+        }
+    });
+}    
 
     // 엑셀 다운로드 버튼
     document.getElementById('downloadExcel')?.addEventListener('click', async function() {
@@ -2095,8 +2144,8 @@ document.addEventListener('keydown', function(e) {
                 showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info', 3000);
             }
         } catch (error) {
-            logout();
             console.error('Auto login error:', error);
+            logout();
         }
     }
 });
