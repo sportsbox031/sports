@@ -23,9 +23,20 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
         }
         .modal.show {
             display: flex;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 32rem;
+            margin: auto;
+            position: relative;
+            z-index: 51;
         }
         .calendar-day.booked {
             background-color: #FEF3C7;
@@ -44,6 +55,10 @@
             background-color: #4B5563 !important;
             color: white !important;
             cursor: not-allowed;
+        }
+        .calendar-day.partially-blocked {
+            background-color: #FCD34D !important; /* amber-300 색상 */
+            cursor: pointer;
         }
         .calendar-day.today {
             font-weight: bold;
@@ -86,7 +101,28 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-    </style>
+        .calendar-container {
+            position: relative;
+            z-index: 1;
+        }
+        .modal-open {
+            pointer-events: none;
+        }
+        .badge {
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .badge.partial {
+            background-color: #FEF3C7;
+        }
+    </style>    
 </head>
 
 <body class="bg-gray-100 min-h-screen">
@@ -424,6 +460,10 @@
                     <span class="text-sm text-gray-600">예약가능</span>
                 </div>
                 <div class="flex items-center">
+                    <div class="w-4 h-4 bg-amber-300 rounded-full mr-2"></div>
+                    <span class="text-sm text-gray-600">부분마감</span>
+                </div>
+                <div class="flex items-center">
                     <div class="w-4 h-4 bg-red-100 rounded-full mr-2"></div>
                     <span class="text-sm text-gray-600">예약마감</span>
                 </div>
@@ -432,7 +472,6 @@
                     <span class="text-sm text-gray-600">전체마감</span>
                 </div>
             </div>
-        </div>
 
         <!-- 회원가입 승인 및 예약 승인 섹션 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1466,18 +1505,18 @@ function renderAdminCalendar(date) {
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
             dayElement.addEventListener('click', async function() {
-                const modal = document.getElementById('dateBookingsModal');
-                await loadDateBookings(dateString);
-                modal.classList.add('show');
+    const modal = document.getElementById('dateBookingsModal');
+    await loadDateBookings(dateString);
+    showDateBookingsModal();
 
                 // 마감 처리 버튼 이벤트
                 document.getElementById('partialBlockDateBtn').onclick = async () => {
-                    if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
-                        await blockDate(dateString, 'partial');
-                        await loadDateBookings(dateString);
-                        debouncedUpdateCalendarStatus();
-                    }
-                };
+        if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
+            await blockDate(dateString, 'partial');
+            await loadDateBookings(dateString);
+            debouncedUpdateCalendarStatus();
+        }
+    };
 
                 document.getElementById('fullBlockDateBtn').onclick = async () => {
                     if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
@@ -1688,6 +1727,20 @@ async function generateExcelData(year, month) {
     }
 }
 
+function showDateBookingsModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    const calendarContainer = document.getElementById('adminCalendar').parentElement;
+    modal.classList.add('show');
+    calendarContainer.classList.add('modal-open');
+}
+
+function closeDateBookingsModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    const calendarContainer = document.getElementById('adminCalendar').parentElement;
+    modal.classList.remove('show');
+    calendarContainer.classList.remove('modal-open');
+}
+
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
     // 로그인 폼 제출
@@ -1755,23 +1808,23 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 날짜별 예약 모달 닫기
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', function() {
-        document.getElementById('dateBookingsModal').classList.remove('show');
-    });
+    closeDateBookingsModal();  
+});
 
     // 날짜별 예약 모달 외부 클릭 시 닫기
     document.getElementById('dateBookingsModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('show');
-        }
-    });
+    if (e.target === this) {
+        closeDateBookingsModal(); 
+    }
+});
 
     // ESC 키로 모달 닫기
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.getElementById('dateBookingsModal').classList.remove('show');
-            document.getElementById('signupModal').classList.remove('show');
-        }
-    });
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDateBookingsModal();  
+        document.getElementById('signupModal').classList.remove('show');
+    }
+});
 
     // 엑셀 다운로드 버튼
     document.getElementById('downloadExcel')?.addEventListener('click', async function() {
