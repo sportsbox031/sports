@@ -1457,8 +1457,11 @@ function renderAdminCalendar(date) {
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateStatus = bookingStatus[dateString];
 
+        // 기본 클래스 설정 (모든 날짜 요소에 공통 적용)
+        let baseClass = 'calendar-day h-12 flex items-center justify-center relative';
+
         if (selectedDateObj < today) {
-            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+            dayElement.className = `${baseClass} past`;
             dayElement.title = '지난 날짜';
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
@@ -1495,28 +1498,35 @@ function renderAdminCalendar(date) {
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
-                dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.className = `${baseClass} blocked cursor-pointer`;
                 dayElement.title = '전체 마감 (클릭하여 해제)';
             } else if (dateStatus?.isPartiallyBlocked) {
-                dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
                 dayElement.title = '부분 마감 (1개 예약만 가능)';
+                dayElement.style.backgroundColor = '#FCD34D'; // 부분마감 색상 (amber-300)
             } else if (dateStatus?.isFull) {
-                dayElement.className = 'calendar-day full h-12 flex items-center justify-center cursor-pointer';
+                dayElement.className = `${baseClass} full cursor-pointer`;
                 dayElement.title = '예약 마감';
             } else if (dateStatus?.hasBooking) {
-                dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+                dayElement.className = `${baseClass} booked cursor-pointer`;
                 dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
             } else {
-                dayElement.className = 
-                    'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
                 dayElement.title = '클릭하여 마감 설정';
             }
 
-            // 예약 수 표시
+            // 예약 수 표시 개선
             if (dateStatus?.bookingCount > 0) {
-                const countBadge = document.createElement('span');
-                countBadge.className = 'text-xs font-semibold';
-                countBadge.textContent = ` (${dateStatus.bookingCount})`;
+                const countBadge = document.createElement('div');
+                countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-white shadow-sm';
+                
+                if (dateStatus.isPartiallyBlocked) {
+                    countBadge.textContent = `${dateStatus.bookingCount}/1`;
+                    countBadge.style.backgroundColor = '#FEF3C7'; // amber-100
+                } else {
+                    countBadge.textContent = `${dateStatus.bookingCount}`;
+                }
+                
                 dayElement.appendChild(countBadge);
             }
         }
@@ -1524,6 +1534,7 @@ function renderAdminCalendar(date) {
         // 날짜 텍스트 추가
         const dateText = document.createElement('span');
         dateText.textContent = day;
+        dateText.className = 'z-10'; // 날짜가 배지 아래에 가려지지 않도록
         dayElement.insertBefore(dateText, dayElement.firstChild);
 
         // 오늘 날짜 강조
