@@ -30,7 +30,8 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 50;
-    padding: 1rem; /* 패딩 추가 */
+    overflow-y: auto; /* 전체 모달에 스크롤 추가 */
+    padding: 2rem;
 }
 
 .modal.show {
@@ -43,10 +44,11 @@
     border-radius: 1rem;
     width: 100%;
     max-width: 32rem;
-    margin: auto;
+    margin: 2rem auto;
     position: relative;
     z-index: 51;
     max-height: 80vh; /* 최대 높이 설정 */
+    overflow-y: auto; /* 내용이 넘칠 경우 스크롤 */
     display: flex;
     flex-direction: column;
 }
