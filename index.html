@@ -1303,7 +1303,7 @@ function closeAllDropdowns() {
     });
 }
 
-async function confirmForceCancel(event, bookingId) {
+window.confirmForceCancel = async function(event, bookingId) {  // async 추가
     event.preventDefault();
     event.stopPropagation();
     
