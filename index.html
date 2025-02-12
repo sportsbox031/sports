@@ -192,11 +192,16 @@
     <div id="userDashboard" class="hidden">
         <!-- 네비게이션 바 -->
         <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-4">
+            <div class="container mx-auto px-4 py-2"> <!-- py-4를 py-2로 수정하여 높이 조절 -->
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-running text-2xl"></i>
-                        <span class="text-2xl font-bold">스포츠박스</span>
+                    <div class="flex items-center space-x-4">
+                        <img src="https://raw.githubusercontent.com/sportsbox031/sports/main/logo-1.jpg" 
+                             alt="스포츠박스 로고" 
+                             class="h-12 w-auto object-contain rounded-lg" /> <!-- 로고 추가 -->
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-running text-2xl"></i>
+                            <span class="text-2xl font-bold">스포츠박스</span>
+                        </div>
                     </div>
                     <div class="flex items-center space-x-6">
                         <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
@@ -344,11 +349,16 @@
 <div id="adminDashboard" class="hidden">
     <!-- 관리자 네비게이션 바 -->
     <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
+        <div class="container mx-auto px-4 py-2"> <!-- py-4를 py-2로 수정하여 높이 조절 -->
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-running text-2xl"></i>
-                    <span class="text-2xl font-bold">스포츠박스 관리자</span>
+                <div class="flex items-center space-x-4">
+                    <img src="https://raw.githubusercontent.com/sportsbox031/sports/main/logo-1.jpg" 
+                         alt="스포츠박스 로고" 
+                         class="h-12 w-auto object-contain rounded-lg" /> <!-- 로고 추가 -->
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-running text-2xl"></i>
+                        <span class="text-2xl font-bold">스포츠박스 관리자</span>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-6">
                     <button id="adminLogoutBtn" 
