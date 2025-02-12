@@ -1814,39 +1814,48 @@ function renderAdminCalendar(date) {
             dayElement.title = '지난 날짜';
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
-            dayElement.addEventListener('click', async function() {
-    const modal = document.getElementById('dateBookingsModal');
-    await loadDateBookings(dateString);
-    showDateBookingsModal();
+            dayElement.addEventListener('click', function() {
+    const handleDateClick = async () => {
+        try {
+            const modal = document.getElementById('dateBookingsModal');
+            await loadDateBookings(dateString);
+            showDateBookingsModal();
 
-                // 마감 처리 버튼 이벤트
-                document.getElementById('partialBlockDateBtn').onclick = async () => {
-    if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
-        await blockDate(dateString, 'partial');
-        await loadDateBookings(dateString);
-        debouncedUpdateCalendarStatus();
-        closeDateBookingsModal(); // 팝업 닫기 추가
-    }
-};
+            // 마감 처리 버튼 이벤트
+            document.getElementById('partialBlockDateBtn').onclick = async () => {
+                if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
+                    await blockDate(dateString, 'partial');
+                    await loadDateBookings(dateString);
+                    debouncedUpdateCalendarStatus();
+                    closeDateBookingsModal();
+                }
+            };
 
-document.getElementById('fullBlockDateBtn').onclick = async () => {
-    if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
-        await blockDate(dateString, 'full');
-        await loadDateBookings(dateString);
-        debouncedUpdateCalendarStatus();
-        closeDateBookingsModal(); // 팝업 닫기 추가
-    }
-};
+            document.getElementById('fullBlockDateBtn').onclick = async () => {
+                if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
+                    await blockDate(dateString, 'full');
+                    await loadDateBookings(dateString);
+                    debouncedUpdateCalendarStatus();
+                    closeDateBookingsModal();
+                }
+            };
 
-document.getElementById('unblockDateBtn').onclick = async () => {
-    if (confirm('마감을 해제하시겠습니까?')) {
-        await unblockDate(dateString);
-        await loadDateBookings(dateString);
-        debouncedUpdateCalendarStatus();
-        closeDateBookingsModal(); // 팝업 닫기 추가
-    }
-};
-            });
+            document.getElementById('unblockDateBtn').onclick = async () => {
+                if (confirm('마감을 해제하시겠습니까?')) {
+                    await unblockDate(dateString);
+                    await loadDateBookings(dateString);
+                    debouncedUpdateCalendarStatus();
+                    closeDateBookingsModal();
+                }
+            };
+        } catch (error) {
+            console.error('Error handling date click:', error);
+            showAlert('날짜 처리 중 오류가 발생했습니다.', 'error');
+        }
+    };
+
+    handleDateClick();
+});
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
