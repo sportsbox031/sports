@@ -700,29 +700,6 @@ thead.sticky {
     </div>
 </div>
 
- <!-- 여기에 예약 중지 알림 모달 추가 -->
- <div id="bookingClosedModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-    <div class="min-h-screen px-4 text-center flex items-center justify-center">
-        <div class="inline-block w-full max-w-md p-6 my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-            <div class="text-center">
-                <div class="mb-4">
-                    <i class="fas fa-clock text-5xl text-blue-600"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">
-                    지금은 예약 기간이 아닙니다
-                </h3>
-                <p id="bookingClosedMessage" class="text-gray-600 mb-8">
-                    지금은 예약을 받고 있지 않습니다.
-                </p>
-                <button id="closeBookingModal" 
-                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-                    확인
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Excel.js 라이브러리 추가 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 
@@ -1233,14 +1210,6 @@ async function login(username, password) {
     }
 }
 
-// 모달 닫기 함수 추가
-function closeBookingModal() {
-    const modal = document.getElementById('bookingClosedModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    logout();  // 로그아웃 처리
-}
-
 // 대시보드 표시 함수
 async function showDashboard(role) {
     document.getElementById('loginScreen').style.display = 'none';
@@ -1252,50 +1221,21 @@ async function showDashboard(role) {
         initializeAdminDashboard();
     } else {
         try {
-            // 예약 상태 확인
-            const settings = await apiRequest('/api/admin/booking-settings');
+            const settings = await apiRequest('/api/booking-settings');
+            document.getElementById('userDashboard').style.display = 'block';
             
-            if (!settings.data?.is_active) {
-                // 예약이 중지된 경우 모달 표시
-                const modal = document.getElementById('bookingClosedModal');
-                const message = document.getElementById('bookingClosedMessage');
-                const closeButton = document.getElementById('closeBookingModal');
-                
-                message.textContent = settings.data?.message || '지금은 예약 기간이 아닙니다.';
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                
-                // 모달 닫기 버튼에 이벤트 리스너 추가
-                closeButton.onclick = closeBookingModal;
-                
-                // ESC 키로 모달 닫기
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        closeBookingModal();
-                    }
-                });
-
-                // 모달 외부 클릭 시 닫기
-                modal.onclick = function(e) {
-                    if (e.target === modal) {
-                        closeBookingModal();
-                    }
-                };
-            } else {
-                // 예약이 활성화된 경우 대시보드 표시
-                document.getElementById('userDashboard').style.display = 'block';
-                if (localStorage.getItem('username')) {
-                    document.getElementById('userGroupName').textContent = 
-                        localStorage.getItem('username');
-                }
-                initializeCalendar();
-                debouncedUpdateCalendarStatus();
-                loadBookings();
+            if (localStorage.getItem('username')) {
+                document.getElementById('userGroupName').textContent = 
+                    localStorage.getItem('username');
             }
+
+            // 예약 상태에 따른 UI 업데이트
+            updateUserDashboardState(settings.data?.is_active);
+            await initializeUserDashboard();
+
         } catch (error) {
-            console.error('Error checking booking status:', error);
+            console.error('Dashboard initialization error:', error);
             showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
-            logout();
         }
     }
 }
@@ -1310,6 +1250,39 @@ function logout() {
     document.getElementById('loginScreen').style.display = 'flex';
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
+}
+
+function updateUserDashboardState(isActive) {
+    const calendar = document.getElementById('calendar');
+    const bookingForm = document.getElementById('bookingForm');
+    const message = document.createElement('div');
+    
+    if (!isActive) {
+        // 달력과 예약 폼 비활성화
+        calendar.style.opacity = '0.5';
+        calendar.style.pointerEvents = 'none';
+        
+        bookingForm.style.opacity = '0.5';
+        bookingForm.style.pointerEvents = 'none';
+        
+        // 예약 중지 메시지 표시
+        message.className = 'bg-red-100 text-red-700 p-4 rounded-lg mb-4';
+        message.textContent = '현재 예약이 중지된 상태입니다.';
+        bookingForm.parentNode.insertBefore(message, bookingForm);
+    } else {
+        // 달력과 예약 폼 활성화
+        calendar.style.opacity = '1';
+        calendar.style.pointerEvents = 'auto';
+        
+        bookingForm.style.opacity = '1';
+        bookingForm.style.pointerEvents = 'auto';
+        
+        // 기존 메시지 제거
+        const existingMessage = bookingForm.parentNode.querySelector('.bg-red-100');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+    }
 }
 
 async function validateStoredToken() {
