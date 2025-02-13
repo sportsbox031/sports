@@ -1509,14 +1509,23 @@ function initializeCalendar() {
     const calendar = document.getElementById('calendar');
     const currentMonthElement = document.getElementById('currentMonth');
 
+    // 현재 날짜 상태 초기화
+    if (!currentDate) {
+        currentDate = new Date();
+    }
+
     document.getElementById('prevMonth').addEventListener('click', function() {
-        currentDate.setMonth(currentDate.getMonth() - 1);
+        // 이전 달로 이동 (한 달씩)
+        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
         renderCalendar(currentDate);
+        debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
     });
 
     document.getElementById('nextMonth').addEventListener('click', function() {
-        currentDate.setMonth(currentDate.getMonth() + 1);
+        // 다음 달로 이동 (한 달씩)
+        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
         renderCalendar(currentDate);
+        debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
     });
 
     renderCalendar(currentDate);
@@ -1532,14 +1541,23 @@ function initializeAdminCalendar() {
     const adminCalendar = document.getElementById('adminCalendar');
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
 
+    // 현재 날짜 상태 초기화
+    if (!adminCurrentDate) {
+        adminCurrentDate = new Date();
+    }
+
     document.getElementById('adminPrevMonth').addEventListener('click', function() {
-        adminCurrentDate.setMonth(adminCurrentDate.getMonth() - 1);
+        // 이전 달로 이동 (한 달씩)
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() - 1, 1);
         renderAdminCalendar(adminCurrentDate);
+        debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
     });
 
     document.getElementById('adminNextMonth').addEventListener('click', function() {
-        adminCurrentDate.setMonth(adminCurrentDate.getMonth() + 1);
+        // 다음 달로 이동 (한 달씩)
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() + 1, 1);
         renderAdminCalendar(adminCurrentDate);
+        debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
     });
 
     renderAdminCalendar(adminCurrentDate);
