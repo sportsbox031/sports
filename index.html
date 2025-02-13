@@ -1593,19 +1593,30 @@ function initializeAdminCalendar() {
     renderAdminCalendar(adminCurrentDate);
 }
 
-// 날짜 선택 핸들러 추가
-function addDateClickHandler(element, dateString) {
+// 일반 사용자용 날짜 클릭 핸들러
+function addDateClickHandler(element, year, month, day) {
     element.addEventListener('click', function() {
         const selected = document.querySelector('.selected');
         if (selected) {
             selected.classList.remove('selected');
         }
         element.classList.add('selected');
-        
-        // dateString은 'YYYY-MM-DD' 형식이므로 이를 변환
-        const date = new Date(dateString);
-        document.getElementById('selectedDate').value = 
-            `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+    });
+}
+
+// 관리자용 날짜 클릭 핸들러
+function addAdminDateClickHandler(element, dateString) {
+    element.addEventListener('click', async () => {
+        if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            console.error('Invalid date format:', dateString);
+            showAlert('올바르지 않은 날짜 형식입니다.', 'error');
+            return;
+        }
+        currentSelectedDate = dateString;
+        await loadDateBookings(dateString);
+        showDateBookingsModal();
+        setupModalButtons(dateString);
     });
 }
 
@@ -1641,44 +1652,43 @@ function renderCalendar(date) {
         const dateStatus = bookingStatus[dateString];
 
         if (selectedDateObj < today) {
-    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-    dayElement.title = '지난 날짜';
-} else if (dateStatus?.isFullyBlocked) {
-    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-    dayElement.title = '전체 마감';
-} else if (dateStatus?.isPartiallyBlocked) {
-    // 부분 마감이어도 일반 예약 가능 상태처럼 보이도록 수정
-    if (dateStatus.bookingCount < 1) {
-        dayElement.className = 
-            'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-        dayElement.title = '예약 가능';
-        addDateClickHandler(dayElement, dateString);
-    } else {
-        dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-        dayElement.title = '예약 마감';
-    }
-} else if (dateStatus?.isFull) {
-    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감';
-} else if (dateStatus?.hasBooking) {
-    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-    addDateClickHandler(dayElement, dateString);
-} else {
-    dayElement.className = 
-        'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-    dayElement.title = '예약 가능';
-    addDateClickHandler(dayElement, dateString);
-}
+            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+            dayElement.title = '지난 날짜';
+        } else if (dateStatus?.isFullyBlocked) {
+            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+            dayElement.title = '전체 마감';
+        } else if (dateStatus?.isPartiallyBlocked) {
+            if (dateStatus.bookingCount < 1) {
+                dayElement.className = 
+                    'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+                dayElement.title = '예약 가능';
+                addDateClickHandler(dayElement, year, month, currentDay);
+            } else {
+                dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+                dayElement.title = '예약 마감';
+            }
+        } else if (dateStatus?.isFull) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감';
+        } else if (dateStatus?.hasBooking) {
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            addDateClickHandler(dayElement, year, month, currentDay);
+        } else {
+            dayElement.className = 
+                'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+            dayElement.title = '예약 가능';
+            addDateClickHandler(dayElement, year, month, currentDay);
+        }
 
-dayElement.textContent = currentDay;
+        dayElement.textContent = currentDay;
 
-if (
-    !dateStatus?.isFullyBlocked && 
-    currentDay === today.getDate() &&
-    currentDate.getMonth() === today.getMonth() &&
-    currentDate.getFullYear() === today.getFullYear()
-) {
+        if (
+            !dateStatus?.isFullyBlocked && 
+            currentDay === today.getDate() &&
+            currentDate.getMonth() === today.getMonth() &&
+            currentDate.getFullYear() === today.getFullYear()
+        ) {
             dayElement.classList.add('font-bold');
         }
 
@@ -1730,9 +1740,9 @@ function renderAdminCalendar(date) {
             dayElement.style.backgroundColor = dayConfig.backgroundColor;
         }
 
-        // 클릭 이벤트 추가
+        // 클릭 이벤트 추가 (관리자용으로 변경)
         if (selectedDateObj >= today) {
-            addDateClickHandler(dayElement, dateString);
+            addAdminDateClickHandler(dayElement, dateString);
         }
 
         // 예약 수 배지 추가
@@ -1807,23 +1817,6 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
         className: `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`,
         title: '클릭하여 마감 설정'
     };
-}
-
-// 날짜 클릭 이벤트 핸들러 추가
-function addDateClickHandler(element, dateString) {
-    element.addEventListener('click', async () => {
-        // dateString이 올바른 형식(YYYY-MM-DD)인지 확인
-        if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            console.error('Invalid date format:', dateString);
-            showAlert('올바르지 않은 날짜 형식입니다.', 'error');
-            return;
-        }
-
-        currentSelectedDate = dateString;
-        await loadDateBookings(dateString);
-        showDateBookingsModal();
-        setupModalButtons(dateString);
-    });
 }
 
 // 모달 버튼 설정
