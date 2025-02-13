@@ -1424,28 +1424,34 @@ async function cancelBooking(bookingId) {
             return;
         }
 
-        // 먼저 예약 상태 확인
-        const bookingStatus = await apiRequest(`/api/bookings/${bookingId}`);
-        const status = bookingStatus.data.status;
+        // 예약 상태 확인
+        const response = await apiRequest(`/api/bookings/${bookingId}`);
+        if (!response.success) {
+            throw new Error(response.message);
+        }
 
-        let response;
-        if (status === 'pending') {
+        const booking = response.data;
+        let cancelResponse;
+
+        if (booking.status === 'pending') {
             // 승인대기 상태일 경우 즉시 취소
-            response = await apiRequest(`/api/bookings/${bookingId}/cancel-pending`, {
+            cancelResponse = await apiRequest(`/api/bookings/${bookingId}/cancel-pending`, {
+                method: 'PUT'
+            });
+        } else if (booking.status === 'approved') {
+            // 승인완료 상태일 경우 취소 요청
+            cancelResponse = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
                 method: 'PUT'
             });
         } else {
-            // 승인완료 상태일 경우 취소 요청
-            response = await apiRequest(`/api/bookings/${bookingId}/cancel`, {
-                method: 'PUT'
-            });
+            throw new Error('취소할 수 없는 예약 상태입니다.');
         }
-        
-        if (response.success) {
+
+        if (cancelResponse.success) {
             showAlert(
-                status === 'pending' ? 
-                '예약이 취소되었습니다.' : 
-                '예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 
+                booking.status === 'pending' ? 
+                    '예약이 취소되었습니다.' : 
+                    '예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 
                 'success', 
                 3000
             );
