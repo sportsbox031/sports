@@ -1656,11 +1656,10 @@ function renderCalendar(date) {
     dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
     dayElement.title = '지난 날짜';
 } else if (dateStatus?.isFullyBlocked) {
-    // 관리자 전체 마감 먼저 체크
     dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
     dayElement.title = '전체 마감';
 } else if (dateStatus?.isFull || (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1)) {
-    // 일반 마감이거나 부분 마감에서 예약이 찬 경우 -> 예약 마감으로 표시
+    // 여기가 핵심: 부분마감이면서 예약이 1개 이상인 경우도 예약마감으로 처리
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
     dayElement.title = '예약 마감';
 } else if (dateStatus?.hasBooking) {
