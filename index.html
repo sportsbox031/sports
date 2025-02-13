@@ -1175,10 +1175,11 @@ async function apiRequest(endpoint, options = {}) {
 // 캘린더 상태 업데이트 함수
 const debouncedUpdateCalendarStatus = debounce(async () => {
     try {
+        console.log('Updating calendar status...');
         const data = await apiRequest('/api/bookings/status');
+        console.log('Received calendar status:', data);
         bookingStatus = data.data;
         
-        // 서버에서 받은 남은 예약 횟수 사용
         updateRemainingBookingsDisplay(data.remainingBookings);
         
         const role = localStorage.getItem('role');
@@ -1460,7 +1461,7 @@ async function cancelBooking(bookingId) {
                 3000
             );
             await loadBookings();
-            debouncedUpdateCalendarStatus();
+            debouncedUpdateCalendarStatus();  // 캘린더 상태 업데이트
         }
     } catch (error) {
         console.error('Booking cancellation error:', error);
