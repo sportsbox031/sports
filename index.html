@@ -1255,7 +1255,8 @@ function logout() {
 function updateUserDashboardState(isActive) {
     const calendar = document.getElementById('calendar');
     const bookingForm = document.getElementById('bookingForm');
-    const bookingFormSection = document.querySelector('.bg-white.rounded-2xl.shadow-xl.p-8');
+    // 예약 폼의 부모 요소를 더 정확하게 선택
+    const bookingFormSection = bookingForm.closest('.bg-white.rounded-2xl.shadow-xl.p-8');
 
     if (!isActive) {
         // 달력은 보여주되 클릭만 비활성화
@@ -1271,14 +1272,14 @@ function updateUserDashboardState(isActive) {
         bookingForm.style.opacity = '0.5';
         bookingForm.style.pointerEvents = 'none';
         
-        // 예약 중지 메시지 표시
-        const message = document.createElement('div');
-        message.className = 'bg-red-100 text-red-700 p-4 rounded-lg mb-4';
-        message.textContent = '현재 예약이 중지된 상태입니다.';
+        // 이미 존재하는 메시지 확인
+        let message = bookingFormSection.querySelector('.booking-disabled-message');
         
-        // 기존 메시지가 있다면 제거
-        const existingMessage = bookingFormSection.querySelector('.bg-red-100');
-        if (!existingMessage) {
+        // 메시지가 없을 경우에만 새로 생성
+        if (!message) {
+            message = document.createElement('div');
+            message.className = 'booking-disabled-message bg-red-100 text-red-700 p-4 rounded-lg mb-4';
+            message.textContent = '현재 예약이 중지된 상태입니다.';
             bookingFormSection.insertBefore(message, bookingForm);
         }
     } else {
@@ -1298,9 +1299,9 @@ function updateUserDashboardState(isActive) {
         bookingForm.style.pointerEvents = 'auto';
         
         // 예약 중지 메시지 제거
-        const existingMessage = bookingFormSection.querySelector('.bg-red-100');
-        if (existingMessage) {
-            existingMessage.remove();
+        const message = bookingFormSection.querySelector('.booking-disabled-message');
+        if (message) {
+            message.remove();
         }
     }
 }
