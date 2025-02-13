@@ -1755,7 +1755,7 @@ document.getElementById('unblockDateBtn').onclick = async () => {
         closeDateBookingsModal(); // 팝업 닫기 추가
     }
 };
-            });
+            };
 
             // 날짜 상태에 따른 스타일 적용
             if (dateStatus?.isFullyBlocked) {
@@ -1809,7 +1809,6 @@ document.getElementById('unblockDateBtn').onclick = async () => {
 
         adminCalendar.appendChild(dayElement);
     }
-}
 
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
