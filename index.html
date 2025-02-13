@@ -656,6 +656,12 @@
     // 1. 기본 설정 및 초기화
     const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
     const DEBUG = true;
+    function debugLog(...args) {
+    if (DEBUG) {
+        console.log('[Debug]', ...args);
+    }
+}
+
     
     // 관리자 계정 정보
     const ADMIN_CREDENTIALS = {
@@ -901,13 +907,26 @@ async function apiRequest(endpoint, options = {}) {
             ...options.headers
         };
 
+        // 요청 전 로깅
+        console.log(`Requesting ${endpoint}`, {
+            url: API_BASE_URL + endpoint,
+            method: options.method || 'GET',
+            headers: headers
+        });
+
         const response = await fetch(API_BASE_URL + endpoint, {
             ...options,
             headers,
             credentials: 'include'
         });
-
+        
+        // 응답 상태 로깅
+        console.log(`Response for ${endpoint}:`, response.status);
+        
         if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('요청하신 리소스를 찾을 수 없습니다.');
+            }
             if (response.status === 401) {
                 throw new Error('인증이 필요합니다.');
             }
