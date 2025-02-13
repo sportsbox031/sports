@@ -1468,8 +1468,13 @@ async function cancelBooking(bookingId) {
     }
 }
 
-async function forceCancel(bookingId) {
+async function forceCancel(bookingId, dateString) {
     try {
+        if (!dateString) {
+            showAlert('날짜 정보가 없습니다.', 'error', 3000);
+            return;
+        }
+
         if (!confirm('이 예약을 강제로 취소하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
             return;
         }
@@ -1480,14 +1485,8 @@ async function forceCancel(bookingId) {
 
         if (response.success) {
             showAlert(response.message, 'success', 3000);
-            
-            // 날짜별 예약 목록 새로고침
-            const currentModal = document.getElementById('dateBookingsModal');
-            if (currentModal.classList.contains('show') && currentSelectedDate) {
-                await loadDateBookings(currentSelectedDate);
-            }
-            
-            // 캘린더 상태 업데이트
+            // 날짜를 직접 전달받아 사용
+            await loadDateBookings(dateString);
             debouncedUpdateCalendarStatus();
         }
     } catch (error) {
@@ -1868,7 +1867,7 @@ async function loadDateBookings(dateString) {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.status === 'approved' ? `
-                                <button onclick="forceCancel(${booking.id})" 
+                                <button onclick="forceCancel(${booking.id}, '${dateString}')" 
                                     class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
                                     강제취소
                                 </button>
