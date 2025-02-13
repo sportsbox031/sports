@@ -702,16 +702,27 @@
         }
     }
     
-    function getStatusText(status) {
-        switch(status) {
-            case 'approved': return '승인완료';
-            case 'pending': return '승인대기';
-            case 'rejected': return '거부됨';
-            case 'cancelled': return '취소완료';
-            case 'cancel_pending': return '취소대기';
-            default: return '알 수 없음';
-        }
+    function getStatusClass(status) {
+    switch(status) {
+        case 'pending': return 'bg-yellow-100 text-yellow-800';
+        case 'approved': return 'bg-green-100 text-green-800';
+        case 'rejected': return 'bg-red-100 text-red-800';
+        case 'cancelled': return 'bg-gray-100 text-gray-800';
+        case 'cancel_pending': return 'bg-orange-100 text-orange-800';
+        default: return 'bg-gray-100 text-gray-800';
     }
+}
+
+function canCancelBooking(booking) {
+    if (!booking) return false;
+
+    const bookingDate = new Date(booking.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return bookingDate >= today && 
+           ['approved', 'pending'].includes(booking.status);
+}
     
     // 디바운스 유틸리티 함수
     function debounce(func, wait) {
@@ -728,17 +739,32 @@
     
     // 날짜 포맷 유틸리티
     function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+function formatDateForAPI(displayDate) {
+    // 한글 날짜 형식을 API 형식으로 변환
+    const match = displayDate.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
+    if (match) {
+        return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
     }
-    
-    function formatDateForAPI(dateStr) {
-        const match = dateStr.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
-        if (match) {
-            return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
-        }
-        return dateStr;
+    // 이미 YYYY-MM-DD 형식인 경우
+    if (/^\d{4}-\d{2}-\d{2}$/.test(displayDate)) {
+        return displayDate;
     }
+    // 기타 경우 현재 날짜 반환
+    const date = new Date(displayDate);
+    if (isNaN(date.getTime())) {
+        return new Date().toISOString().split('T')[0];
+    }
+    return date.toISOString().split('T')[0];
+}
+
+function isValidDate(dateStr) {
+    const date = new Date(dateStr);
+    return date instanceof Date && !isNaN(date);
+}
 
 // 2. UI 관련 유틸리티
 
@@ -955,46 +981,29 @@ async function logout() {
 // 토큰 검증 함수
 async function validateStoredToken() {
     const token = localStorage.getItem('token');
-    if (!token) {
-        console.log('No token found');
-        return false;
-    }
+    if (!token) return false;
 
     try {
-        const response = await apiRequest('/api/validate-token', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.success) {
-            throw new Error(response.message || '토큰이 유효하지 않습니다.');
-        }
-
         // 토큰 만료 시간 확인
-        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) return false;
+
+        const payload = JSON.parse(atob(tokenParts[1]));
         const currentTime = Math.floor(Date.now() / 1000);
-        
-        if (decodedToken.exp && decodedToken.exp < currentTime) {
-            throw new Error('토큰이 만료되었습니다.');
+
+        if (payload.exp && payload.exp < currentTime) {
+            throw new Error('토큰이 만료되었습니다');
         }
 
-        if (response.role) {
-            localStorage.setItem('role', response.role);
-        }
-
-        return true;
+        const response = await apiRequest('/api/validate-token');
+        return response.success;
     } catch (error) {
         console.error('Token validation error:', error);
-        
         if (error.message.includes('만료')) {
             showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
-        } else if (error.message.includes('네트워크')) {
-            showAlert('네트워크 연결을 확인해주세요.', 'error');
         } else {
             showAlert('인증에 실패했습니다.', 'error');
         }
-
         await logout();
         return false;
     }
@@ -1101,6 +1110,23 @@ async function createBooking(bookingData) {
 }
 
 // 예약 목록 로드 함수
+function getStatusText(status, cancelledBy) {
+    let statusText = '';
+    switch(status) {
+        case 'approved': statusText = '승인완료'; break;
+        case 'pending': statusText = '승인대기'; break;
+        case 'rejected': statusText = '거부됨'; break;
+        case 'cancelled': statusText = '취소완료'; break;
+        case 'cancel_pending': statusText = '취소대기'; break;
+        default: statusText = '알 수 없음';
+    }
+    
+    if (cancelledBy) {
+        statusText += ' (관리자 취소)';
+    }
+    return statusText;
+}
+
 async function loadBookings() {
     try {
         const data = await apiRequest('/api/bookings');
@@ -1109,42 +1135,23 @@ async function loadBookings() {
         if (data.success && data.data) {
             tbody.innerHTML = data.data
                 .filter(booking => booking.status !== 'cancelled')
-                .map(booking => {
-                    const bookingDate = new Date(booking.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    const canCancel = bookingDate >= today && 
-                        booking.status !== 'cancelled' && 
-                        booking.status !== 'rejected';
-
-                    return `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${canCancel ? `
-                                    <button onclick="cancelBooking(${booking.id})" 
-                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                        취소
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+                .map(booking => `
+                    <tr>
+                        <td class="px-6 py-4">${formatDate(booking.date)}</td>
+                        <td class="px-6 py-4">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4">${booking.place}</td>
+                        <td class="px-6 py-4">${booking.people}명</td>
+                        <td class="px-6 py-4">
+                            <span class="${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status, booking.cancelled_by)}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
-        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
     }
 }
 
