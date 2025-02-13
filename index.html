@@ -1594,14 +1594,18 @@ function initializeAdminCalendar() {
 }
 
 // 날짜 선택 핸들러 추가
-function addDateClickHandler(element, year, month, day) {
+function addDateClickHandler(element, dateString) {
     element.addEventListener('click', function() {
         const selected = document.querySelector('.selected');
         if (selected) {
             selected.classList.remove('selected');
         }
         element.classList.add('selected');
-        document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+        
+        // dateString은 'YYYY-MM-DD' 형식이므로 이를 변환
+        const date = new Date(dateString);
+        document.getElementById('selectedDate').value = 
+            `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
     });
 }
 
@@ -1648,7 +1652,7 @@ function renderCalendar(date) {
         dayElement.className = 
             'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
         dayElement.title = '예약 가능';
-        addDateClickHandler(dayElement, year, month, currentDay);
+        addDateClickHandler(dayElement, dateString);
     } else {
         dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
         dayElement.title = '예약 마감';
@@ -1659,12 +1663,12 @@ function renderCalendar(date) {
 } else if (dateStatus?.hasBooking) {
     dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
     dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-    addDateClickHandler(dayElement, year, month, currentDay);
+    addDateClickHandler(dayElement, dateString);
 } else {
     dayElement.className = 
         'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
     dayElement.title = '예약 가능';
-    addDateClickHandler(dayElement, year, month, currentDay);
+    addDateClickHandler(dayElement, dateString);
 }
 
 dayElement.textContent = currentDay;
@@ -1808,6 +1812,13 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
 // 날짜 클릭 이벤트 핸들러 추가
 function addDateClickHandler(element, dateString) {
     element.addEventListener('click', async () => {
+        // dateString이 올바른 형식(YYYY-MM-DD)인지 확인
+        if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            console.error('Invalid date format:', dateString);
+            showAlert('올바르지 않은 날짜 형식입니다.', 'error');
+            return;
+        }
+
         currentSelectedDate = dateString;
         await loadDateBookings(dateString);
         showDateBookingsModal();
