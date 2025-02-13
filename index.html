@@ -1723,10 +1723,10 @@ function renderAdminCalendar(date) {
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
             dayElement.addEventListener('click', async function() {
-    currentSelectedDate = dateString;  // 날짜 클릭 시 현재 선택된 날짜 저장
-    await loadDateBookings(dateString);
-    showDateBookingsModal();
-});
+                currentSelectedDate = dateString;  // 날짜 클릭 시 현재 선택된 날짜 저장
+                await loadDateBookings(dateString);
+                showDateBookingsModal();
+            });
 
                 // 마감 처리 버튼 이벤트
                 document.getElementById('partialBlockDateBtn').onclick = async () => {
@@ -1757,14 +1757,14 @@ document.getElementById('unblockDateBtn').onclick = async () => {
 };
             };
 
-            // 날짜 상태에 따른 스타일 적용
-            if (dateStatus?.isFullyBlocked) {
+             // 날짜 상태에 따른 스타일 적용
+             if (dateStatus?.isFullyBlocked) {
                 dayElement.className = `${baseClass} blocked cursor-pointer`;
                 dayElement.title = '전체 마감 (클릭하여 해제)';
             } else if (dateStatus?.isPartiallyBlocked) {
                 dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
                 dayElement.title = '부분 마감 (1개 예약만 가능)';
-                dayElement.style.backgroundColor = '#FCD34D'; // 부분마감 색상 (amber-300)
+                dayElement.style.backgroundColor = '#FCD34D';
             } else if (dateStatus?.isFull) {
                 dayElement.className = `${baseClass} full cursor-pointer`;
                 dayElement.title = '예약 마감';
@@ -1783,7 +1783,7 @@ document.getElementById('unblockDateBtn').onclick = async () => {
                 
                 if (dateStatus.isPartiallyBlocked) {
                     countBadge.textContent = `${dateStatus.bookingCount}/1`;
-                    countBadge.style.backgroundColor = '#FEF3C7'; // amber-100
+                    countBadge.style.backgroundColor = '#FEF3C7';
                 } else {
                     countBadge.textContent = `${dateStatus.bookingCount}`;
                 }
@@ -1795,14 +1795,14 @@ document.getElementById('unblockDateBtn').onclick = async () => {
         // 날짜 텍스트 추가
         const dateText = document.createElement('span');
         dateText.textContent = day;
-        dateText.className = 'z-10'; // 날짜가 배지 아래에 가려지지 않도록
+        dateText.className = 'z-10';
         dayElement.insertBefore(dateText, dayElement.firstChild);
 
         // 오늘 날짜 강조
         if (
             day === today.getDate() &&
-            adminCurrentDate.getMonth() === today.getMonth() &&
-            adminCurrentDate.getFullYear() === today.getFullYear()
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
         ) {
             dayElement.classList.add('font-bold');
         }
