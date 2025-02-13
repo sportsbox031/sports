@@ -1255,30 +1255,50 @@ function logout() {
 function updateUserDashboardState(isActive) {
     const calendar = document.getElementById('calendar');
     const bookingForm = document.getElementById('bookingForm');
-    const message = document.createElement('div');
-    
+    const bookingFormSection = document.querySelector('.bg-white.rounded-2xl.shadow-xl.p-8');
+
     if (!isActive) {
-        // 달력과 예약 폼 비활성화
-        calendar.style.opacity = '0.5';
-        calendar.style.pointerEvents = 'none';
+        // 달력은 보여주되 클릭만 비활성화
+        const calendarDays = calendar.querySelectorAll('.calendar-day:not(.past)');
+        calendarDays.forEach(day => {
+            day.style.pointerEvents = 'none';
+            day.style.opacity = '0.7';
+            day.classList.remove('cursor-pointer');
+            day.classList.add('cursor-not-allowed');
+        });
         
+        // 예약 폼 비활성화
         bookingForm.style.opacity = '0.5';
         bookingForm.style.pointerEvents = 'none';
         
         // 예약 중지 메시지 표시
+        const message = document.createElement('div');
         message.className = 'bg-red-100 text-red-700 p-4 rounded-lg mb-4';
         message.textContent = '현재 예약이 중지된 상태입니다.';
-        bookingForm.parentNode.insertBefore(message, bookingForm);
-    } else {
-        // 달력과 예약 폼 활성화
-        calendar.style.opacity = '1';
-        calendar.style.pointerEvents = 'auto';
         
+        // 기존 메시지가 있다면 제거
+        const existingMessage = bookingFormSection.querySelector('.bg-red-100');
+        if (!existingMessage) {
+            bookingFormSection.insertBefore(message, bookingForm);
+        }
+    } else {
+        // 달력 활성화
+        const calendarDays = calendar.querySelectorAll('.calendar-day:not(.past)');
+        calendarDays.forEach(day => {
+            day.style.pointerEvents = 'auto';
+            day.style.opacity = '1';
+            day.classList.remove('cursor-not-allowed');
+            if (!day.classList.contains('blocked') && !day.classList.contains('full')) {
+                day.classList.add('cursor-pointer');
+            }
+        });
+        
+        // 예약 폼 활성화
         bookingForm.style.opacity = '1';
         bookingForm.style.pointerEvents = 'auto';
         
-        // 기존 메시지 제거
-        const existingMessage = bookingForm.parentNode.querySelector('.bg-red-100');
+        // 예약 중지 메시지 제거
+        const existingMessage = bookingFormSection.querySelector('.bg-red-100');
         if (existingMessage) {
             existingMessage.remove();
         }
@@ -1493,6 +1513,12 @@ function initializeCalendar() {
     });
 
     renderCalendar(currentDate);
+}
+
+async function initializeUserDashboard() {
+    initializeCalendar();  // 달력 초기화
+    debouncedUpdateCalendarStatus();  // 예약 상태 업데이트
+    await loadBookings();  // 예약 목록 로드
 }
 
 function initializeAdminCalendar() {
