@@ -1480,8 +1480,14 @@ async function forceCancel(bookingId) {
 
         if (response.success) {
             showAlert(response.message, 'success', 3000);
-            // 관련 데이터 업데이트
-            await loadDateBookings(currentSelectedDate);
+            
+            // 날짜별 예약 목록 새로고침
+            const currentModal = document.getElementById('dateBookingsModal');
+            if (currentModal.classList.contains('show') && currentSelectedDate) {
+                await loadDateBookings(currentSelectedDate);
+            }
+            
+            // 캘린더 상태 업데이트
             debouncedUpdateCalendarStatus();
         }
     } catch (error) {
@@ -1718,9 +1724,10 @@ function renderAdminCalendar(date) {
         } else {
             // 모든 날짜에 클릭 이벤트 추가 (관리자용)
             dayElement.addEventListener('click', async function() {
-    const modal = document.getElementById('dateBookingsModal');
+    currentSelectedDate = dateString;  // 날짜 클릭 시 현재 선택된 날짜 저장
     await loadDateBookings(dateString);
     showDateBookingsModal();
+});
 
                 // 마감 처리 버튼 이벤트
                 document.getElementById('partialBlockDateBtn').onclick = async () => {
@@ -1808,6 +1815,12 @@ document.getElementById('unblockDateBtn').onclick = async () => {
 // 날짜별 예약 조회 함수
 async function loadDateBookings(dateString) {
     try {
+        if (!dateString) {
+            console.error('No date selected');
+            showAlert('날짜 정보가 없습니다.', 'error', 3000);
+            return;
+        }
+
         console.log('Loading bookings for date:', dateString);
         const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
         console.log('Received booking data:', data);
@@ -1819,6 +1832,7 @@ async function loadDateBookings(dateString) {
         const unblockDateBtn = document.getElementById('unblockDateBtn');
         
         modalDate.textContent = formatDate(dateString);
+        currentSelectedDate = dateString;  // 현재 선택된 날짜 저장
 
         const dateStatus = bookingStatus[dateString];
         if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
@@ -1840,29 +1854,29 @@ async function loadDateBookings(dateString) {
             );
 
             tbody.innerHTML = activeBookings.length > 0 
-    ? activeBookings.map(booking => `
-        <tr>
-            <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${getStatusClass(booking.status)}">
-                    ${getStatusText(booking.status)}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                ${booking.status === 'approved' ? `
-                    <button onclick="forceCancel(${booking.id})" 
-                        class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
-                        강제취소
-                    </button>
-                ` : ''}
-            </td>
-        </tr>
-    `).join('')
-    : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.status === 'approved' ? `
+                                <button onclick="forceCancel(${booking.id})" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                                    강제취소
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading date bookings:', error);
