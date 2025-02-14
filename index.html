@@ -319,7 +319,7 @@
                                     class="w-full h-[300px] object-cover" alt="스포츠체험존">
                                 <div class="p-6 bg-white">
                                     <h3 class="text-xl font-bold mb-3">스포츠체험존</h3>
-                                    <p class="text-gray-600 mb-4">경기도 내 스포츠대회 및 지역축제 연계 체험존 운영</p>
+                                    <p class="text-gray-600 mb-4">경기도 내 스포츠대회 및 지자체 축제 연계 체험존 운영</p>
                                     <a href="https://www.youtube.com/watch?v=cdOh5nLmQ-o" target="_blank" 
                                         class="inline-block bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                         자세히보기
@@ -332,7 +332,7 @@
                                 <div class="p-6 bg-white">
                                     <h3 class="text-xl font-bold mb-3">스포츠이벤트</h3>
                                     <p class="text-gray-600 mb-4">수상레저스포츠, 스키교실 등 특별 프로그램 운영</p>
-                                    <a href="https://www.youtube.com/watch?v=cdOh5nLmQ-o" target="_blank" 
+                                    <a href="https://www.youtube.com/watch?v=4nyB-iATP5k" target="_blank" 
                                         class="inline-block bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                         자세히보기
                                     </a>
@@ -354,10 +354,13 @@
                                     <h3 class="text-xl font-bold text-center mb-4">수요처등록 신청</h3>
                                     <p class="text-gray-600 text-center mb-6">신청서를 다운로드하여 작성 후 제출해주세요</p>
                                     <div class="flex justify-center">
-                                        <a href="#" download class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-                                            <i class="ri-download-line"></i>
-                                            <span>신청서 다운로드</span>
-                                        </a>
+                                        <div class="flex justify-center">
+                                            <a href="#" onclick="downloadApplication(); return false;" 
+                                                class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
+                                                <i class="ri-download-line"></i>
+                                                <span>신청서 다운로드</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
@@ -2342,6 +2345,37 @@ function closeDateBookingsModal() {
     const calendarContainer = document.getElementById('adminCalendar').parentElement;
     modal.classList.remove('show');
     calendarContainer.classList.remove('modal-open');
+}
+
+// 여기에 downloadApplication 함수 추가
+function downloadApplication() {
+    const fileUrl = 'https://raw.githubusercontent.com/sportsbox031/sports/main/%EC%8A%A4%ED%8F%AC%EC%B8%A0%EB%B0%95%EC%8A%A4%20%EC%88%98%EC%9A%94%EC%B2%98%EB%93%B1%EB%A1%9D%20%EC%8B%A0%EC%B2%AD%EC%84%9C.hwp';
+    const fileName = '스포츠박스_수요처등록_신청서.hwp';
+
+    showAlert('파일 다운로드를 시작합니다...', 'info');
+    
+    fetch(fileUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showAlert('파일 다운로드가 완료되었습니다.', 'success');
+        })
+        .catch(error => {
+            console.error('Download error:', error);
+            showAlert('파일 다운로드 중 오류가 발생했습니다.', 'error');
+        });
 }
 
 // 이벤트 리스너 설정
