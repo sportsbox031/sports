@@ -996,28 +996,29 @@ function showLoginScreen() {
     document.getElementById('adminDashboard').classList.add('hidden');
 }
 
+// 대시보드 표시 함수
 async function showDashboard(role) {
-    document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-    document.getElementById('loginAndReservationSystem').classList.remove('hidden');
-    document.getElementById('loginScreen').classList.add('hidden');
-    
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('userDashboard').style.display = 'none';
+
     if (role === 'admin') {
-        document.getElementById('adminDashboard').classList.remove('hidden');
-        document.getElementById('userDashboard').classList.add('hidden');
+        document.getElementById('adminDashboard').style.display = 'block';
         initializeAdminDashboard();
     } else {
         try {
             const settings = await apiRequest('/api/booking-settings');
-            document.getElementById('userDashboard').classList.remove('hidden');
-            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('userDashboard').style.display = 'block';
             
             if (localStorage.getItem('username')) {
                 document.getElementById('userGroupName').textContent = 
                     localStorage.getItem('username');
             }
 
+            // 예약 상태에 따른 UI 업데이트
             updateUserDashboardState(settings.data?.is_active);
             await initializeUserDashboard();
+
         } catch (error) {
             console.error('Dashboard initialization error:', error);
             showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
