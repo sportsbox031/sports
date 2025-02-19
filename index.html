@@ -2114,11 +2114,16 @@ async function loadBookingSettings() {
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
             const settings = response.data;
-            updateBookingStatusUI(settings.is_active);
+            const region = localStorage.getItem('region');
+            const regionSettings = region === 'all' ? settings : settings[region];
+            
+            updateBookingStatusUI(regionSettings?.is_active || false);
+            return regionSettings;
         }
     } catch (error) {
         console.error('Error loading booking settings:', error);
-        updateBookingStatusUI(false);
+        updateBookingStatusUI(false);  // 오류 시 기본적으로 예약 중지 상태로 표시
+        throw error;
     }
 }
 
