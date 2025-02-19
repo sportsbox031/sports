@@ -2003,37 +2003,62 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
+        const region = localStorage.getItem('region');
+        // 전체 관리자의 경우 특정 지역을 선택해야 함
+        const targetRegion = region === 'all' ? 
+            document.getElementById('regionFilter')?.value : region;
+
+        if (!targetRegion) {
+            throw new Error('지역을 선택해주세요.');
+        }
+
         const response = await apiRequest('/api/admin/dates/block', {
             method: 'POST',
-            body: JSON.stringify({ date, blockType })
+            body: JSON.stringify({ 
+                date, 
+                blockType,
+                region: targetRegion 
+            })
         });
+
         if (response.success) {
             showAlert(
                 blockType === 'full' ? '날짜가 전체 마감되었습니다.' : '날짜가 부분 마감되었습니다.', 
-                'success', 
-                3000
+                'success'
             );
-            debouncedUpdateCalendarStatus();
+            await debouncedUpdateCalendarStatus();
         }
     } catch (error) {
         console.error('Date blocking error:', error);
-        showAlert('날짜 마감 처리 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '날짜 마감 처리 중 오류가 발생했습니다.', 'error');
     }
 }
 
 async function unblockDate(date) {
     try {
+        const region = localStorage.getItem('region');
+        const targetRegion = region === 'all' ? 
+            document.getElementById('regionFilter')?.value : region;
+
+        if (!targetRegion) {
+            throw new Error('지역을 선택해주세요.');
+        }
+
         const response = await apiRequest('/api/admin/dates/unblock', {
             method: 'POST',
-            body: JSON.stringify({ date })
+            body: JSON.stringify({ 
+                date,
+                region: targetRegion
+            })
         });
+
         if (response.success) {
-            showAlert('날짜 마감이 해제되었습니다.', 'success', 3000);
-            debouncedUpdateCalendarStatus();
+            showAlert('날짜 마감이 해제되었습니다.', 'success');
+            await debouncedUpdateCalendarStatus();
         }
     } catch (error) {
         console.error('Date unblocking error:', error);
-        showAlert('날짜 마감 해제 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '날짜 마감 해제 중 오류가 발생했습니다.', 'error');
     }
 }
 
