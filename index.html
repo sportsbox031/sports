@@ -1158,126 +1158,161 @@ function showLoginScreen() {
 
 // 대시보드 표시 함수
 async function showDashboard(role) {
-    document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('loginAndReservationSystem').classList.remove('hidden');
+    try {
+        showLoading();
 
-    const region = localStorage.getItem('region');
-    const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
-    
-    if (role === 'admin') {
-        // 관리자 대시보드 표시
-        document.getElementById('adminDashboard').classList.remove('hidden');
-        document.getElementById('userDashboard').classList.add('hidden');
+        // 기본 화면 전환
+        document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('loginAndReservationSystem').classList.remove('hidden');
 
-        // 관리자 타입에 따른 UI 조정
-        if (region === 'all') {
-            document.querySelector('#adminDashboard .dashboard-title').textContent = '스포츠박스 관리자';
-            document.getElementById('regionFilter').classList.remove('hidden');
+        const region = localStorage.getItem('region');
+        const username = localStorage.getItem('username');
+        const dashboardTitle = region === 'south' ? '남부 스포츠박스' : 
+                             region === 'north' ? '북부 스포츠박스' : 
+                             '스포츠박스 관리자';
+        
+        if (role === 'admin') {
+            // 관리자 대시보드 표시
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('userDashboard').classList.add('hidden');
+
+            // 관리자 타입에 따른 UI 조정
+            if (region === 'all') {
+                document.querySelector('#adminDashboard .dashboard-title').textContent = '스포츠박스 관리자';
+                document.getElementById('regionFilter').classList.remove('hidden');
+                document.getElementById('regionFilterContainer').classList.remove('hidden');
+            } else {
+                document.querySelector('#adminDashboard .dashboard-title').textContent = dashboardTitle;
+                document.getElementById('regionFilter').classList.add('hidden');
+                document.getElementById('regionFilterContainer').classList.add('hidden');
+            }
+
+            // 관리자 대시보드 초기화
+            await initializeAdminDashboard(region, username);
+
         } else {
-            document.querySelector('#adminDashboard .dashboard-title').textContent = dashboardTitle;
-            document.getElementById('regionFilter').classList.add('hidden');
+            // 사용자 대시보드 표시
+            document.getElementById('userDashboard').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            
+            // 대시보드 제목 설정
+            document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
+            
+            try {
+                // 예약 시스템 상태 확인
+                const settings = await apiRequest('/api/booking-settings');
+                updateUserDashboardState(settings.data?.is_active);
+                
+                // 사용자 대시보드 초기화
+                await initializeUserDashboard(region, username);
+            } catch (error) {
+                console.error('User dashboard initialization error:', error);
+                showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+                throw error; // 에러를 상위로 전파
+            }
         }
 
-        await initializeAdminDashboard();
-    } else {
-        // 사용자 대시보드 표시
-        document.getElementById('userDashboard').classList.remove('hidden');
-        document.getElementById('adminDashboard').classList.add('hidden');
-        
-        // 대시보드 제목 설정
-        document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
-        
-        try {
-            // 예약 시스템 상태 확인
-            const settings = await apiRequest('/api/booking-settings');
-            
-            // 예약 상태에 따른 UI 업데이트
-            updateUserDashboardState(settings.data?.is_active);
-            
-            // 지역별 예약 상태 조회
-            await initializeUserDashboard(region);
-        } catch (error) {
-            console.error('Dashboard initialization error:', error);
-            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
-        }
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
-// 사용자 대시보드 초기화
-async function initializeUserDashboard(region) {
-    // 캘린더 초기화
-    initializeCalendar();
-    
-    // 시간 선택 초기화
-    initializeTimeSelects();
-    
-    // 예약 상태 업데이트
-    await debouncedUpdateCalendarStatus();
-    
-    // 예약 목록 로드
-    await loadBookings();
+async function initializeUserDashboard(region, username) {
+    // 대시보드 표시
+    document.getElementById('userDashboard').classList.remove('hidden');
+    document.getElementById('adminDashboard').classList.add('hidden');
 
-    // 남은 예약 횟수 표시 업데이트
-    updateRemainingBookingsDisplay();
+    // 대시보드 제목 및 사용자 정보 설정
+    const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
+    document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
+    
+    // 사용자 정보 표시
+    document.getElementById('userGroupName').textContent = username;
+    
+    // 지역 뱃지 업데이트
+    const regionBadge = document.getElementById('regionBadge');
+    regionBadge.textContent = region === 'south' ? '남부' : '북부';
+    regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
+        region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+    }`;
+
+    try {
+        // 예약 시스템 상태 확인
+        const settings = await apiRequest('/api/booking-settings');
+        updateUserDashboardState(settings.data?.is_active);
+
+        // 캘린더 초기화
+        initializeCalendar();
+        
+        // 시간 선택 초기화
+        initializeTimeSelects();
+        
+        // 예약 상태 업데이트
+        await debouncedUpdateCalendarStatus();
+        
+        // 예약 목록 로드
+        await loadBookings();
+        
+        // 남은 예약 횟수 표시 업데이트
+        updateRemainingBookingsDisplay();
+
+    } catch (error) {
+        console.error('User dashboard initialization error:', error);
+        showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+        throw error;
+    }
 }
 
-// 관리자 대시보드 초기화
-async function initializeAdminDashboard() {
-    const region = localStorage.getItem('region');
-    const username = localStorage.getItem('username');
+async function initializeAdminDashboard(region, username) {
+    document.getElementById('adminDashboard').classList.remove('hidden');
+    document.getElementById('userDashboard').classList.add('hidden');
 
-    // 관리자 정보 표시
-    document.getElementById('adminName').textContent = username;
+    try {
+        document.getElementById('adminName').textContent = username;
 
-    // 지역 필터 설정
-    const regionFilterContainer = document.getElementById('regionFilterContainer');
-    const regionFilter = document.getElementById('regionFilter');
-    const adminRegionBadge = document.getElementById('adminRegionBadge');
+        const regionFilterContainer = document.getElementById('regionFilterContainer');
+        const regionFilter = document.getElementById('regionFilter');
+        const adminRegionBadge = document.getElementById('adminRegionBadge');
+        const dashboardTitle = document.querySelector('#adminDashboard .dashboard-title');
 
-    if (region === 'all') {
-        // 전체 관리자
-        regionFilterContainer.classList.remove('hidden');
-        adminRegionBadge.textContent = '전체 관리자';
-        adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
-    } else {
-        // 지역 관리자
-        regionFilterContainer.classList.add('hidden');
-        const regionText = region === 'south' ? '남부' : '북부';
-        adminRegionBadge.textContent = `${regionText} 관리자`;
-        adminRegionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
-            region === 'south' ? 
-            'bg-blue-100 text-blue-800' : 
-            'bg-green-100 text-green-800'
-        }`;
-    }
+        if (region === 'all') {
+            dashboardTitle.textContent = '스포츠박스 관리자';
+            regionFilterContainer.classList.remove('hidden');
+            adminRegionBadge.textContent = '전체 관리자';
+            adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
+        } else {
+            const regionText = region === 'south' ? '남부' : '북부';
+            dashboardTitle.textContent = `${regionText} 스포츠박스`;
+            regionFilterContainer.classList.add('hidden');
+            adminRegionBadge.textContent = `${regionText} 관리자`;
+            adminRegionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
+                region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+            }`;
+        }
 
-    // 지역 필터 이벤트 리스너
-    regionFilter.addEventListener('change', async function(e) {
-        currentRegion = e.target.value;
-        await refreshAdminDashboard();
-    });
-    // 예약 설정 로드
-    await loadBookingSettings();
-
-    await loadRegionStatistics();    
-
-    // 관리자 캘린더 초기화
-    initializeAdminCalendar();
-    
-    // 예약 상태 업데이트
-    await debouncedUpdateCalendarStatus();
-    
-    // 승인 대기 목록 로드
-    await loadPendingUsers();
-    await loadPendingBookings();
-    
-    // 지역 필터 이벤트 리스너 설정
-    if (localStorage.getItem('region') === 'all') {
-        document.getElementById('regionFilter').addEventListener('change', function(e) {
+        regionFilter.removeEventListener('change', refreshAdminDashboard);
+        regionFilter.addEventListener('change', async function(e) {
             currentRegion = e.target.value;
-            refreshAdminDashboard();
+            await refreshAdminDashboard();
         });
+
+        await Promise.all([
+            loadBookingSettings(),
+            loadRegionStatistics(),
+            initializeAdminCalendar(),
+            debouncedUpdateCalendarStatus(),
+            loadPendingUsers(),
+            loadPendingBookings()
+        ]);
+
+    } catch (error) {
+        console.error('Admin dashboard initialization error:', error);
+        showAlert('관리자 대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        throw error;
     }
 }
 
@@ -1330,67 +1365,19 @@ async function loadRegionStatistics() {
 
 // 관리자 대시보드 새로고침
 async function refreshAdminDashboard() {
-    showLoading();
     try {
+        showLoading();
         await Promise.all([
             loadPendingUsers(),
             loadPendingBookings(),
-            debouncedUpdateCalendarStatus()
+            debouncedUpdateCalendarStatus(),
+            loadRegionStatistics()
         ]);
     } catch (error) {
         console.error('Dashboard refresh error:', error);
         showAlert('대시보드 새로고침 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
-    }
-}
-
-// 대시보드 상태 업데이트
-function updateUserDashboardState(isActive) {
-    const calendar = document.getElementById('calendar');
-    const bookingForm = document.getElementById('bookingForm');
-    const bookingFormSection = bookingForm.closest('.bg-white.rounded-2xl.shadow-xl.p-8');
-
-    if (!isActive) {
-        // 달력 비활성화
-        calendar.querySelectorAll('.calendar-day:not(.past)').forEach(day => {
-            day.style.pointerEvents = 'none';
-            day.style.opacity = '0.7';
-            day.classList.remove('cursor-pointer');
-            day.classList.add('cursor-not-allowed');
-        });
-        
-        // 예약 폼 비활성화
-        bookingForm.style.opacity = '0.5';
-        bookingForm.style.pointerEvents = 'none';
-        
-        // 예약 중지 메시지 표시
-        if (!bookingFormSection.querySelector('.booking-disabled-message')) {
-            const message = document.createElement('div');
-            message.className = 'booking-disabled-message bg-red-100 text-red-700 p-4 rounded-lg mb-4';
-            message.textContent = '현재 예약이 중지된 상태입니다.';
-            bookingFormSection.insertBefore(message, bookingForm);
-        }
-    } else {
-        // 달력 활성화
-        calendar.querySelectorAll('.calendar-day:not(.past)').forEach(day => {
-            day.style.pointerEvents = 'auto';
-            day.style.opacity = '1';
-            day.classList.remove('cursor-not-allowed');
-            if (!day.classList.contains('blocked') && !day.classList.contains('full')) {
-                day.classList.add('cursor-pointer');
-            }
-        });
-        
-        // 예약 폼 활성화
-        bookingForm.style.opacity = '1';
-        bookingForm.style.pointerEvents = 'auto';
-        
-        // 예약 중지 메시지 제거
-        const message = bookingFormSection.querySelector('.booking-disabled-message');
-        if (message) {
-            message.remove();
-        }
     }
 }
 
@@ -2188,21 +2175,6 @@ async function generateExcelData(year, month) {
     }
 }
 
-// 관리자 대시보드 초기화
-function initializeAdminDashboard() {
-    loadBookingSettings();  // 예약 설정 로드
-    initializeAdminCalendar();
-    debouncedUpdateCalendarStatus();
-    loadPendingUsers();
-    loadPendingBookings();
-    
-    // 예약 상태 토글 버튼 이벤트 리스너 추가
-    const toggleButton = document.getElementById('toggleBookingStatus');
-    if (toggleButton) {
-        toggleButton.removeEventListener('click', toggleBookingStatus);
-        toggleButton.addEventListener('click', toggleBookingStatus);
-    }
-
     // 엑셀 다운로드 버튼 이벤트 리스너
     document.getElementById('downloadExcel')?.addEventListener('click', async function() {
         const year = adminCurrentDate.getFullYear();
@@ -2229,7 +2201,6 @@ function initializeAdminDashboard() {
             hideLoading();
         }
     });
-}
 
 // 모달 컨트롤 함수들
 function showDateBookingsModal() {
@@ -2271,36 +2242,35 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
     }
 }, 500);
 
+// 로그인 함수도 수정
 async function login(username, password) {
     try {
+        showLoading();
         const response = await apiRequest('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                group_name: username,  // 변경: group_name으로 변경
+                group_name: username,
                 password: password
             })
         });
 
         if (response.success) {
-            // 로그인 성공 처리
             localStorage.setItem('token', response.token);
             localStorage.setItem('role', response.user.role);
             localStorage.setItem('username', response.user.group_name);
             localStorage.setItem('region', response.user.region);
-            
-            // 페이지 이동 전 약간의 지연
-            setTimeout(() => {
-                showDashboard(response.user.role);
-            }, 100);
 
-            showAlert('로그인 되었습니다.', 'success');
+            await showDashboard(response.user.role);
+            showAlert('로그인되었습니다.', 'success', 2000);
         }
     } catch (error) {
         console.error('Login error:', error);
         showAlert(error.message || '로그인에 실패했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -2402,31 +2372,6 @@ function initializeAdminCalendar() {
     });
 
     // 초기 달력 렌더링
-    renderAdminCalendar(adminCurrentDate);
-}
-
-function initializeAdminCalendar() {
-    const adminCalendar = document.getElementById('adminCalendar');
-    const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
-
-    if (!adminCurrentDate) {
-        adminCurrentDate = new Date();
-    }
-
-    document.getElementById('adminPrevMonth').addEventListener('click', function() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
-                                  adminCurrentDate.getMonth() - 1, 1);
-        renderAdminCalendar(adminCurrentDate);
-        debouncedUpdateCalendarStatus();
-    });
-
-    document.getElementById('adminNextMonth').addEventListener('click', function() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
-                                  adminCurrentDate.getMonth() + 1, 1);
-        renderAdminCalendar(adminCurrentDate);
-        debouncedUpdateCalendarStatus();
-    });
-
     renderAdminCalendar(adminCurrentDate);
 }
 
@@ -2927,12 +2872,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // 로그인 폼 제출
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+        showLoading();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        login(username, password);
-    });
+        await login(username, password);
+    } catch (error) {
+        console.error('Login submission error:', error);
+        showAlert('로그인 처리 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
 
     // 회원가입 모달 컨트롤
     document.getElementById('showSignup').addEventListener('click', function() {
