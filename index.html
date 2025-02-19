@@ -2297,10 +2297,15 @@ async function login(username, password) {
 }
 
 // 회원가입시 자동 지역 설정을 위한 수정
+// 회원가입 폼 제출 이벤트 리스너
 document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     try {
+        // 중복 제출 방지
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        
         showLoading();
         
         const formData = {
@@ -2311,18 +2316,20 @@ document.getElementById('signupForm').addEventListener('submit', async function(
             city: document.getElementById('city').value
         };
 
-        await signup(formData);
+        const response = await signup(formData);
         
-        // 성공 시 처리
-        document.getElementById('signupModal').classList.remove('show');
-        document.getElementById('signupForm').reset();
-        showAlert('회원가입이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+        if (response.success) {
+            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('signupModal').classList.remove('show');
+            this.reset();
+        }
         
     } catch (error) {
         console.error('Form submission error:', error);
         showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
+        submitButton.disabled = false;
     }
 });
 
