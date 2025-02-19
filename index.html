@@ -2019,7 +2019,6 @@ async function forceCancel(bookingId, dateString) {
 async function blockDate(date, blockType) {
     try {
         const region = localStorage.getItem('region');
-        // 전체 관리자의 경우 특정 지역을 선택해야 함
         const targetRegion = region === 'all' ? 
             document.getElementById('regionFilter')?.value : region;
 
@@ -2042,6 +2041,7 @@ async function blockDate(date, blockType) {
                 'success'
             );
             await debouncedUpdateCalendarStatus();
+            await loadDateBookings(date);  // 날짜별 예약 목록 새로고침
         }
     } catch (error) {
         console.error('Date blocking error:', error);
@@ -2350,14 +2350,15 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
         console.log('Received calendar status:', data);
         bookingStatus = data.data;
         
-        updateRemainingBookingsDisplay(data.remainingBookings);
-        
+        // 관리자/사용자에 따라 다른 캘린더 업데이트
         const role = localStorage.getItem('role');
         if (role === 'admin') {
             renderAdminCalendar(adminCurrentDate);
         } else {
             renderCalendar(currentDate);
         }
+        
+        updateRemainingBookingsDisplay(data.remainingBookings);
     } catch (error) {
         console.error('Calendar status update error:', error);
     }
@@ -2691,14 +2692,6 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
         };
     }
 
-    if (dateStatus?.isFull || (dateStatus?.bookingCount >= 1 && dateStatus?.isPartiallyBlocked)) {
-        // 일반 마감이거나 부분 마감에서 예약이 찬 경우 -> 예약 마감으로 표시
-        return {
-            className: `${baseClass} full cursor-pointer`,
-            title: '예약 마감'
-        };
-    }
-
     if (dateStatus?.isFullyBlocked) {
         return {
             className: `${baseClass} blocked cursor-pointer`,
@@ -2706,11 +2699,26 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
         };
     }
 
-    if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount === 0) {
+    if (dateStatus?.isPartiallyBlocked) {
+        // 부분 마감인 경우
+        if (dateStatus.bookingCount >= 1) {
+            return {
+                className: `${baseClass} full cursor-pointer`,
+                title: '예약 마감'
+            };
+        } else {
+            return {
+                className: `${baseClass} partially-blocked cursor-pointer`,
+                title: '부분 마감 (1개 예약만 가능)',
+                backgroundColor: '#F97316'
+            };
+        }
+    }
+
+    if (dateStatus?.isFull) {
         return {
-            className: `${baseClass} partially-blocked cursor-pointer`,
-            title: '부분 마감 (1개 예약만 가능)',
-            backgroundColor: '#FCD34D'
+            className: `${baseClass} full cursor-pointer`,
+            title: '예약 마감'
         };
     }
 
