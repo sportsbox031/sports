@@ -1704,13 +1704,15 @@ async function cancelBooking(bookingId) {
             return;
         }
 
+        showLoading();
+
         // 예약 상태 확인
-        const response = await apiRequest(`/api/bookings/${bookingId}`);
-        if (!response.success) {
-            throw new Error(response.message);
+        const bookingResponse = await apiRequest(`/api/bookings/${bookingId}`);
+        if (!bookingResponse.success) {
+            throw new Error(bookingResponse.message);
         }
 
-        const booking = response.data;
+        const booking = bookingResponse.data;
         let cancelResponse;
 
         if (booking.status === 'pending') {
@@ -1732,15 +1734,16 @@ async function cancelBooking(bookingId) {
                 booking.status === 'pending' ? 
                     '예약이 취소되었습니다.' : 
                     '예약 취소가 요청되었습니다. 관리자 승인을 기다려주세요.', 
-                'success', 
-                3000
+                'success'
             );
             await loadBookings();
-            debouncedUpdateCalendarStatus();  // 캘린더 상태 업데이트
+            await debouncedUpdateCalendarStatus();
         }
     } catch (error) {
         console.error('Booking cancellation error:', error);
-        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '예약 취소 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
