@@ -2275,21 +2275,76 @@ async function login(username, password) {
     try {
         const response = await apiRequest('/api/login', {
             method: 'POST',
-            body: JSON.stringify({ username, password })
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                group_name: username,  // 변경: group_name으로 변경
+                password: password
+            })
         });
 
         if (response.success) {
+            // 로그인 성공 처리
             localStorage.setItem('token', response.token);
-            localStorage.setItem('role', response.role);
-            localStorage.setItem('username', response.username);
-            localStorage.setItem('region', response.region); // region 정보 저장
+            localStorage.setItem('role', response.user.role);
+            localStorage.setItem('username', response.user.group_name);
+            localStorage.setItem('region', response.user.region);
             
-            showDashboard(response.role);
-            showAlert('로그인되었습니다.', 'success', 3000);
+            // 페이지 이동 전 약간의 지연
+            setTimeout(() => {
+                showDashboard(response.user.role);
+            }, 100);
+
+            showAlert('로그인 되었습니다.', 'success');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showAlert(error.message || '로그인에 실패했습니다.', 'error', 3000);
+        showAlert(error.message || '로그인에 실패했습니다.', 'error');
+    }
+}
+
+// 회원가입시 자동 지역 설정을 위한 수정
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        group_name: document.getElementById('groupName').value,
+        password: document.getElementById('signupPassword').value,
+        manager: document.getElementById('manager').value,
+        contact: document.getElementById('contact').value,
+        city: document.getElementById('city').value,
+        region: determineRegion(document.getElementById('city').value)
+    };
+
+    try {
+        const response = await signup(formData);
+        if (response.success) {
+            showAlert('회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('signupModal').classList.remove('show');
+            this.reset();
+        }
+    } catch (error) {
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
+    }
+});
+
+// 지역 정보 표시 업데이트
+function updateRegionDisplay() {
+    const region = localStorage.getItem('region');
+    const regionBadge = document.getElementById('regionBadge');
+    
+    if (regionBadge) {
+        regionBadge.textContent = region === 'south' ? '남부' : 
+                                 region === 'north' ? '북부' : 
+                                 region === 'all' ? '전체' : '';
+        
+        regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
+            region === 'south' ? 'bg-blue-100 text-blue-800' :
+            region === 'north' ? 'bg-green-100 text-green-800' :
+            region === 'all' ? 'bg-purple-100 text-purple-800' :
+            'bg-gray-100 text-gray-800'
+        }`;
     }
 }
 
