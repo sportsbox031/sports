@@ -780,6 +780,14 @@
                                     <i class="fas fa-home"></i>
                                     <span>홈으로</span>
                                 </button>
+                                <!-- 비밀번호 변경 버튼 추가 -->
+    <button onclick="showChangePasswordModal()" 
+    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+    <i class="fas fa-key"></i>
+    <span>비밀번호 변경</span>
+</button>
+
+<!-- 로그아웃 버튼 -->
                                 <button id="adminLogoutBtn" 
                                     class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
                                     <i class="fas fa-sign-out-alt"></i>
@@ -997,6 +1005,40 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+    <!-- 관리자 비밀번호 변경 모달 -->
+    <div id="changePasswordModal" class="modal">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96 m-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">비밀번호 변경</h2>
+                <button id="closeChangePassword" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">현재 비밀번호</label>
+                    <input type="password" id="currentPassword" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">새 비밀번호</label>
+                    <input type="password" id="newPassword" required minlength="6"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">새 비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" required minlength="6"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    비밀번호 변경
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -2960,6 +3002,7 @@ function initializeTimeSelects() {
     });
 }
 
+// 관리자 대시보드 초기화 함수
 async function initializeAdminDashboard(region, username) {
     try {
         // 예약 설정 로드
@@ -2986,12 +3029,69 @@ async function initializeAdminDashboard(region, username) {
             toggleButton.removeEventListener('click', toggleBookingStatus);
             toggleButton.addEventListener('click', toggleBookingStatus);
         }
+
+        // 비밀번호 변경 모달 이벤트 리스너 설정
+        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
         
     } catch (error) {
         console.error('Admin dashboard initialization error:', error);
         showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
     }
 }
+
+// 비밀번호 변경 관련 함수들
+// 비밀번호 변경 모달 컨트롤
+function showChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.add('show');
+}
+
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.remove('show');
+    document.getElementById('changePasswordForm').reset();
+}
+
+// 비밀번호 변경 폼 제출
+document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // 새 비밀번호 일치 확인
+        if (newPassword !== confirmPassword) {
+            showAlert('새 비밀번호가 일치하지 않습니다.', 'error');
+            return;
+        }
+
+        // 비밀번호 복잡도 검증
+        if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(newPassword)) {
+            showAlert('비밀번호는 영문과 숫자를 포함하여 6자 이상이어야 합니다.', 'error');
+            return;
+        }
+
+        showLoading();
+        
+        const response = await apiRequest('/api/admin/change-password', {
+            method: 'PUT',
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        if (response.success) {
+            showAlert('비밀번호가 성공적으로 변경되었습니다.', 'success');
+            closeChangePasswordModal();
+        }
+    } catch (error) {
+        console.error('Password change error:', error);
+        showAlert(error.message || '비밀번호 변경 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
 
 // 날짜 포맷 함수
 function formatDate(dateStr) {
