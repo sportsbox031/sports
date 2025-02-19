@@ -1959,26 +1959,36 @@ async function approveBookingCancel(bookingId) {
     }
 }
 
+// 예약 취소 거부 함수
 async function rejectBookingCancel(bookingId) {
     try {
+        if (!confirm('이 예약의 취소 요청을 거부하시겠습니까?')) {
+            return;
+        }
+
+        showLoading();
+
         const response = await apiRequest(`/api/admin/bookings/${bookingId}/reject-cancel`, {
             method: 'PUT'
         });
+
         if (response.success) {
-            showAlert('예약 취소가 거부되었습니다.', 'success', 3000);
-            loadPendingBookings();
-            debouncedUpdateCalendarStatus();
+            showAlert('예약 취소가 거부되었습니다.', 'success');
+            await loadPendingBookings();  // 대기 목록 새로고침
+            await debouncedUpdateCalendarStatus();  // 캘린더 상태 업데이트
         }
     } catch (error) {
         console.error('Cancel rejection error:', error);
-        showAlert('예약 취소 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '예약 취소 거부 처리 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 async function forceCancel(bookingId, dateString) {
     try {
         if (!dateString) {
-            showAlert('날짜 정보가 없습니다.', 'error', 3000);
+            showAlert('날짜 정보가 없습니다.', 'error');
             return;
         }
 
@@ -1986,18 +1996,22 @@ async function forceCancel(bookingId, dateString) {
             return;
         }
 
+        showLoading();
+
         const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
             method: 'PUT'
         });
 
         if (response.success) {
-            showAlert(response.message, 'success', 3000);
-            await loadDateBookings(dateString);
-            debouncedUpdateCalendarStatus();
+            showAlert('예약이 강제 취소되었습니다.', 'success');
+            await loadDateBookings(dateString);  // 날짜별 예약 목록 새로고침
+            await debouncedUpdateCalendarStatus();  // 캘린더 상태 업데이트
         }
     } catch (error) {
         console.error('Force cancel error:', error);
-        showAlert(error.message || '예약 강제 취소 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '예약 강제 취소 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
