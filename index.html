@@ -1476,41 +1476,40 @@ async function validateStoredToken() {
 
 async function signup(formData) {
     try {
-        // 입력값 검증
+        // 입력값 검증 강화
         if (!formData.groupName || !formData.password || !formData.manager || 
-            !formData.contact || !formData.city || !formData.region) {
+            !formData.contact || !formData.city) {
             throw new Error('모든 필드를 입력해주세요.');
+        }
+
+        // 지역 결정 및 검증
+        const region = determineRegion(formData.city);
+        if (!region) {
+            throw new Error('올바른 시/군을 선택해주세요.');
         }
 
         // API 요청 데이터 구성
         const signupData = {
-            group_name: formData.groupName,  // API 요구사항에 맞게 키 이름 변경
+            group_name: formData.groupName,
             password: formData.password,
             manager: formData.manager,
             contact: formData.contact,
             city: formData.city,
-            region: formData.region
+            region: region
         };
 
         const response = await apiRequest('/api/signup', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(signupData)
         });
 
         if (response.success) {
-            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
-            document.getElementById('signupModal').classList.remove('show');
-            document.getElementById('signupForm').reset();
             return response;
         } else {
             throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
         }
     } catch (error) {
         console.error('Signup error:', error);
-        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
         throw error;
     }
 }
@@ -2298,23 +2297,25 @@ document.getElementById('signupForm').addEventListener('submit', async function(
     e.preventDefault();
     
     try {
-        const city = document.getElementById('city').value;
-        const region = determineRegion(city);  // 기존 함수 사용
+        showLoading();
         
         const formData = {
             groupName: document.getElementById('groupName').value.trim(),
             password: document.getElementById('signupPassword').value,
             manager: document.getElementById('manager').value.trim(),
             contact: document.getElementById('contact').value.trim(),
-            city: city,
-            region: region
+            city: document.getElementById('city').value
         };
 
-        showLoading();
         await signup(formData);
+        
+        // 성공 시 처리
+        document.getElementById('signupModal').classList.remove('show');
+        document.getElementById('signupForm').reset();
+        showAlert('회원가입이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success');
+        
     } catch (error) {
-        console.error('Signup error:', error);
-        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
     }
