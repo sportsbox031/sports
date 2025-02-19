@@ -1332,46 +1332,117 @@ async function initializeAdminDashboard(region, username) {
     }
 }
 
+// 통계 섹션 HTML을 동적으로 처리하는 함수 추가
+function updateStatisticsUI(region) {
+    const statsContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.gap-8.mb-8');
+    if (!statsContainer) return;
+
+    // 전체 관리자인 경우 두 지역 모두 표시
+    if (region === 'all') {
+        statsContainer.innerHTML = `
+            <!-- 남부 통계 -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">남부 지역 현황</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">금일 예약</p>
+                        <p id="southTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">이번 달 총 예약</p>
+                        <p id="southMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 북부 통계 -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">북부 지역 현황</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">금일 예약</p>
+                        <p id="northTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">이번 달 총 예약</p>
+                        <p id="northMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // 지역 관리자인 경우 해당 지역만 표시
+        const regionText = region === 'south' ? '남부' : '북부';
+        const idPrefix = region === 'south' ? 'south' : 'north';
+        
+        statsContainer.innerHTML = `
+            <div class="bg-white rounded-xl shadow-lg p-6 col-span-2">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">${regionText} 지역 현황</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">금일 예약</p>
+                        <p id="${idPrefix}TodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">이번 달 총 예약</p>
+                        <p id="${idPrefix}MonthBookings" class="text-2xl font-bold text-green-600">0건</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // 통계 로드 함수
 async function loadRegionStatistics() {
     try {
+        const adminRegion = localStorage.getItem('region');
+        updateStatisticsUI(adminRegion);
+
         const today = new Date().toISOString().split('T')[0];
         const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
             .toISOString().split('T')[0];
         const lastDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
             .toISOString().split('T')[0];
 
-        // 남부 통계
-        const southStats = await apiRequest('/api/admin/statistics', {
-            method: 'POST',
-            body: JSON.stringify({
-                region: 'south',
-                today,
-                startDate: firstDayOfMonth,
-                endDate: lastDayOfMonth
-            })
-        });
+        if (adminRegion === 'all' || adminRegion === 'south') {
+            // 남부 통계
+            const southStats = await apiRequest('/api/admin/statistics', {
+                method: 'POST',
+                body: JSON.stringify({
+                    region: 'south',
+                    today,
+                    startDate: firstDayOfMonth,
+                    endDate: lastDayOfMonth
+                })
+            });
 
-        // 북부 통계
-        const northStats = await apiRequest('/api/admin/statistics', {
-            method: 'POST',
-            body: JSON.stringify({
-                region: 'north',
-                today,
-                startDate: firstDayOfMonth,
-                endDate: lastDayOfMonth
-            })
-        });
+            if (southStats.success) {
+                document.getElementById('southTodayBookings').textContent = 
+                    `${southStats.todayBookings}건`;
+                document.getElementById('southMonthBookings').textContent = 
+                    `${southStats.monthBookings}건`;
+            }
+        }
 
-        // 통계 업데이트
-        document.getElementById('southTodayBookings').textContent = 
-            `${southStats.todayBookings}건`;
-        document.getElementById('southMonthBookings').textContent = 
-            `${southStats.monthBookings}건`;
-        document.getElementById('northTodayBookings').textContent = 
-            `${northStats.todayBookings}건`;
-        document.getElementById('northMonthBookings').textContent = 
-            `${northStats.monthBookings}건`;
+        if (adminRegion === 'all' || adminRegion === 'north') {
+            // 북부 통계
+            const northStats = await apiRequest('/api/admin/statistics', {
+                method: 'POST',
+                body: JSON.stringify({
+                    region: 'north',
+                    today,
+                    startDate: firstDayOfMonth,
+                    endDate: lastDayOfMonth
+                })
+            });
+
+            if (northStats.success) {
+                document.getElementById('northTodayBookings').textContent = 
+                    `${northStats.todayBookings}건`;
+                document.getElementById('northMonthBookings').textContent = 
+                    `${northStats.monthBookings}건`;
+            }
+        }
 
     } catch (error) {
         console.error('Statistics loading error:', error);
@@ -2900,6 +2971,9 @@ async function initializeAdminDashboard(region, username) {
         // 예약 상태 업데이트
         await debouncedUpdateCalendarStatus();
         
+        // 통계 로드
+        await loadRegionStatistics();
+        
         // 가입 대기 목록 로드
         await loadPendingUsers();
         
@@ -2909,7 +2983,6 @@ async function initializeAdminDashboard(region, username) {
         // 예약 상태 토글 버튼 이벤트 리스너 추가
         const toggleButton = document.getElementById('toggleBookingStatus');
         if (toggleButton) {
-            // 이벤트 리스너 중복 방지를 위해 제거 후 다시 추가
             toggleButton.removeEventListener('click', toggleBookingStatus);
             toggleButton.addEventListener('click', toggleBookingStatus);
         }
