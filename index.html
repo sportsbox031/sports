@@ -2166,25 +2166,39 @@ async function loadUserBookingSettings() {
 }
 
 async function toggleBookingStatus() {
-    const isCurrentlyActive = this.textContent.includes('중지');
     try {
+        const region = localStorage.getItem('region');
+        // 전체 관리자의 경우 선택된 지역 값 사용
+        const targetRegion = region === 'all' ? 
+            document.getElementById('regionFilter')?.value : region;
+
+        if (!targetRegion) {
+            showAlert('지역을 선택해주세요.', 'error');
+            return;
+        }
+
+        const toggleButton = document.getElementById('toggleBookingStatus');
+        const isCurrentlyActive = toggleButton.textContent.includes('중지');
+
         const response = await apiRequest('/api/admin/booking-settings', {
             method: 'POST',
             body: JSON.stringify({
+                region: targetRegion,
                 is_active: !isCurrentlyActive
             })
         });
 
         if (response.success) {
-            updateBookingStatusUI(!isCurrentlyActive);
             showAlert(
-                isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.', 
+                isCurrentlyActive ? '예약이 중지되었습니다.' : '예약이 시작되었습니다.',
                 'success'
             );
+            updateBookingStatusUI(!isCurrentlyActive);
+            await debouncedUpdateCalendarStatus();
         }
     } catch (error) {
-        console.error('Error toggling booking status:', error);
-        showAlert('설정 변경 중 오류가 발생했습니다.', 'error');
+        console.error('Toggle booking status error:', error);
+        showAlert(error.message || '설정 변경 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -2195,12 +2209,12 @@ function updateBookingStatusUI(isActive) {
     
     if (isActive) {
         toggleButton.textContent = '예약 중지하기';
-        toggleButton.className = 'px-6 py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-all duration-200';
+        toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-red-500 text-white hover:bg-red-600 transition-all duration-200';
         statusText.textContent = '현재 예약을 받고 있습니다';
         statusText.className = 'text-sm text-green-600';
     } else {
         toggleButton.textContent = '예약 시작하기';
-        toggleButton.className = 'px-6 py-2 rounded-lg font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-200';
+        toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-200';
         statusText.textContent = '현재 예약을 받고 있지 않습니다';
         statusText.className = 'text-sm text-red-600';
     }
@@ -2867,9 +2881,10 @@ async function initializeAdminDashboard(region, username) {
         // 예약 승인 대기 목록 로드
         await loadPendingBookings();
 
-        // 예약 상태 토글 버튼 이벤트 리스너 추가 (기존 코드에서 가져온 부분)
+        // 예약 상태 토글 버튼 이벤트 리스너 추가
         const toggleButton = document.getElementById('toggleBookingStatus');
         if (toggleButton) {
+            // 이벤트 리스너 중복 방지를 위해 제거 후 다시 추가
             toggleButton.removeEventListener('click', toggleBookingStatus);
             toggleButton.addEventListener('click', toggleBookingStatus);
         }
@@ -2877,31 +2892,6 @@ async function initializeAdminDashboard(region, username) {
     } catch (error) {
         console.error('Admin dashboard initialization error:', error);
         showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
-        throw error;
-    }
-}
-
-async function initializeAdminDashboard(region, username) {
-    try {
-        // 예약 설정 로드
-        await loadAdminBookingSettings();
-        
-        // 관리자 캘린더 초기화
-        initializeAdminCalendar();
-        
-        // 예약 상태 업데이트
-        await debouncedUpdateCalendarStatus();
-        
-        // 가입 대기 목록 로드
-        await loadPendingUsers();
-        
-        // 예약 승인 대기 목록 로드
-        await loadPendingBookings();
-        
-    } catch (error) {
-        console.error('Admin dashboard initialization error:', error);
-        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
-        throw error;
     }
 }
 
