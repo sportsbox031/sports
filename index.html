@@ -1802,31 +1802,44 @@ async function loadPendingUsers() {
 
 async function approveUser(userId) {
     try {
+        showLoading();  // 로딩 표시 추가
         const response = await apiRequest(`/api/admin/users/${userId}/approve`, {
             method: 'PUT'
         });
+        
         if (response.success) {
             showAlert('사용자가 승인되었습니다.', 'success', 3000);
-            loadPendingUsers();
+            await loadPendingUsers();  // await 추가하여 목록 새로고침 보장
         }
     } catch (error) {
         console.error('User approval error:', error);
-        showAlert('사용자 승인 처리 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '사용자 승인 처리 중 오류가 발생했습니다.', 'error', 3000);
+    } finally {
+        hideLoading();  // 로딩 표시 제거 보장
     }
 }
 
 async function rejectUser(userId) {
     try {
+        // 확인 대화상자 추가
+        if (!confirm('정말 이 사용자의 가입을 거부하시겠습니까?')) {
+            return;
+        }
+
+        showLoading();  // 로딩 표시 추가
         const response = await apiRequest(`/api/admin/users/${userId}/reject`, {
             method: 'PUT'
         });
+        
         if (response.success) {
             showAlert('사용자가 거부되었습니다.', 'success', 3000);
-            loadPendingUsers();
+            await loadPendingUsers();  // await 추가하여 목록 새로고침 보장
         }
     } catch (error) {
         console.error('User rejection error:', error);
-        showAlert('사용자 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+        showAlert(error.message || '사용자 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
+    } finally {
+        hideLoading();  // 로딩 표시 제거 보장
     }
 }
 
