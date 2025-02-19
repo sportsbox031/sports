@@ -1031,7 +1031,7 @@ const DEBUG = true;
 const REGION_MAPPING = {
     south: [
         '과천시', '광명시', '광주시', '군포시', '김포시', '부천시', '성남시', 
-        '수원시', '시흥시', '안산시', '안성시', '안양시', '여주시', '오산시', 
+        '수원시', '시흥시', '안산시', '안성시', '안양시', '양평군', '여주시', '오산시', 
         '용인시', '의왕시', '이천시', '평택시', '하남시', '화성시'
     ],
     north: [
@@ -1040,11 +1040,24 @@ const REGION_MAPPING = {
     ]
 };
 
-// 시군 선택에 따른 지역 자동 분류 함수
+    // 시군 선택 드롭다운 초기화 수정
+    function initializeCitySelect() {
+    const citySelect = document.getElementById('city');
+    citySelect.innerHTML = '<option value="">시/군을 선택하세요</option>';
+    
+    // 모든 시군을 알파벳 순으로 정렬
+    [...REGION_MAPPING.south, ...REGION_MAPPING.north]  // REGION_MAPPING 사용
+        .sort()
+        .forEach(city => {
+            citySelect.innerHTML += `<option value="${city}">${city}</option>`;
+        });
+}
+
+// 시군 선택에 따른 지역 자동 분류 함수 (에러 처리만 추가)
 function determineRegion(city) {
     if (REGION_MAPPING.south.includes(city)) return 'south';
     if (REGION_MAPPING.north.includes(city)) return 'north';
-    return null;
+    throw new Error('올바른 시/군을 선택해주세요.');  // null 반환 대신 에러 발생
 }
 
 // 전역 상태 관리
@@ -2285,21 +2298,22 @@ document.getElementById('signupForm').addEventListener('submit', async function(
     e.preventDefault();
     
     try {
-        showLoading();
-
+        const city = document.getElementById('city').value;
+        const region = determineRegion(city);  // 기존 함수 사용
+        
         const formData = {
             groupName: document.getElementById('groupName').value.trim(),
             password: document.getElementById('signupPassword').value,
             manager: document.getElementById('manager').value.trim(),
             contact: document.getElementById('contact').value.trim(),
-            city: document.getElementById('city').value,
-            region: determineRegion(document.getElementById('city').value)
+            city: city,
+            region: region
         };
 
+        showLoading();
         await signup(formData);
-        
     } catch (error) {
-        console.error('Form submission error:', error);
+        console.error('Signup error:', error);
         showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
     } finally {
         hideLoading();
@@ -2896,17 +2910,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 회원가입 모달 컨트롤
     document.getElementById('showSignup').addEventListener('click', function() {
-        document.getElementById('signupModal').classList.add('show');
-        
-        // 시군 선택 드롭다운 초기화
-        const citySelect = document.getElementById('city');
-        citySelect.innerHTML = '<option value="">시/군을 선택하세요</option>';
-        [...REGION_MAPPING.south, ...REGION_MAPPING.north]
-            .sort()
-            .forEach(city => {
-                citySelect.innerHTML += `<option value="${city}">${city}</option>`;
-            });
-    });
+    document.getElementById('signupModal').classList.add('show');
+    initializeCitySelect(); // 함수 호출 추가
+}); // 닫는 괄호 추가
 
     document.getElementById('closeSignup').addEventListener('click', function() {
         document.getElementById('signupModal').classList.remove('show');
@@ -2916,18 +2922,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 시군 선택 이벤트
     document.getElementById('city')?.addEventListener('change', function() {
-        const region = determineRegion(this.value);
-        const regionInfo = document.getElementById('regionInfo');
-        
-        if (region) {
-            regionInfo.textContent = `${region === 'south' ? '남부' : '북부'} 지역`;
-            regionInfo.className = `text-sm font-medium mt-1 ${
-                region === 'south' ? 'text-blue-600' : 'text-green-600'
-            }`;
-        } else {
-            regionInfo.textContent = '';
-        }
-    });
+    const city = this.value;
+    const region = determineRegion(city);  // 기존 함수 사용
+    const regionInfo = document.getElementById('regionInfo');
+    
+    if (region) {
+        regionInfo.textContent = `${region === 'south' ? '남부' : '북부'} 지역`;
+        regionInfo.className = `text-sm font-medium mt-1 ${
+            region === 'south' ? 'text-blue-600' : 'text-green-600'
+        }`;
+    } else {
+        regionInfo.textContent = '';
+    }
+});
 
     // 회원가입 폼 제출
     document.getElementById('signupForm').addEventListener('submit', function(e) {
