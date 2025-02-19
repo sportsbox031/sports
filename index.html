@@ -1415,14 +1415,14 @@ function logout() {
     showAlert('로그아웃되었습니다.', 'info', 3000);
 }
 
+// 일반 사용자용 UI 업데이트
 function updateUserDashboardState(isActive) {
     const calendar = document.getElementById('calendar');
     const bookingForm = document.getElementById('bookingForm');
-    // 예약 폼의 부모 요소를 더 정확하게 선택
     const bookingFormSection = bookingForm.closest('.bg-white.rounded-2xl.shadow-xl.p-8');
 
     if (!isActive) {
-        // 달력은 보여주되 클릭만 비활성화
+        // 달력 비활성화
         const calendarDays = calendar.querySelectorAll('.calendar-day:not(.past)');
         calendarDays.forEach(day => {
             day.style.pointerEvents = 'none';
@@ -1435,10 +1435,8 @@ function updateUserDashboardState(isActive) {
         bookingForm.style.opacity = '0.5';
         bookingForm.style.pointerEvents = 'none';
         
-        // 이미 존재하는 메시지 확인
+        // 예약 중지 메시지 표시
         let message = bookingFormSection.querySelector('.booking-disabled-message');
-        
-        // 메시지가 없을 경우에만 새로 생성
         if (!message) {
             message = document.createElement('div');
             message.className = 'booking-disabled-message bg-red-100 text-red-700 p-4 rounded-lg mb-4';
@@ -2133,8 +2131,8 @@ async function loadDateBookings(dateString) {
     }
 }
 
-// 예약 시스템 설정 관리
-async function loadBookingSettings() {
+// 관리자용 예약 설정 로드
+async function loadAdminBookingSettings() {
     try {
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
@@ -2147,8 +2145,23 @@ async function loadBookingSettings() {
         }
     } catch (error) {
         console.error('Error loading booking settings:', error);
-        updateBookingStatusUI(false);  // 오류 시 기본적으로 예약 중지 상태로 표시
+        updateBookingStatusUI(false);
         throw error;
+    }
+}
+
+// 일반 사용자용 예약 설정 로드
+async function loadUserBookingSettings() {
+    try {
+        const response = await apiRequest('/api/booking-settings');
+        if (response.success) {
+            updateUserDashboardState(response.data?.is_active || false);
+            return response.data;
+        }
+    } catch (error) {
+        console.error('Error loading booking settings:', error);
+        updateUserDashboardState(false);
+        showAlert('예약 설정을 불러오는데 실패했습니다.', 'error');
     }
 }
 
@@ -2175,6 +2188,7 @@ async function toggleBookingStatus() {
     }
 }
 
+// 관리자용 UI 업데이트
 function updateBookingStatusUI(isActive) {
     const toggleButton = document.getElementById('toggleBookingStatus');
     const statusText = document.getElementById('bookingStatusText');
@@ -2191,6 +2205,8 @@ function updateBookingStatusUI(isActive) {
         statusText.className = 'text-sm text-red-600';
     }
 }
+
+
 
 // 디바운스 함수
 function debounce(func, wait) {
@@ -2435,12 +2451,6 @@ function initializeCalendar() {
     });
 
     renderCalendar(currentDate);
-}
-
-async function initializeUserDashboard() {
-    initializeCalendar();  // 달력 초기화
-    debouncedUpdateCalendarStatus();  // 예약 상태 업데이트
-    await loadBookings();  // 예약 목록 로드
 }
 
 function initializeAdminCalendar() {
@@ -2840,19 +2850,58 @@ function initializeTimeSelects() {
     });
 }
 
-// 관리자 대시보드 초기화 함수
-function initializeAdminDashboard() {
-    loadBookingSettings();  // 예약 설정 로드
-    initializeAdminCalendar();
-    debouncedUpdateCalendarStatus();
-    loadPendingUsers();
-    loadPendingBookings();
-    
-    // 예약 상태 토글 버튼 이벤트 리스너 추가
-    const toggleButton = document.getElementById('toggleBookingStatus');
-    if (toggleButton) {
-        toggleButton.removeEventListener('click', toggleBookingStatus);
-        toggleButton.addEventListener('click', toggleBookingStatus);
+async function initializeAdminDashboard(region, username) {
+    try {
+        // 예약 설정 로드
+        await loadAdminBookingSettings();
+        
+        // 관리자 캘린더 초기화
+        initializeAdminCalendar();
+        
+        // 예약 상태 업데이트
+        await debouncedUpdateCalendarStatus();
+        
+        // 가입 대기 목록 로드
+        await loadPendingUsers();
+        
+        // 예약 승인 대기 목록 로드
+        await loadPendingBookings();
+
+        // 예약 상태 토글 버튼 이벤트 리스너 추가 (기존 코드에서 가져온 부분)
+        const toggleButton = document.getElementById('toggleBookingStatus');
+        if (toggleButton) {
+            toggleButton.removeEventListener('click', toggleBookingStatus);
+            toggleButton.addEventListener('click', toggleBookingStatus);
+        }
+        
+    } catch (error) {
+        console.error('Admin dashboard initialization error:', error);
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        throw error;
+    }
+}
+
+async function initializeAdminDashboard(region, username) {
+    try {
+        // 예약 설정 로드
+        await loadAdminBookingSettings();
+        
+        // 관리자 캘린더 초기화
+        initializeAdminCalendar();
+        
+        // 예약 상태 업데이트
+        await debouncedUpdateCalendarStatus();
+        
+        // 가입 대기 목록 로드
+        await loadPendingUsers();
+        
+        // 예약 승인 대기 목록 로드
+        await loadPendingBookings();
+        
+    } catch (error) {
+        console.error('Admin dashboard initialization error:', error);
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        throw error;
     }
 }
 
