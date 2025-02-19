@@ -1184,12 +1184,15 @@ async function showDashboard(role) {
         const dashboardTitle = region === 'south' ? '남부 스포츠박스' : 
                              region === 'north' ? '북부 스포츠박스' : 
                              '스포츠박스 관리자';
+
+        // 이전 대시보드 상태 초기화
+        document.getElementById('adminDashboard').classList.add('hidden');
+        document.getElementById('userDashboard').classList.add('hidden');
         
         if (role === 'admin') {
             // 관리자 대시보드 표시
             document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('userDashboard').classList.add('hidden');
-
+            
             // 관리자 타입에 따른 UI 조정
             if (region === 'all') {
                 document.querySelector('#adminDashboard .dashboard-title').textContent = '스포츠박스 관리자';
@@ -1395,13 +1398,19 @@ async function refreshAdminDashboard() {
 }
 
 function logout() {
+    // 기존 데이터 정리
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('username');
+    localStorage.removeItem('region');
     
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('userDashboard').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
+     // 로그인 화면 표시
+     document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
+    document.getElementById('loginAndReservationSystem').classList.remove('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    
+    // 폼 초기화
+    document.getElementById('loginForm').reset();
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
 }
@@ -2280,11 +2289,18 @@ async function login(username, password) {
         });
 
         if (response.success) {
+            // 로컬 스토리지 업데이트
             localStorage.setItem('token', response.token);
             localStorage.setItem('role', response.user.role);
             localStorage.setItem('username', response.user.group_name);
             localStorage.setItem('region', response.user.region);
 
+            // 모든 대시보드 숨기기
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('userDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.add('hidden');
+
+            // 새로운 대시보드 표시
             await showDashboard(response.user.role);
             showAlert('로그인되었습니다.', 'success', 2000);
         }
