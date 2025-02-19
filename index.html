@@ -610,24 +610,23 @@
                                 <span class="dashboard-title text-2xl font-bold">스포츠박스</span>
                             </div>
                             <div class="flex items-center space-x-4">
-                                <!-- 지역 뱃지 추가 -->
-                                <span id="regionBadge" class="px-3 py-1 rounded-full text-sm font-medium bg-white/20">
-                                    <!-- 지역 정보는 JavaScript에서 동적으로 설정 -->
-                                </span>
-                                <!-- 사용자 정보 -->
+                                <span id="regionBadge" class="px-3 py-1 rounded-full text-sm font-medium bg-white/20"></span>
                                 <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
-                                <div class="flex items-center space-x-2">
-                                    <button onclick="showHomeScreen()" 
-                                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                                        <i class="fas fa-home"></i>
-                                        <span>홈으로</span>
-                                    </button>
-                                    <button id="logoutBtn" 
-                                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>로그아웃</span>
-                                    </button>
-                                </div>
+                                <button onclick="showUserProfileModal()" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-user"></i>
+                                    <span>계정관리</span>
+                                </button>
+                                <button onclick="showHomeScreen()" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-home"></i>
+                                    <span>홈으로</span>
+                                </button>
+                                <button id="logoutBtn" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>로그아웃</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -750,6 +749,67 @@
                     </div>
                 </main>
             </div>
+
+    <!-- 사용자 프로필 관리 모달 -->
+    <div id="userProfileModal" class="modal">
+        <div class="bg-white p-8 rounded-lg shadow-md w-[500px] m-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">계정 정보 관리</h2>
+                <button id="closeUserProfile" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="userProfileForm" class="space-y-6">
+                <!-- 기본 정보 섹션 -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-700">기본 정보</h3>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">단체명</label>
+                        <input type="text" id="userGroupName" disabled
+                            class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">담당자</label>
+                        <input type="text" id="userManager" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">연락처</label>
+                        <input type="text" id="userContact" required
+                            pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}"
+                            placeholder="예: 010-1234-5678"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                </div>
+
+                <!-- 비밀번호 변경 섹션 -->
+                <div class="space-y-4 pt-4 border-t">
+                    <h3 class="text-lg font-semibold text-gray-700">비밀번호 변경</h3>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">현재 비밀번호</label>
+                        <input type="password" id="userCurrentPassword"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">새 비밀번호</label>
+                        <input type="password" id="userNewPassword"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">새 비밀번호 확인</label>
+                        <input type="password" id="userConfirmPassword"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <p class="text-sm text-gray-500">* 비밀번호를 변경하지 않으려면 비워두세요</p>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                    정보 수정
+                </button>
+            </form>
+        </div>
+    </div>
 
             <!-- 관리자 대시보드 -->
             <div id="adminDashboard" class="hidden">
@@ -1324,6 +1384,88 @@ async function initializeUserDashboard(region, username) {
         throw error;
     }
 }
+
+// 사용자 프로필 관리 관련 함수들
+function showUserProfileModal() {
+    const modal = document.getElementById('userProfileModal');
+    // 현재 사용자 정보 표시
+    document.getElementById('userGroupName').value = localStorage.getItem('username');
+    document.getElementById('userManager').value = localStorage.getItem('manager');
+    document.getElementById('userContact').value = localStorage.getItem('contact');
+    
+    // 비밀번호 필드 초기화
+    document.getElementById('userCurrentPassword').value = '';
+    document.getElementById('userNewPassword').value = '';
+    document.getElementById('userConfirmPassword').value = '';
+    
+    modal.classList.add('show');
+}
+
+function closeUserProfileModal() {
+    document.getElementById('userProfileModal').classList.remove('show');
+    document.getElementById('userProfileForm').reset();
+}
+
+// 사용자 프로필 폼 제출
+document.getElementById('userProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        const formData = {
+            manager: document.getElementById('userManager').value.trim(),
+            contact: document.getElementById('userContact').value.trim()
+        };
+
+        // 비밀번호 변경이 포함된 경우
+        const currentPassword = document.getElementById('userCurrentPassword').value;
+        const newPassword = document.getElementById('userNewPassword').value;
+        const confirmPassword = document.getElementById('userConfirmPassword').value;
+
+        if (currentPassword || newPassword || confirmPassword) {
+            if (!currentPassword) {
+                showAlert('현재 비밀번호를 입력해주세요.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showAlert('새 비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+            if (newPassword && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(newPassword)) {
+                showAlert('비밀번호는 영문과 숫자를 포함하여 6자 이상이어야 합니다.', 'error');
+                return;
+            }
+            formData.currentPassword = currentPassword;
+            formData.newPassword = newPassword;
+        }
+
+        showLoading();
+        
+        const response = await apiRequest('/api/user/profile', {
+            method: 'PUT',
+            body: JSON.stringify(formData)
+        });
+
+        if (response.success) {
+            // 로컬 스토리지 정보 업데이트
+            localStorage.setItem('manager', formData.manager);
+            localStorage.setItem('contact', formData.contact);
+            
+            showAlert('계정 정보가 성공적으로 변경되었습니다.', 'success');
+            closeUserProfileModal();
+            
+            // 네비게이션 바 사용자 정보 업데이트
+            document.getElementById('userGroupName').textContent = localStorage.getItem('username');
+        }
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showAlert(error.message || '계정 정보 변경 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
+
+// 모달 닫기 버튼 이벤트
+document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
 
 async function initializeAdminDashboard(region, username) {
     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -3406,6 +3548,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('contactModal').classList.remove('show');
         }
     });
+
+    // 프로필 모달 이벤트 리스너 초기화
+    document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
 
     // 시간 선택 초기화
     initializeTimeSelects();
