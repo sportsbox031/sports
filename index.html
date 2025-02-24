@@ -728,6 +728,14 @@
                             </form>
                         </div>
 
+                       <!-- 여기에 공지사항 섹션 추가 -->
+        <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+            <div id="noticesList" class="space-y-4">
+                <!-- 공지사항이 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
+
                         <!-- 내 예약 목록 -->
                         <div class="mt-8 bg-white rounded-lg shadow-lg p-6 col-span-2">
                             <h2 class="text-xl font-bold text-gray-700 mb-6">내 예약 목록</h2>
@@ -912,6 +920,45 @@
                             </button>
                         </div>
                     </div>
+                    <!-- 관리자 공지사항 -->
+                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항 관리</h2>
+                        <form id="noticeForm" class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
+                                <input type="text" id="noticeTitle" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                                <textarea id="noticeContent" required rows="4"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
+                                <select id="noticeRegion" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    <option value="">선택해주세요</option>
+                                    <option value="all">전체 공개</option>
+                                    <option value="south">남부 지역만</option>
+                                    <option value="north">북부 지역만</option>
+                                </select>
+                            </div>
+                            <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                                공지사항 등록
+                            </button>
+                        </form>
+                    </div>
+
+                        <!-- 공지사항 목록 -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+        <div id="noticesList" class="space-y-4">
+            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+        </div>
+    </div>
+</div>
 
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1527,6 +1574,9 @@ async function initializeUserDashboard(region, username) {
         // 예약 목록 로드
         await loadBookings();
         
+        // 공지사항 로드 추가
+        await loadNotices();
+
         // 남은 예약 횟수 표시 업데이트
         updateRemainingBookingsDisplay();
 
@@ -2052,6 +2102,61 @@ async function loadBookings() {
     } catch (error) {
         console.error('Error loading bookings:', error);
         showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+// 공지사항 작성
+async function createNotice(noticeData) {
+    try {
+        const response = await apiRequest('/api/admin/notices', {
+            method: 'POST',
+            body: JSON.stringify(noticeData)
+        });
+
+        if (response.success) {
+            showAlert('공지사항이 등록되었습니다.', 'success');
+            document.getElementById('noticeForm').reset();
+            await loadNotices();
+        }
+    } catch (error) {
+        console.error('Notice creation error:', error);
+        showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 공지사항 목록 로드
+async function loadNotices() {
+    try {
+        const response = await apiRequest('/api/notices');
+        const noticesList = document.getElementById('noticesList');
+
+        if (response.success && response.data) {
+            noticesList.innerHTML = response.data.map(notice => `
+                <div class="border-b border-gray-200 pb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-semibold">${notice.title}</h3>
+                        <span class="text-sm text-gray-500">
+                            ${new Date(notice.created_at).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 whitespace-pre-line">${notice.content}</p>
+                    <div class="flex items-center mt-2 text-sm text-gray-500">
+                        <span class="mr-4">작성자: ${notice.author}</span>
+                        <span class="px-2 py-1 rounded-full ${
+                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${notice.region === 'all' ? '전체공지' :
+                              notice.region === 'south' ? '남부공지' : '북부공지'}
+                        </span>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        }
+    } catch (error) {
+        console.error('Notices loading error:', error);
+        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
     }
 }
 
@@ -3459,6 +3564,9 @@ async function initializeAdminDashboard(region, username) {
         // 예약 상태 업데이트
         await debouncedUpdateCalendarStatus();
         
+       // 공지사항 로드 추가
+       await loadNotices();   
+
         // 통계 로드
         await loadRegionStatistics();
         
@@ -3836,6 +3944,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         showAlert('회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
     }
 });
+
+// 공지사항 폼 제출 이벤트 리스너 추가
+document.getElementById('noticeForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const noticeData = {
+        title: document.getElementById('noticeTitle').value.trim(),
+        content: document.getElementById('noticeContent').value.trim(),
+        region: document.getElementById('noticeRegion').value
+    };
+
+    await createNotice(noticeData);
+});
+
 
     // 예약 폼 제출
     document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
