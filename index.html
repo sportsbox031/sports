@@ -4096,26 +4096,59 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     // 공지사항 작성 폼 제출
-    document.getElementById('createNoticeForm').addEventListener('submit', async (e) => {
+    document.getElementById('createNoticeForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const formData = {
-            title: document.getElementById('noticeTitle').value,
-            content: document.getElementById('noticeContent').value,
-            is_important: document.getElementById('noticeImportant').checked,
-            region: document.getElementById('noticeRegion').value
-        };
-        await createNotice(formData);
+        try {
+            const formData = {
+                title: document.getElementById('noticeTitle').value,
+                content: document.getElementById('noticeContent').value,
+                is_important: document.getElementById('noticeImportant').checked,
+                region: document.getElementById('noticeRegion').value
+            };
+            await createNotice(formData);
+        } catch (error) {
+            console.error('Notice creation error:', error);
+            showAlert('공지사항 등록에 실패했습니다.', 'error');
+        }
     });
 
     // 문의사항 작성 폼 제출
-    document.getElementById('createInquiryForm').addEventListener('submit', async (e) => {
+    document.getElementById('createInquiryForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const formData = {
-            title: document.getElementById('inquiryTitle').value,
-            content: document.getElementById('inquiryContent').value,
-            is_private: document.getElementById('inquiryPrivate').checked
-        };
-        await createInquiry(formData);
+        try {
+            const formData = {
+                title: document.getElementById('inquiryTitle').value,
+                content: document.getElementById('inquiryContent').value,
+                is_private: document.getElementById('inquiryPrivate').checked
+            };
+            await createInquiry(formData);
+        } catch (error) {
+            console.error('Inquiry creation error:', error);
+            showAlert('문의사항 등록에 실패했습니다.', 'error');
+        }
+    });
+
+    // 섹션 전환 버튼 이벤트 리스너
+    document.querySelector('button[onclick="showNotices()"]')?.addEventListener('click', async function() {
+        try {
+            document.getElementById('noticesSection').classList.remove('hidden');
+            document.getElementById('inquiriesSection').classList.add('hidden');
+            await loadNotices();
+        } catch (error) {
+            console.error('Show notices error:', error);
+            showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
+        }
+    });
+
+    document.querySelector('button[onclick="showInquiries()"]')?.addEventListener('click', async function() {
+        try {
+            document.getElementById('noticesSection').classList.add('hidden');
+            document.getElementById('inquiriesSection').classList.remove('hidden');
+            await loadInquiries();
+        } catch (error) {
+            console.error('Show inquiries error:', error);
+            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        }
     });
 });
 
