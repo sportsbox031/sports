@@ -1231,6 +1231,37 @@
     </div>
 </div>
 
+<!-- 공지사항 상세보기 모달 -->
+<div id="noticeDetailModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold" id="noticeDetailTitle"></h2>
+            <button onclick="closeNoticeDetail()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span id="noticeDetailAuthor"></span>
+                <span id="noticeDetailDate"></span>
+            </div>
+            <div class="border-t pt-4">
+                <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
+            </div>
+            <!-- 관리자일 때만 보이는 버튼들 -->
+            <div id="noticeDetailActions" class="flex justify-end space-x-2 pt-4 border-t hidden">
+                <button onclick="editNotice()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    수정
+                </button>
+                <button onclick="deleteNotice()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    삭제
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- 연락처 모달 -->
 <div id="contactModal" class="modal">
     <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
@@ -1279,7 +1310,8 @@ async function loadHomeNotices() {
 
         if (data.success && data.data) {
             noticesList.innerHTML = data.data.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-semibold">${notice.title}</h3>
                         <span class="text-sm text-gray-500">
@@ -1299,10 +1331,83 @@ async function loadHomeNotices() {
                         </span>
                     </div>
                 </div>
-            `).join('');
+            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
+    }
+}
+
+// 공지사항 상세보기
+function showNoticeDetail(notice) {
+    currentNoticeId = notice.id;
+    document.getElementById('noticeDetailTitle').textContent = notice.title;
+    document.getElementById('noticeDetailContent').textContent = notice.content;
+    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
+    document.getElementById('noticeDetailDate').textContent = 
+        new Date(notice.created_at).toLocaleDateString();
+
+    // 관리자 권한 확인
+    const role = sessionStorage.getItem('role');
+    const region = sessionStorage.getItem('region');
+    const noticeActions = document.getElementById('noticeDetailActions');
+    
+    if (role === 'admin' && (region === 'all' || region === notice.region)) {
+        noticeActions.classList.remove('hidden');
+    } else {
+        noticeActions.classList.add('hidden');
+    }
+
+    document.getElementById('noticeDetailModal').classList.add('show');
+}
+
+function closeNoticeDetail() {
+    document.getElementById('noticeDetailModal').classList.remove('show');
+    currentNoticeId = null;
+}
+
+// 공지사항 수정
+async function editNotice() {
+    try {
+        if (!currentNoticeId) return;
+
+        const title = document.getElementById('noticeDetailTitle').textContent;
+        const content = document.getElementById('noticeDetailContent').textContent;
+        const region = document.getElementById('noticeRegion').value;
+
+        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ title, content, region })
+        });
+
+        if (response.success) {
+            showAlert('공지사항이 수정되었습니다.', 'success');
+            closeNoticeDetail();
+            await loadHomeNotices();  // 목록 새로고침
+        }
+    } catch (error) {
+        console.error('Notice update error:', error);
+        showAlert(error.message || '공지사항 수정 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 공지사항 삭제
+async function deleteNotice() {
+    try {
+        if (!currentNoticeId || !confirm('정말 이 공지사항을 삭제하시겠습니까?')) return;
+
+        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.success) {
+            showAlert('공지사항이 삭제되었습니다.', 'success');
+            closeNoticeDetail();
+            await loadHomeNotices();  // 목록 새로고침
+        }
+    } catch (error) {
+        console.error('Notice deletion error:', error);
+        showAlert(error.message || '공지사항 삭제 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -1375,6 +1480,7 @@ let currentUser = null;
 let bookingStatus = {};
 let isLoading = false;
 let currentSelectedDate = null;
+let currentNoticeId = null;
 
 // 로딩 인디케이터 제어
 function showLoading() {
@@ -2274,36 +2380,41 @@ async function createNotice(noticeData) {
 async function loadNotices() {
     try {
         const response = await apiRequest('/api/notices');
-        const noticesList = document.getElementById('noticesList');
-
         if (response.success && response.data) {
-            noticesList.innerHTML = response.data.map(notice => `
-                <div class="border-b border-gray-200 pb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">${notice.title}</h3>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-600 whitespace-pre-line">${notice.content}</p>
-                    <div class="flex items-center mt-2 text-sm text-gray-500">
-                        <span class="mr-4">작성자: ${notice.author}</span>
-                        <span class="px-2 py-1 rounded-full ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            renderNoticesList(response.data, 'noticesList');
         }
     } catch (error) {
         console.error('Notices loading error:', error);
         showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
     }
+}
+
+// 공지사항 목록 렌더링 함수
+function renderNoticesList(notices, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = notices.map(notice => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">${notice.title}</h3>
+                <span class="text-sm text-gray-500">
+                    ${new Date(notice.created_at).toLocaleDateString()}
+                </span>
+            </div>
+            <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                <span class="px-2 py-1 rounded-full text-sm ${
+                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                    'bg-green-100 text-green-800'
+                }">
+                    ${notice.region === 'all' ? '전체공지' :
+                      notice.region === 'south' ? '남부공지' : '북부공지'}
+                </span>
+            </div>
+        </div>
+    `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
 }
 
 async function loadAdminBookings() {
