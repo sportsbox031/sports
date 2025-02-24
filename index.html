@@ -312,11 +312,12 @@
                         <nav class="hidden md:flex items-center space-x-8">
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
                             <button onclick="showLoginScreen()" 
-    class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
-    회원가입/로그인
-</button>
+                                class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
+                                회원가입/로그인
+                            </button>
                         </nav>
                     </div>
                 </div>
@@ -1433,8 +1434,9 @@ async function apiRequest(endpoint, options = {}) {
     showLoading();
     try {
         const token = sessionStorage.getItem('token');
-        // 로그인과 회원가입은 토큰 검증 제외
-        if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup')) {
+        // public API는 인증 체크 제외
+        if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup') 
+            && !endpoint.includes('/public')) {
             throw new Error('인증이 필요합니다.');
         }
 
@@ -1460,7 +1462,8 @@ async function apiRequest(endpoint, options = {}) {
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
-        if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')) {
+        if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')
+            && !endpoint.includes('/public')) {
             logout();
         }
         throw error;
@@ -3876,6 +3879,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             '파주시', '포천시', '가평군', '연천군'
         ]
     };
+
+    // 공지사항 로드
+    loadHomeNotices();
+    checkAdminStatus();
+
+    // 홈으로 돌아갈 때도 공지사항 새로고침
+    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
+        const originalClick = button.onclick;
+        button.onclick = async function() {
+            originalClick.call(this);
+            await loadHomeNotices();
+            checkAdminStatus();
+        };
+    });
 
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
