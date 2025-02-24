@@ -825,10 +825,10 @@
                                 <!-- 지역 선택 필터 -->
                                 <div id="regionFilterContainer" class="flex items-center space-x-2 bg-white/20 rounded-lg px-4 py-2">
                                     <span class="text-sm font-medium">지역 선택:</span>
-                                    <select id="regionFilter" class="bg-transparent border-none text-white focus:ring-0 cursor-pointer">
-                                        <option value="all">전체 지역</option>
-                                        <option value="south">남부</option>
-                                        <option value="north">북부</option>
+                                    <select id="regionFilter" class="bg-transparent border-none text-white focus:ring-0 cursor-pointer font-medium">
+                                        <option value="all" class="bg-white text-gray-700">전체 지역</option>
+                                        <option value="south" class="bg-white text-gray-700">남부</option>
+                                        <option value="north" class="bg-white text-gray-700">북부</option>
                                     </select>
                                 </div>
                                 <!-- 관리자 정보 -->
@@ -1501,11 +1501,45 @@ async function initializeAdminDashboard(region, username) {
         const dashboardTitle = document.querySelector('#adminDashboard .dashboard-title');
 
         if (region === 'all') {
+            // 전체 관리자 설정
             dashboardTitle.textContent = '스포츠박스 관리자';
             regionFilterContainer.classList.remove('hidden');
             adminRegionBadge.textContent = '전체 관리자';
             adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
+
+            // 지역 필터 초기값 설정 및 상태 로드
+            const selectedRegion = regionFilter.value;
+            const settings = await loadAdminBookingSettings();
+            updateBookingStatusUI(settings?.is_active || false);
+
+            // 지역 필터 변경 이벤트 리스너
+            regionFilter.removeEventListener('change', refreshAdminDashboard);
+            regionFilter.addEventListener('change', async function(e) {
+                try {
+                    const selectedRegion = e.target.value;
+                    
+                    // 예약 설정 상태 로드
+                    const response = await apiRequest('/api/admin/booking-settings');
+                    if (response.success) {
+                        const settings = response.data;
+                        const regionSettings = settings[selectedRegion];
+                        updateBookingStatusUI(regionSettings?.is_active || false);
+                    }
+
+                    // 데이터 새로고침
+                    await Promise.all([
+                        loadRegionStatistics(),
+                        debouncedUpdateCalendarStatus(),
+                        loadPendingBookings()
+                    ]);
+                } catch (error) {
+                    console.error('Region filter change error:', error);
+                    showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+                }
+            });
+
         } else {
+            // 지역 관리자 설정
             const regionText = region === 'south' ? '남부' : '북부';
             dashboardTitle.textContent = `${regionText} 스포츠박스`;
             regionFilterContainer.classList.add('hidden');
@@ -1513,16 +1547,14 @@ async function initializeAdminDashboard(region, username) {
             adminRegionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
                 region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
             }`;
+
+            // 지역 관리자용 설정 로드
+            const settings = await loadAdminBookingSettings();
+            updateBookingStatusUI(settings?.is_active || false);
         }
 
-        regionFilter.removeEventListener('change', refreshAdminDashboard);
-        regionFilter.addEventListener('change', async function(e) {
-            currentRegion = e.target.value;
-            await refreshAdminDashboard();
-        });
-
+        // 공통 초기화 작업
         await Promise.all([
-            loadBookingSettings(),
             loadRegionStatistics(),
             initializeAdminCalendar(),
             debouncedUpdateCalendarStatus(),
@@ -2562,7 +2594,7 @@ async function toggleBookingStatus() {
         const region = localStorage.getItem('region');
         // 전체 관리자의 경우 선택된 지역 값 사용
         const targetRegion = region === 'all' ? 
-            document.getElementById('regionFilter')?.value : region;
+            document.getElementById('regionFilter').value : region;
 
         if (!targetRegion) {
             showAlert('지역을 선택해주세요.', 'error');
@@ -2587,6 +2619,12 @@ async function toggleBookingStatus() {
             );
             updateBookingStatusUI(!isCurrentlyActive);
             await debouncedUpdateCalendarStatus();
+
+            // 통계 및 예약 목록 새로고침
+            await Promise.all([
+                loadRegionStatistics(),
+                loadPendingBookings()
+            ]);
         }
     } catch (error) {
         console.error('Toggle booking status error:', error);
@@ -2598,16 +2636,20 @@ async function toggleBookingStatus() {
 function updateBookingStatusUI(isActive) {
     const toggleButton = document.getElementById('toggleBookingStatus');
     const statusText = document.getElementById('bookingStatusText');
+    const region = localStorage.getItem('region');
+    const selectedRegion = region === 'all' ? 
+        document.getElementById('regionFilter').value : region;
+    const regionText = selectedRegion === 'south' ? '남부' : '북부';
     
     if (isActive) {
-        toggleButton.textContent = '예약 중지하기';
+        toggleButton.textContent = `${regionText} 예약 중지하기`;
         toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-red-500 text-white hover:bg-red-600 transition-all duration-200';
-        statusText.textContent = '현재 예약을 받고 있습니다';
+        statusText.textContent = `현재 ${regionText} 지역 예약을 받고 있습니다`;
         statusText.className = 'text-sm text-green-600';
     } else {
-        toggleButton.textContent = '예약 시작하기';
+        toggleButton.textContent = `${regionText} 예약 시작하기`;
         toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-200';
-        statusText.textContent = '현재 예약을 받고 있지 않습니다';
+        statusText.textContent = `현재 ${regionText} 지역 예약을 받고 있지 않습니다`;
         statusText.className = 'text-sm text-red-600';
     }
 }
@@ -3440,6 +3482,33 @@ document.addEventListener('DOMContentLoaded', async function() {
             '파주시', '포천시', '가평군', '연천군'
         ]
     };
+
+    // 여기에 지역 필터 변경 이벤트 리스너 추가
+    document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
+        try {
+            const selectedRegion = e.target.value;
+            
+            // 예약 설정 상태 로드
+            const response = await apiRequest('/api/admin/booking-settings');
+            if (response.success) {
+                const settings = response.data;
+                // 선택된 지역의 설정 가져오기
+                const regionSettings = settings[selectedRegion];
+                // UI 업데이트
+                updateBookingStatusUI(regionSettings?.is_active || false);
+            }
+
+            // 다른 데이터도 새로고침
+            await Promise.all([
+                loadRegionStatistics(),
+                debouncedUpdateCalendarStatus(),
+                loadPendingBookings()
+            ]);
+        } catch (error) {
+            console.error('Region filter change error:', error);
+            showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+        }
+    });
 
     // 시군 선택에 따른 지역 자동 분류 함수
     function determineRegion(city) {
