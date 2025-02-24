@@ -2307,18 +2307,6 @@ async function loadAdminBookings() {
     }
 }
 
-// 상태 클래스 및 텍스트 헬퍼 함수들
-function getStatusClass(status) {
-    const statusClasses = {
-        approved: 'bg-green-100 text-green-800',
-        pending: 'bg-yellow-100 text-yellow-800',
-        rejected: 'bg-red-100 text-red-800',
-        cancelled: 'bg-gray-100 text-gray-800',
-        cancel_pending: 'bg-orange-100 text-orange-800'
-    };
-    return statusClasses[status] || 'bg-gray-100 text-gray-800';
-}
-
 function getStatusText(status) {
     const statusTexts = {
         approved: '승인완료',
