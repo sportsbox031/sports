@@ -610,217 +610,27 @@
                                 <span class="dashboard-title text-2xl font-bold">스포츠박스</span>
                             </div>
                             <div class="flex items-center space-x-4">
-                                <!-- 공지사항 버튼 추가 -->
-                                <button id="noticesBtn" 
-    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-    <i class="fas fa-bullhorn"></i>
-    <span>공지사항</span>
-</button>
-                                <!-- 문의하기 버튼 추가 -->
-                                <button id="inquiriesBtn" 
-    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-    <i class="fas fa-question-circle"></i>
-    <span>문의하기</span>
-</button>
-                                <!-- 구분선 추가 -->
-                                <div class="h-6 w-px bg-white/20"></div>
-                                <!-- 사용자 정보 -->
-                                <div class="flex items-center space-x-2">
-                                    <span id="regionBadge" class="px-3 py-1 rounded-full text-sm font-medium bg-white/20"></span>
-                                    <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
-                                </div>
-                                <!-- 기능 버튼들 -->
-                                <div class="flex items-center space-x-2">
-                                    <button onclick="showUserProfileModal()" 
-                                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                                        <i class="fas fa-user"></i>
-                                        <span>계정관리</span>
-                                    </button>
-                                    <button onclick="showHomeScreen()" 
-                                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                                        <i class="fas fa-home"></i>
-                                        <span>홈으로</span>
-                                    </button>
-                                    <button id="logoutBtn" 
-                                        class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>로그아웃</span>
-                                    </button>
-                                </div>
+                                <span id="regionBadge" class="px-3 py-1 rounded-full text-sm font-medium bg-white/20"></span>
+                                <span id="userGroupName" class="text-sm bg-white/20 px-4 py-2 rounded-full"></span>
+                                <button onclick="showUserProfileModal()" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-user"></i>
+                                    <span>계정관리</span>
+                                </button>
+                                <button onclick="showHomeScreen()" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-home"></i>
+                                    <span>홈으로</span>
+                                </button>
+                                <button id="logoutBtn" 
+                                    class="flex items-center space-x-2 hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-200">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>로그아웃</span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </nav>
-
-<!-- 공지사항 섹션 -->
-<div id="noticesSection" class="hidden">
-    <div class="bg-white rounded-2xl shadow-xl p-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">공지사항</h2>
-            <!-- 관리자만 보이는 버튼 - onclick 제거하고 id 추가 -->
-            <button id="createNoticeModalBtn" 
-                class="bg-primary text-white px-4 py-2 rounded-lg hidden">
-                공지사항 작성
-            </button>
-        </div>
-        
-        <!-- 공지사항 목록 -->
-        <div class="space-y-4">
-            <div id="importantNotices" class="space-y-4">
-                <!-- 중요 공지사항이 여기에 렌더링됨 -->
-            </div>
-            <div id="normalNotices" class="space-y-4">
-                <!-- 일반 공지사항이 여기에 렌더링됨 -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 공지사항 작성 모달 -->
-<div id="createNoticeModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">공지사항 작성</h2>
-            <!-- onclick 제거하고 id 추가 -->
-            <button id="closeNoticeModalBtn" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="createNoticeForm" class="space-y-6">
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
-                <input type="text" id="noticeTitle" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="noticeContent" required rows="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-            </div>
-            <div class="flex items-center space-x-4">
-                <label class="flex items-center">
-                    <input type="checkbox" id="noticeImportant" class="form-checkbox h-5 w-5 text-blue-600">
-                    <span class="ml-2 text-gray-700">중요 공지</span>
-                </label>
-                <div class="flex-1"></div>
-                <select id="noticeRegion" required
-                    class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <option value="all">전체</option>
-                    <option value="south">남부</option>
-                    <option value="north">북부</option>
-                </select>
-            </div>
-            <button type="submit" 
-                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                작성완료
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- 문의하기 섹션 -->
-<div id="inquiriesSection" class="hidden">
-    <div class="bg-white rounded-2xl shadow-xl p-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">문의하기</h2>
-            <button onclick="showCreateInquiryModal()" 
-                class="bg-primary text-white px-4 py-2 rounded-lg">
-                문의글 작성
-            </button>
-        </div>
-        
-        <!-- 문의글 목록 -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성자</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
-                    </tr>
-                </thead>
-                <tbody id="inquiriesList" class="bg-white divide-y divide-gray-200">
-                    <!-- 문의글이 여기에 렌더링됨 -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- 문의글 작성 모달 -->
-<div id="createInquiryModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">문의글 작성</h2>
-            <button onclick="closeCreateInquiryModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="createInquiryForm" class="space-y-6">
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
-                <input type="text" id="inquiryTitle" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="inquiryContent" required rows="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-            </div>
-            <div class="flex items-center">
-                <label class="flex items-center">
-                    <input type="checkbox" id="inquiryPrivate" class="form-checkbox h-5 w-5 text-blue-600">
-                    <span class="ml-2 text-gray-700">비공개 문의</span>
-                </label>
-            </div>
-            <button type="submit" 
-                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                작성완료
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- 문의글 상세보기 모달 -->
-<div id="inquiryDetailModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold" id="inquiryDetailTitle"></h2>
-            <button onclick="closeInquiryDetailModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="space-y-6">
-            <div class="bg-gray-50 p-6 rounded-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center space-x-4">
-                        <span id="inquiryDetailAuthor" class="text-gray-600"></span>
-                        <span id="inquiryDetailDate" class="text-gray-500 text-sm"></span>
-                    </div>
-                    <span id="inquiryDetailStatus" class="px-2 py-1 rounded-full text-sm"></span>
-                </div>
-                <p id="inquiryDetailContent" class="text-gray-700 whitespace-pre-wrap"></p>
-            </div>
-            
-            <!-- 답변 섹션 -->
-            <div id="inquiryReplies" class="space-y-4">
-                <!-- 답변들이 여기에 렌더링됨 -->
-            </div>
-            
-            <!-- 관리자용 답변 작성 폼 -->
-            <form id="createReplyForm" class="space-y-4 hidden">
-                <textarea id="replyContent" required rows="4"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    placeholder="답변을 작성해주세요"></textarea>
-                <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                    답변등록
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
 
                 <main class="container mx-auto px-4 py-8">
                     <div class="grid md:grid-cols-2 gap-8">
@@ -1335,7 +1145,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 
 <!-- JavaScript 코드 시작 -->
-<script type="module">
+<script>
 // 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
@@ -2307,6 +2117,18 @@ async function loadAdminBookings() {
     }
 }
 
+// 상태 클래스 및 텍스트 헬퍼 함수들
+function getStatusClass(status) {
+    const statusClasses = {
+        approved: 'bg-green-100 text-green-800',
+        pending: 'bg-yellow-100 text-yellow-800',
+        rejected: 'bg-red-100 text-red-800',
+        cancelled: 'bg-gray-100 text-gray-800',
+        cancel_pending: 'bg-orange-100 text-orange-800'
+    };
+    return statusClasses[status] || 'bg-gray-100 text-gray-800';
+}
+
 function getStatusText(status) {
     const statusTexts = {
         approved: '승인완료',
@@ -2386,289 +2208,15 @@ function getStatusClass(status) {
     return statusClasses[status] || 'bg-gray-100 text-gray-800';
 }
 
-// 공지사항 관련 함수들
-async function loadNotices() {
-    try {
-        showLoading();
-        const response = await apiRequest('/api/notices');
-        
-        if (response.success) {
-            const importantNotices = document.getElementById('importantNotices');
-            const normalNotices = document.getElementById('normalNotices');
-            
-            // 중요 공지와 일반 공지 분리
-            const important = response.data.filter(notice => notice.is_important);
-            const normal = response.data.filter(notice => !notice.is_important);
-            
-            // 중요 공지 렌더링
-            importantNotices.innerHTML = important.map(notice => `
-                <div class="bg-red-50 border border-red-100 rounded-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">중요</span>
-                            <h3 class="text-lg font-bold text-gray-900">${notice.title}</h3>
-                        </div>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-700 whitespace-pre-wrap">${notice.content}</p>
-                    <div class="mt-4 text-sm text-gray-500">
-                        작성자: ${notice.author_name} | 
-                        지역: ${notice.region === 'all' ? '전체' : notice.region === 'south' ? '남부' : '북부'}
-                    </div>
-                </div>
-            `).join('');
-            
-            // 일반 공지 렌더링
-            normalNotices.innerHTML = normal.map(notice => `
-                <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-gray-900">${notice.title}</h3>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-700 whitespace-pre-wrap">${notice.content}</p>
-                    <div class="mt-4 text-sm text-gray-500">
-                        작성자: ${notice.author_name} | 
-                        지역: ${notice.region === 'all' ? '전체' : notice.region === 'south' ? '남부' : '북부'}
-                    </div>
-                </div>
-            `).join('');
-            
-            // 관리자인 경우 작성 버튼 표시
-            const createNoticeBtn = document.getElementById('createNoticeModalBtn');
-            const userRole = sessionStorage.getItem('role');
-            createNoticeBtn.classList.toggle('hidden', userRole !== 'admin');
-        }
-    } catch (error) {
-        console.error('Notices load error:', error);
-        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function createNotice(formData) {
-    try {
-        showLoading();
-        const response = await apiRequest('/api/notices', {
-            method: 'POST',
-            body: JSON.stringify(formData)
-        });
-        
-        if (response.success) {
-            showAlert('공지사항이 등록되었습니다.', 'success');
-            document.getElementById('createNoticeModal').classList.remove('show');
-            document.getElementById('createNoticeForm').reset();
-            await loadNotices();
-        }
-    } catch (error) {
-        console.error('Notice creation error:', error);
-        showAlert(error.message || '공지사항 등록에 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// 문의사항 관련 함수들
-async function loadInquiries() {
-    try {
-        showLoading();
-        const response = await apiRequest('/api/inquiries');
-        
-        if (response.success) {
-            const tbody = document.getElementById('inquiriesList');
-            const userRole = sessionStorage.getItem('role');
-            const userId = sessionStorage.getItem('userId');
-            
-            tbody.innerHTML = response.data.map(inquiry => `
-                <tr class="hover:bg-gray-50 cursor-pointer" 
-                    onclick="showInquiryDetail(${inquiry.id})">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center space-x-2">
-                            ${inquiry.is_private ? 
-                                '<span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">비공개</span>' 
-                                : ''}
-                            <span class="font-medium text-gray-900">${inquiry.title}</span>
-                            ${inquiry.reply_count > 0 ? 
-                                `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                    답변 ${inquiry.reply_count}
-                                </span>` 
-                                : ''}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
-                        ${inquiry.author_name}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs rounded-full ${
-                            inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            inquiry.status === 'answered' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                        }">
-                            ${
-                                inquiry.status === 'pending' ? '답변대기' :
-                                inquiry.status === 'answered' ? '답변완료' :
-                                '처리완료'
-                            }
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
-                        ${new Date(inquiry.created_at).toLocaleDateString()}
-                    </td>
-                </tr>
-            `).join('');
-        }
-    } catch (error) {
-        console.error('Inquiries load error:', error);
-        showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function createInquiry(formData) {
-    try {
-        showLoading();
-        const response = await apiRequest('/api/inquiries', {
-            method: 'POST',
-            body: JSON.stringify(formData)
-        });
-        
-        if (response.success) {
-            showAlert('문의사항이 등록되었습니다.', 'success');
-            closeCreateInquiryModal();
-            await loadInquiries();
-        }
-    } catch (error) {
-        console.error('Inquiry creation error:', error);
-        showAlert(error.message || '문의사항 등록에 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function showInquiryDetail(inquiryId) {
-    try {
-        showLoading();
-        const response = await apiRequest(`/api/inquiries/${inquiryId}`);
-        
-        if (response.success) {
-            const inquiry = response.data;
-            const modal = document.getElementById('inquiryDetailModal');
-            
-            // 기본 정보 설정
-            document.getElementById('inquiryDetailTitle').textContent = inquiry.title;
-            document.getElementById('inquiryDetailAuthor').textContent = inquiry.author_name;
-            document.getElementById('inquiryDetailDate').textContent = 
-                new Date(inquiry.created_at).toLocaleDateString();
-            document.getElementById('inquiryDetailContent').textContent = inquiry.content;
-            
-            // 상태 표시
-            const statusElement = document.getElementById('inquiryDetailStatus');
-            statusElement.className = `px-2 py-1 rounded-full text-sm ${
-                inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                inquiry.status === 'answered' ? 'bg-green-100 text-green-800' :
-                'bg-gray-100 text-gray-800'
-            }`;
-            statusElement.textContent = 
-                inquiry.status === 'pending' ? '답변대기' :
-                inquiry.status === 'answered' ? '답변완료' :
-                '처리완료';
-            
-            // 답변 목록 렌더링
-            const repliesContainer = document.getElementById('inquiryReplies');
-            repliesContainer.innerHTML = inquiry.replies?.map(reply => `
-                <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-medium text-gray-900">${reply.author_name}</span>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(reply.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-700 whitespace-pre-wrap">${reply.content}</p>
-                </div>
-            `).join('') || '';
-            
-            // 관리자인 경우 답변 폼 표시
-            const userRole = sessionStorage.getItem('role');
-            const replyForm = document.getElementById('createReplyForm');
-            replyForm.classList.toggle('hidden', userRole !== 'admin');
-            
-            // 답변 폼 이벤트 리스너 설정
-            if (userRole === 'admin') {
-                replyForm.onsubmit = async (e) => {
-                    e.preventDefault();
-                    await createReply(inquiryId, document.getElementById('replyContent').value);
-                };
-            }
-            
-            modal.classList.add('show');
-        }
-    } catch (error) {
-        console.error('Inquiry detail error:', error);
-        showAlert('문의사항 상세 정보를 불러오는데 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function createReply(inquiryId, content) {
-    try {
-        showLoading();
-        const response = await apiRequest(`/api/inquiries/${inquiryId}/reply`, {
-            method: 'POST',
-            body: JSON.stringify({ content })
-        });
-        
-        if (response.success) {
-            showAlert('답변이 등록되었습니다.', 'success');
-            await showInquiryDetail(inquiryId); // 상세 정보 새로고침
-        }
-    } catch (error) {
-        console.error('Reply creation error:', error);
-        showAlert(error.message || '답변 등록에 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// 모달 컨트롤 함수들
-function showCreateNoticeModal() {
-    document.getElementById('createNoticeModal').classList.add('show');
-}
-
-function closeCreateNoticeModal() {
-    document.getElementById('createNoticeModal').classList.remove('show');
-    document.getElementById('createNoticeForm').reset();
-}
-
-function showCreateInquiryModal() {
-    document.getElementById('createInquiryModal').classList.add('show');
-}
-
-function closeCreateInquiryModal() {
-    document.getElementById('createInquiryModal').classList.remove('show');
-    document.getElementById('createInquiryForm').reset();
-}
-
-function closeInquiryDetailModal() {
-    document.getElementById('inquiryDetailModal').classList.remove('show');
-}
-
-// 섹션 표시 함수들
-function showNotices() {
-    document.getElementById('noticesSection').classList.remove('hidden');
-    document.getElementById('inquiriesSection').classList.add('hidden');
-    loadNotices();
-}
-
-function showInquiries() {
-    document.getElementById('noticesSection').classList.add('hidden');
-    document.getElementById('inquiriesSection').classList.remove('hidden');
-    loadInquiries();
+function getStatusText(status) {
+    const statusTexts = {
+        approved: '승인완료',
+        pending: '승인대기',
+        rejected: '거부됨',
+        cancelled: '취소완료',
+        cancel_pending: '취소대기'
+    };
+    return statusTexts[status] || '알 수 없음';
 }
 
 // 승인 대기 회원 목록 로드
@@ -2817,6 +2365,30 @@ async function rejectUser(userId) {
         showAlert(error.message || '사용자 거부 처리 중 오류가 발생했습니다.', 'error', 3000);
     } finally {
         hideLoading();  // 로딩 표시 제거 보장
+    }
+}
+
+// 비밀번호 초기화 함수 추가
+async function resetUserPassword(userId, groupName) {
+    try {
+        if (!confirm(`${groupName} 사용자의 비밀번호를 초기화하시겠습니까?\n초기화 후 비밀번호는 'sportsbox00' 입니다.`)) {
+            return;
+        }
+
+        showLoading();
+        
+        const response = await apiRequest(`/api/admin/users/${userId}/reset-password`, {
+            method: 'PUT'
+        });
+
+        if (response.success) {
+            showAlert(`${groupName} 사용자의 비밀번호가 초기화되었습니다.`, 'success');
+        }
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showAlert(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -3773,6 +3345,78 @@ function isToday(currentDay, date, today) {
     );
 }
 
+// 날짜별 예약 조회 함수
+async function loadDateBookings(dateString) {
+    try {
+        if (!dateString) {
+            console.error('No date selected');
+            showAlert('날짜 정보가 없습니다.', 'error', 3000);
+            return;
+        }
+
+        console.log('Loading bookings for date:', dateString);
+        const data = await apiRequest(`/api/admin/bookings/date/${dateString}`);
+        console.log('Received booking data:', data);
+
+        const tbody = document.getElementById('dateBookingsList');
+        const modalDate = document.getElementById('modalDate');
+        const partialBlockDateBtn = document.getElementById('partialBlockDateBtn');
+        const fullBlockDateBtn = document.getElementById('fullBlockDateBtn');
+        const unblockDateBtn = document.getElementById('unblockDateBtn');
+        
+        modalDate.textContent = formatDate(dateString);
+        currentSelectedDate = dateString;  // 현재 선택된 날짜 저장
+
+        const dateStatus = bookingStatus[dateString];
+        if (dateStatus?.isFullyBlocked || dateStatus?.isPartiallyBlocked) {
+            partialBlockDateBtn.classList.add('hidden');
+            fullBlockDateBtn.classList.add('hidden');
+            unblockDateBtn.classList.remove('hidden');
+        } else {
+            partialBlockDateBtn.classList.remove('hidden');
+            fullBlockDateBtn.classList.remove('hidden');
+            unblockDateBtn.classList.add('hidden');
+        }
+
+        if (data.success && data.data) {
+            // 유효한 예약만 필터링 (취소되지 않은 예약)
+            const activeBookings = data.data.filter(booking => 
+                booking.status !== 'cancelled' && 
+                booking.status !== 'rejected' &&
+                booking.status !== 'cancel_pending'
+            );
+
+            tbody.innerHTML = activeBookings.length > 0 
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.status === 'approved' ? `
+                                <button onclick="forceCancel(${booking.id}, '${dateString}')" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                                    강제취소
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading date bookings:', error);
+        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
 // 시간 선택 초기화
 function initializeTimeSelects() {
     const startTimeSelect = document.getElementById('startTime');
@@ -3895,6 +3539,66 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
     }
 });
 
+// 날짜 포맷 함수
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+// 엑셀 데이터 생성 함수
+async function generateExcelData(year, month) {
+    try {
+        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`);
+        if (!response.success) {
+            throw new Error('데이터 조회 실패');
+        }
+
+        const bookings = response.data;
+        const ws = XLSX.utils.aoa_to_sheet([
+            ['날짜', '단체명', '시간', '장소'] // 헤더 행
+        ]);
+
+        const data = Object.entries(bookings).flatMap(([date, dayBookings]) =>
+            dayBookings.map(booking => [
+                formatDate(date),
+                booking.group_name,
+                `${booking.start_time} - ${booking.end_time}`,
+                booking.place
+            ])
+        );
+
+        XLSX.utils.sheet_add_aoa(ws, data, { origin: -1 });
+        
+        // 열 너비 자동 조정
+        const wscols = [
+            { wch: 15 }, // 날짜
+            { wch: 20 }, // 단체명
+            { wch: 15 }, // 시간
+            { wch: 20 }  // 장소
+        ];
+        ws['!cols'] = wscols;
+
+        return ws;
+    } catch (error) {
+        console.error('Excel data generation error:', error);
+        throw error;
+    }
+}
+
+function showDateBookingsModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    const calendarContainer = document.getElementById('adminCalendar').parentElement;
+    modal.classList.add('show');
+    calendarContainer.classList.add('modal-open');
+}
+
+function closeDateBookingsModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    const calendarContainer = document.getElementById('adminCalendar').parentElement;
+    modal.classList.remove('show');
+    calendarContainer.classList.remove('modal-open');
+}
+
 // 여기에 downloadApplication 함수 추가
 function downloadApplication() {
     const fileUrl = 'https://raw.githubusercontent.com/sportsbox031/sports/main/스포츠박스%20수요처등록%20신청서.hwp';
@@ -3917,59 +3621,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             '파주시', '포천시', '가평군', '연천군'
         ]
     };
-
-    // 공지사항 작성 폼 제출
-    document.getElementById('createNoticeForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = {
-            title: document.getElementById('noticeTitle').value,
-            content: document.getElementById('noticeContent').value,
-            is_important: document.getElementById('noticeImportant').checked,
-            region: document.getElementById('noticeRegion').value
-        };
-        await createNotice(formData);
-    });
-});
-
-    // 문의사항 작성 폼 제출
-    document.getElementById('createInquiryForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        try {
-            const formData = {
-                title: document.getElementById('inquiryTitle').value,
-                content: document.getElementById('inquiryContent').value,
-                is_private: document.getElementById('inquiryPrivate').checked
-            };
-            await createInquiry(formData);
-        } catch (error) {
-            console.error('Inquiry creation error:', error);
-            showAlert('문의사항 등록에 실패했습니다.', 'error');
-        }
-    });
-
-    // 섹션 전환 버튼 이벤트 리스너
-    document.querySelector('button[onclick="showNotices()"]')?.addEventListener('click', async function() {
-        try {
-            document.getElementById('noticesSection').classList.remove('hidden');
-            document.getElementById('inquiriesSection').classList.add('hidden');
-            await loadNotices();
-        } catch (error) {
-            console.error('Show notices error:', error);
-            showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
-        }
-    });
-
-    document.querySelector('button[onclick="showInquiries()"]')?.addEventListener('click', async function() {
-        try {
-            document.getElementById('noticesSection').classList.add('hidden');
-            document.getElementById('inquiriesSection').classList.remove('hidden');
-            await loadInquiries();
-        } catch (error) {
-            console.error('Show inquiries error:', error);
-            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
-        }
-    });
-});
 
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
@@ -4252,7 +3903,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             logout();
             console.error('Auto login error:', error);
         }
-    };
+    }
+});
 
 // 디버그 모드 설정
 if (DEBUG) {
