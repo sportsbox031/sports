@@ -1374,27 +1374,25 @@ function showLoginScreen() {
     const token = sessionStorage.getItem('token');
     const role = sessionStorage.getItem('role');
 
-    // 이미 로그인된 상태라면 대시보드로 이동
+    // 이미 로그인된 상태라면 직접 대시보드 초기화
     if (token && role) {
         const region = sessionStorage.getItem('region');
         const username = sessionStorage.getItem('username');
         
-        // 화면 전환 및 대시보드 초기화
+        // 기본 화면 전환
+        document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
+        document.getElementById('loginAndReservationSystem').classList.remove('hidden');
+        document.getElementById('loginScreen').classList.add('hidden');
+
         if (role === 'admin') {
+            // 관리자 대시보드 표시
             document.getElementById('adminDashboard').classList.remove('hidden');
             document.getElementById('userDashboard').classList.add('hidden');
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-            document.getElementById('loginAndReservationSystem').classList.remove('hidden');
-            
             initializeAdminDashboard(region, username);
         } else {
+            // 사용자 대시보드 표시
             document.getElementById('userDashboard').classList.remove('hidden');
             document.getElementById('adminDashboard').classList.add('hidden');
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-            document.getElementById('loginAndReservationSystem').classList.remove('hidden');
-            
             initializeUserDashboard(region, username);
         }
         return;
