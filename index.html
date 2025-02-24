@@ -1246,7 +1246,11 @@ function updateRemainingBookingsDisplay(remainingBookings) {
 async function apiRequest(endpoint, options = {}) {
     showLoading();
     try {
-        const token = sessionStorage.getItem('token');  // localStorage를 sessionStorage로 변경
+        const token = sessionStorage.getItem('token');
+        if (!token && !endpoint.includes('/login')) {  // 로그인 요청이 아닌 경우
+            throw new Error('인증이 필요합니다.');
+        }
+
         const defaultHeaders = {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -1269,6 +1273,9 @@ async function apiRequest(endpoint, options = {}) {
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
+        if (error.message.includes('인증') && !endpoint.includes('/login')) {
+            logout();
+        }
         throw error;
     } finally {
         hideLoading();
@@ -1386,13 +1393,19 @@ async function showDashboard(role) {
     try {
         showLoading();
 
+        // 토큰 유효성 확인
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('인증이 필요합니다.');
+        }
+
         // 기본 화면 전환
         document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('loginAndReservationSystem').classList.remove('hidden');
 
-        const region = localStorage.getItem('region');
-        const username = localStorage.getItem('username');
+        const region = sessionStorage.getItem('region');
+        const username = sessionStorage.getItem('username');
         const dashboardTitle = region === 'south' ? '남부 스포츠박스' : 
                              region === 'north' ? '북부 스포츠박스' : 
                              '스포츠박스 관리자';
@@ -1436,14 +1449,23 @@ async function showDashboard(role) {
                 await initializeUserDashboard(region, username);
             } catch (error) {
                 console.error('User dashboard initialization error:', error);
-                showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
-                throw error; // 에러를 상위로 전파
+                if (error.message.includes('인증')) {
+                    logout();
+                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                } else {
+                    showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+                }
             }
         }
 
     } catch (error) {
         console.error('Dashboard initialization error:', error);
-        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        if (error.message.includes('인증')) {
+            logout();
+            showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+        } else {
+            showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        }
     } finally {
         hideLoading();
     }
@@ -1578,10 +1600,16 @@ document.getElementById('userProfileForm').addEventListener('submit', async func
 document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
 
 async function initializeAdminDashboard(region, username) {
-    document.getElementById('adminDashboard').classList.remove('hidden');
-    document.getElementById('userDashboard').classList.add('hidden');
-
     try {
+        // 토큰 유효성 먼저 확인
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('인증이 필요합니다.');
+        }
+
+        // 대시보드 표시 설정
+        document.getElementById('adminDashboard').classList.remove('hidden');
+        document.getElementById('userDashboard').classList.add('hidden');
         document.getElementById('adminName').textContent = username;
 
         const regionFilterContainer = document.getElementById('regionFilterContainer');
@@ -1623,7 +1651,12 @@ async function initializeAdminDashboard(region, username) {
                     ]);
                 } catch (error) {
                     console.error('Region filter change error:', error);
-                    showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+                    if (error.message.includes('인증')) {
+                        logout();
+                        showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                    } else {
+                        showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+                    }
                 }
             });
 
@@ -1653,8 +1686,12 @@ async function initializeAdminDashboard(region, username) {
 
     } catch (error) {
         console.error('Admin dashboard initialization error:', error);
-        showAlert('관리자 대시보드 초기화 중 오류가 발생했습니다.', 'error');
-        throw error;
+        if (error.message.includes('인증')) {
+            logout();
+            showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+        } else {
+            showAlert('관리자 대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        }
     }
 }
 
