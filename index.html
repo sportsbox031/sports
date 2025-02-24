@@ -1296,7 +1296,8 @@ async function apiRequest(endpoint, options = {}) {
     showLoading();
     try {
         const token = sessionStorage.getItem('token');
-        if (!token && !endpoint.includes('/login')) {  // 로그인 요청이 아닌 경우
+        // 로그인과 회원가입은 토큰 검증 제외
+        if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup')) {
             throw new Error('인증이 필요합니다.');
         }
 
@@ -1322,7 +1323,7 @@ async function apiRequest(endpoint, options = {}) {
         return data;
     } catch (error) {
         console.error('API Request Error:', error);
-        if (error.message.includes('인증') && !endpoint.includes('/login')) {
+        if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')) {
             logout();
         }
         throw error;
@@ -3072,8 +3073,7 @@ document.getElementById('signupForm').addEventListener('submit', async function(
     e.preventDefault();
     
     try {
-        // 중복 제출 방지
-        const submitButton = this.querySelector('button[type="submit"]');
+        const submitButton = e.target.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         
         showLoading();
@@ -3099,7 +3099,10 @@ document.getElementById('signupForm').addEventListener('submit', async function(
         showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
-        submitButton.disabled = false;
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 });
 
