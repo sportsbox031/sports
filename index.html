@@ -312,8 +312,8 @@
                         <nav class="hidden md:flex items-center space-x-8">
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
-                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -419,7 +419,57 @@
                     </div>
                 </section>
 
-<!-- 운영프로그램 섹션 다음에 추가 -->
+                <!-- 신청절차 섹션 -->
+                <section id="process" class="py-20 bg-gray-50">
+                    <div class="container mx-auto px-6">
+                        <h2 class="text-3xl font-bold text-center mb-16">신청절차</h2>
+                        <div class="relative">
+                            <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2"></div>
+                            <div class="relative grid md:grid-cols-3 gap-8">
+                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
+                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">1</div>
+                                    <h3 class="text-xl font-bold text-center mb-4">수요처등록 신청</h3>
+                                    <p class="text-gray-600 text-center mb-6">신청서를 다운로드하여 작성 후 제출해주세요</p>
+                                    <div class="flex justify-center">
+                                        <div class="flex justify-center">
+                                            <button onclick="downloadApplication()" 
+                                                class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
+                                                <i class="ri-download-line"></i>
+                                                <span>신청서 다운로드</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
+                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">2</div>
+                                    <h3 class="text-xl font-bold text-center mb-4">홈페이지 회원가입</h3>
+                                    <p class="text-gray-600 text-center mb-6">홈페이지에서 회원가입을 진행해주세요</p>
+                                    <div class="flex justify-center">
+                                        <button onclick="showLoginScreen()" 
+    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
+    <i class="ri-user-add-line"></i>
+    <span>회원가입하기</span>
+</button>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
+                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">3</div>
+                                    <h3 class="text-xl font-bold text-center mb-4">스포츠교실 예약</h3>
+                                    <p class="text-gray-600 text-center mb-6">원하시는 날짜를 선택하여 예약해주세요</p>
+                                    <div class="flex justify-center">
+                                        <button onclick="showLoginScreen()" 
+    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
+    <i class="ri-calendar-check-line"></i>
+    <span>예약하기</span>
+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 운영프로그램 섹션 다음에 추가 -->
 <section id="notices" class="py-20 bg-gray-50">
     <div class="container mx-auto px-6">
         <div class="flex justify-between items-center mb-16">
@@ -475,56 +525,6 @@
         </form>
     </div>
 </div>
-
-                <!-- 신청절차 섹션 -->
-                <section id="process" class="py-20 bg-gray-50">
-                    <div class="container mx-auto px-6">
-                        <h2 class="text-3xl font-bold text-center mb-16">신청절차</h2>
-                        <div class="relative">
-                            <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2"></div>
-                            <div class="relative grid md:grid-cols-3 gap-8">
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">1</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">수요처등록 신청</h3>
-                                    <p class="text-gray-600 text-center mb-6">신청서를 다운로드하여 작성 후 제출해주세요</p>
-                                    <div class="flex justify-center">
-                                        <div class="flex justify-center">
-                                            <button onclick="downloadApplication()" 
-                                                class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-                                                <i class="ri-download-line"></i>
-                                                <span>신청서 다운로드</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">2</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">홈페이지 회원가입</h3>
-                                    <p class="text-gray-600 text-center mb-6">홈페이지에서 회원가입을 진행해주세요</p>
-                                    <div class="flex justify-center">
-                                        <button onclick="showLoginScreen()" 
-    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-    <i class="ri-user-add-line"></i>
-    <span>회원가입하기</span>
-</button>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">3</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">스포츠교실 예약</h3>
-                                    <p class="text-gray-600 text-center mb-6">원하시는 날짜를 선택하여 예약해주세요</p>
-                                    <div class="flex justify-center">
-                                        <button onclick="showLoginScreen()" 
-    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-    <i class="ri-calendar-check-line"></i>
-    <span>예약하기</span>
-</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
                 <!-- 푸터 -->
                 <footer class="bg-gray-900 text-white py-12">
