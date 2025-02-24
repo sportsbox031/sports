@@ -2820,30 +2820,6 @@ async function rejectUser(userId) {
     }
 }
 
-// 비밀번호 초기화 함수 추가
-async function resetUserPassword(userId, groupName) {
-    try {
-        if (!confirm(`${groupName} 사용자의 비밀번호를 초기화하시겠습니까?\n초기화 후 비밀번호는 'sportsbox00' 입니다.`)) {
-            return;
-        }
-
-        showLoading();
-        
-        const response = await apiRequest(`/api/admin/users/${userId}/reset-password`, {
-            method: 'PUT'
-        });
-
-        if (response.success) {
-            showAlert(`${groupName} 사용자의 비밀번호가 초기화되었습니다.`, 'success');
-        }
-    } catch (error) {
-        console.error('Password reset error:', error);
-        showAlert(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
 // 관리자: 예약 관리 함수들
 async function loadPendingBookings() {
     try {
