@@ -2472,27 +2472,6 @@ async function createNotice(formData) {
     }
 }
 
-async function createNotice(formData) {
-    try {
-        showLoading();
-        const response = await apiRequest('/api/notices', {
-            method: 'POST',
-            body: JSON.stringify(formData)
-        });
-        
-        if (response.success) {
-            showAlert('공지사항이 등록되었습니다.', 'success');
-            closeCreateNoticeModal();
-            await loadNotices();
-        }
-    } catch (error) {
-        console.error('Notice creation error:', error);
-        showAlert(error.message || '공지사항 등록에 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
 // 문의사항 관련 함수들
 async function loadInquiries() {
     try {
