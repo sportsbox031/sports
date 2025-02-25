@@ -2689,7 +2689,7 @@ async function loadNotices() {
                 is_important_types: response.data.map(n => typeof n.is_important)
             });
             
-            renderNoticesList(response.data);
+            renderNotices(response.data);
         }
     } catch (error) {
         console.error('Notices loading error:', error);
@@ -4161,9 +4161,6 @@ async function initializeAdminDashboard(region, username) {
         
         // 예약 상태 업데이트
         await debouncedUpdateCalendarStatus();
-        
-       // 공지사항 로드 추가
-       await loadNotices();   
 
         // 통계 로드
         await loadRegionStatistics();
@@ -4193,7 +4190,6 @@ async function initializeAdminDashboard(region, username) {
     }
 }
 
-// 비밀번호 변경 관련 함수들
 // 비밀번호 변경 모달 컨트롤
 function showChangePasswordModal() {
     document.getElementById('changePasswordModal').classList.add('show');
