@@ -339,10 +339,10 @@
                             <div class="text-2xl font-bold text-primary">스포츠박스</div>
                         </div>
                         <nav class="hidden md:flex items-center space-x-8">
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
-                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -1394,10 +1394,10 @@ function showNoticeDetail(notice) {
     document.getElementById('noticeDetailDate').textContent = 
         new Date(notice.created_at).toLocaleDateString();
 
-    // 중요 공지 체크박스 상태 설정
+    // 중요 공지 체크박스 상태 설정 (notice.is_important가 1 또는 true인 경우 체크)
     const importantCheckbox = document.getElementById('noticeDetailImportant');
     if (importantCheckbox) {
-        importantCheckbox.checked = notice.is_important === 1;
+        importantCheckbox.checked = notice.is_important === 1 || notice.is_important === true;
     }
 
     // 관리자 권한 확인
@@ -2468,17 +2468,24 @@ async function loadNotices() {
 function renderNoticesList(notices) {
     const container = document.getElementById('homeNoticesList');
     
-    // 중요 공지와 일반 공지 분리
-    const importantNotices = notices.filter(notice => notice.is_important);
-    const regularNotices = notices.filter(notice => !notice.is_important);
-    
-    // 중요 공지와 일반 공지 각각 정렬 (날짜 기준 내림차순)
-    const sortedNotices = [
-        ...importantNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
-        ...regularNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    ];
+    if (!notices || !notices.length) {
+        container.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        return;
+    }
 
-    container.innerHTML = sortedNotices.map(notice => `
+    // 중요 공지와 일반 공지 분리 (is_important가 1 또는 true인 경우 중요 공지)
+    const importantNotices = notices.filter(notice => notice.is_important === 1 || notice.is_important === true);
+    const regularNotices = notices.filter(notice => !notice.is_important || notice.is_important === 0);
+    
+    // 각각 날짜순 정렬
+    const sortByDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
+    const sortedImportantNotices = importantNotices.sort(sortByDate);
+    const sortedRegularNotices = regularNotices.sort(sortByDate);
+
+    // 중요 공지를 상단에, 일반 공지를 하단에 배치
+    const allNotices = [...sortedImportantNotices, ...sortedRegularNotices];
+
+    container.innerHTML = allNotices.map(notice => `
         <div class="notice-item cursor-pointer ${notice.is_important ? 'bg-red-50' : 'bg-white'} 
             rounded-lg p-4 hover:shadow-md transition-all duration-200"
             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
@@ -3343,12 +3350,6 @@ function handleModalClick(event) {
 function closeNoticeDetail() {
     const modal = document.getElementById('noticeDetailModal');
     modal.classList.remove('show');
-    // 폼 리셋
-    const importantCheckbox = document.getElementById('noticeDetailImportant');
-    if (importantCheckbox) {
-        importantCheckbox.checked = false;
-    }
-}
 
 // 연락처 모달 컨트롤
 function showContactInfo() {
