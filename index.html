@@ -1394,10 +1394,10 @@ function showNoticeDetail(notice) {
     document.getElementById('noticeDetailDate').textContent = 
         new Date(notice.created_at).toLocaleDateString();
 
-    // 중요 공지 체크박스 상태 설정 (notice.is_important가 1 또는 true인 경우 체크)
+    // 중요 공지 체크박스 상태 설정
     const importantCheckbox = document.getElementById('noticeDetailImportant');
     if (importantCheckbox) {
-        importantCheckbox.checked = notice.is_important === 1 || notice.is_important === true;
+        importantCheckbox.checked = Number(notice.is_important) === 1;
     }
 
     // 관리자 권한 확인
@@ -2473,9 +2473,9 @@ function renderNoticesList(notices) {
         return;
     }
 
-    // 중요 공지와 일반 공지 분리 (is_important가 1 또는 true인 경우 중요 공지)
-    const importantNotices = notices.filter(notice => notice.is_important === 1 || notice.is_important === true);
-    const regularNotices = notices.filter(notice => !notice.is_important || notice.is_important === 0);
+    // 중요 공지와 일반 공지 분리 (Number로 변환하여 비교)
+    const importantNotices = notices.filter(notice => Number(notice.is_important) === 1);
+    const regularNotices = notices.filter(notice => Number(notice.is_important) === 0);
     
     // 각각 날짜순 정렬
     const sortByDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
@@ -2486,15 +2486,15 @@ function renderNoticesList(notices) {
     const allNotices = [...sortedImportantNotices, ...sortedRegularNotices];
 
     container.innerHTML = allNotices.map(notice => `
-        <div class="notice-item cursor-pointer ${notice.is_important ? 'bg-red-50' : 'bg-white'} 
+        <div class="notice-item cursor-pointer ${Number(notice.is_important) === 1 ? 'bg-red-50' : 'bg-white'} 
             rounded-lg p-4 hover:shadow-md transition-all duration-200"
             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    ${notice.is_important ? 
+                    ${Number(notice.is_important) === 1 ? 
                         '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
                         : ''}
-                    <h3 class="font-medium ${notice.is_important ? 'text-red-900' : 'text-gray-900'}">${notice.title}</h3>
+                    <h3 class="font-medium ${Number(notice.is_important) === 1 ? 'text-red-900' : 'text-gray-900'}">${notice.title}</h3>
                 </div>
                 <span class="text-sm text-gray-500">
                     ${new Date(notice.created_at).toLocaleDateString()}
@@ -2502,6 +2502,9 @@ function renderNoticesList(notices) {
             </div>
         </div>
     `).join('');
+
+    // 디버깅용 로그
+    console.log('Rendered notices:', allNotices);
 }
 
 async function loadAdminBookings() {
