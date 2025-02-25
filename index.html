@@ -1317,6 +1317,8 @@
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
 
+
+
 // 시군 분류 데이터
 const REGION_MAPPING = {
     south: [
@@ -1346,8 +1348,22 @@ async function loadHomeNotices() {
 
 // 공지사항 상세보기
 function renderNotices(notices) {
-    const noticesList = document.getElementById('homeNoticesList') || document.getElementById('noticesList');
-    if (!noticesList) return;
+    // homeNoticesList와 noticesList 둘 다 확인
+    const homeNoticesList = document.getElementById('homeNoticesList');
+    const userNoticesList = document.getElementById('noticesList');
+    const targetList = homeNoticesList || userNoticesList;
+
+    console.log('Rendering notices:', {
+        homeNoticesList,
+        userNoticesList,
+        targetList,
+        notices
+    });
+
+    if (!targetList) {
+        console.error('Notice list container not found');
+        return;
+    }
 
     const sortedNotices = sortAndRenderNotices(notices);
     
@@ -1880,13 +1896,6 @@ async function initializeUserDashboard(region, username) {
             region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
         }`;
 
-        // 자동 새로고침 간격 설정 (밀리초)
-        const REFRESH_INTERVALS = {
-            notices: 30000,    // 공지사항: 30초
-            bookings: 60000,   // 예약 목록: 1분
-            calendar: 60000    // 캘린더 상태: 1분
-        };
-
         // 초기 데이터 로드
         await Promise.all([
             // 예약 시스템 상태 확인
@@ -1907,7 +1916,7 @@ async function initializeUserDashboard(region, username) {
             // 예약 목록 로드
             loadBookings(),
             
-            // 공지사항 로드
+            // 공지사항 로드 - 이 부분 추가
             loadUserNotices()
         ]);
 
