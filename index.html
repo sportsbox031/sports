@@ -1397,7 +1397,14 @@ function showNoticeDetail(notice) {
     // 중요 공지 체크박스 상태 설정
     const importantCheckbox = document.getElementById('noticeDetailImportant');
     if (importantCheckbox) {
-        importantCheckbox.checked = Number(notice.is_important) === 1;
+        const isImportant = Number(notice.is_important) === 1;
+        importantCheckbox.checked = isImportant;
+        
+        // 중요 공지 상태 표시 (선택적)
+        const statusLabel = document.createElement('span');
+        statusLabel.className = `ml-2 text-sm ${isImportant ? 'text-red-600' : 'text-gray-500'}`;
+        statusLabel.textContent = isImportant ? '(중요 공지)' : '';
+        importantCheckbox.parentElement.appendChild(statusLabel);
     }
 
     // 관리자 권한 확인
@@ -1419,13 +1426,20 @@ async function updateNoticeImportant() {
     try {
         if (!currentNoticeId) return;
 
-        const isImportant = document.getElementById('noticeDetailImportant').checked;
+        const importantCheckbox = document.getElementById('noticeDetailImportant');
+        const isImportant = importantCheckbox.checked;
+        
+        // 상태 변경 메시지 설정
+        const statusMessage = isImportant ? 
+            '중요 공지로 등록하시겠습니까?' : 
+            '중요 공지를 해제하시겠습니까?';
 
-        // 요청 데이터 로깅
-        console.log('Sending update request:', {
-            currentNoticeId,
-            is_important: isImportant ? 1 : 0
-        });
+        // 사용자 확인
+        if (!confirm(statusMessage)) {
+            // 취소 시 체크박스 상태 원복
+            importantCheckbox.checked = !isImportant;
+            return;
+        }
 
         const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
             method: 'PUT',
@@ -1434,27 +1448,36 @@ async function updateNoticeImportant() {
             })
         });
 
-        // 응답 로깅
-        console.log('Update response:', response);
-
         if (response.success) {
-            showAlert('공지사항이 업데이트되었습니다.', 'success');
+            // 성공 메시지 표시
+            showAlert(
+                isImportant ? 
+                '중요 공지로 등록되었습니다.' : 
+                '중요 공지가 해제되었습니다.', 
+                'success'
+            );
+
             closeNoticeDetail();
-            // 목록 새로고침 전후 로깅
-            console.log('Before refresh - current notices:', notices);
+            
+            // 목록 새로고침
             await Promise.all([
                 loadNotices(),
                 loadHomeNotices()
             ]);
-            console.log('After refresh - updated notices:', notices);
 
-            // 공지사항 목록 새로고침
-            await loadNotices();
-            await loadHomeNotices();
+            // 디버깅용 로그
+            console.log('Notice updated:', {
+                noticeId: currentNoticeId,
+                isImportant: isImportant
+            });
         }
     } catch (error) {
         console.error('Notice update error:', error);
         showAlert(error.message || '공지사항 업데이트 중 오류가 발생했습니다.', 'error');
+        
+        // 에러 발생 시 체크박스 상태 원복
+        const importantCheckbox = document.getElementById('noticeDetailImportant');
+        importantCheckbox.checked = !importantCheckbox.checked;
     }
 }
 
