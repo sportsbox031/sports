@@ -2430,14 +2430,13 @@ async function loadBookings() {
 // 공지사항 작성
 async function createNotice(noticeData) {
     try {
-        // 중요 공지 체크박스 상태 가져오기
         const isImportant = document.getElementById('isImportant').checked;
-
+        
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
             body: JSON.stringify({
                 ...noticeData,
-                is_important: isImportant ? 1 : 0  // 체크박스 상태에 따라 1 또는 0
+                is_important: isImportant ? 1 : 0
             })
         });
 
@@ -2471,48 +2470,48 @@ async function loadNotices() {
 
 
 // 공지사항 목록 렌더링 함수
-function renderNoticesList(notices, containerId) {
-    const container = document.getElementById(containerId);
+function renderNoticesList(notices) {
+    const container = document.getElementById('homeNoticesList');
     
-    // 중요 공지와 일반 공지 분리
+    if (!notices || !notices.length) {
+        container.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        return;
+    }
+
+    // 중요 공지와 일반 공지 분리 (Number로 변환하여 비교)
     const importantNotices = notices.filter(notice => Number(notice.is_important) === 1);
     const regularNotices = notices.filter(notice => Number(notice.is_important) === 0);
     
-    // 각각 날짜순 정렬 후 합치기 (중요 공지가 항상 위에 오도록)
-    const sortedNotices = [
-        ...importantNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
-        ...regularNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    ];
+    // 각각 날짜순 정렬
+    const sortByDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
+    const sortedImportantNotices = importantNotices.sort(sortByDate);
+    const sortedRegularNotices = regularNotices.sort(sortByDate);
 
-    container.innerHTML = sortedNotices.map(notice => `
-        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
-            ${Number(notice.is_important) === 1 ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-            <div class="flex justify-between items-center mb-4">
+    // 중요 공지를 상단에, 일반 공지를 하단에 배치
+    const allNotices = [...sortedImportantNotices, ...sortedRegularNotices];
+
+    container.innerHTML = allNotices.map(notice => `
+        <div class="notice-item cursor-pointer ${Number(notice.is_important) === 1 ? 'bg-red-50' : 'bg-white'} 
+            rounded-lg p-4 hover:shadow-md transition-all duration-200"
+            onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     ${Number(notice.is_important) === 1 ? 
                         '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
                         : ''}
-                    <h3 class="text-xl font-semibold">${notice.title}</h3>
+                    <h3 class="font-medium ${Number(notice.is_important) === 1 ? 'text-red-900' : 'text-gray-900'}">${notice.title}</h3>
                 </div>
                 <span class="text-sm text-gray-500">
                     ${new Date(notice.created_at).toLocaleDateString()}
                 </span>
             </div>
-            <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                <span class="px-2 py-1 rounded-full text-sm ${
-                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                }">
-                    ${notice.region === 'all' ? '전체공지' :
-                      notice.region === 'south' ? '남부공지' : '북부공지'}
-                </span>
-            </div>
         </div>
-    `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+    `).join('');
+
+    // 디버깅용 로그 추가
+    console.log('All notices:', notices);
+    console.log('Important notices:', importantNotices);
+    console.log('Regular notices:', regularNotices);
 }
 
 async function loadAdminBookings() {
