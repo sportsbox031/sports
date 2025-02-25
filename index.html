@@ -1356,11 +1356,19 @@ async function loadHomeNotices() {
         const noticesList = document.getElementById('homeNoticesList');
 
         if (data.success && data.data) {
-            noticesList.innerHTML = data.data.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+            const sortedNotices = sortAndRenderNotices(data.data);
+            
+            noticesList.innerHTML = sortedNotices.map(notice => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
+                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
                      onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        <div class="flex items-center space-x-2">
+                            ${notice.is_important ? 
+                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
+                                : ''}
+                            <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        </div>
                         <span class="text-sm text-gray-500">
                             ${new Date(notice.created_at).toLocaleDateString()}
                         </span>
@@ -1900,52 +1908,110 @@ async function showDashboard(role) {
     }
 }
 
-async function initializeUserDashboard(region, username) {
-    // 대시보드 표시
-    document.getElementById('userDashboard').classList.remove('hidden');
-    document.getElementById('adminDashboard').classList.add('hidden');
-
-    // 대시보드 제목 및 사용자 정보 설정
-    const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
-    document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
-    
-    // 사용자 정보 표시
-    document.getElementById('userGroupName').textContent = username;
-    
-    // 지역 뱃지 업데이트
-    const regionBadge = document.getElementById('regionBadge');
-    regionBadge.textContent = region === 'south' ? '남부' : '북부';
-    regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
-        region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-    }`;
-
+// 관리자 대시보드 공지사항 로드 함수 추가
+async function loadAdminNotices() {
     try {
-        // 예약 시스템 상태 확인
-        const settings = await apiRequest('/api/booking-settings');
-        updateUserDashboardState(settings.data?.is_active);
+        const response = await apiRequest('/api/notices');
+        const noticesList = document.getElementById('adminNoticesList');
 
-        // 캘린더 초기화
-        initializeCalendar();
-        
-        // 시간 선택 초기화
-        initializeTimeSelects();
-        
-        // 예약 상태 업데이트
-        await debouncedUpdateCalendarStatus();
-        
-        // 예약 목록 로드
-        await loadBookings();
-        
-        // 공지사항 로드 추가
-        await loadNotices();
+        if (response.success && response.data) {
+            const sortedNotices = sortAndRenderNotices(response.data);
+            
+            noticesList.innerHTML = sortedNotices.map(notice => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
+                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
+                     onclick="showAdminNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-2">
+                            ${notice.is_important ? 
+                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
+                                : ''}
+                            <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">
+                                ${new Date(notice.created_at).toLocaleDateString()}
+                            </span>
+                            <button onclick="editNotice(${notice.id})" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteNotice(${notice.id})" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                        <span class="px-2 py-1 rounded-full text-sm ${
+                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${notice.region === 'all' ? '전체공지' :
+                              notice.region === 'south' ? '남부공지' : '북부공지'}
+                        </span>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        }
+    } catch (error) {
+        console.error('Admin notices loading error:', error);
+        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
+    }
+}
 
-        // 남은 예약 횟수 표시 업데이트
-        updateRemainingBookingsDisplay();
+async function initializeUserDashboard(region, username) {
+    try {
+        // 대시보드 표시
+        document.getElementById('userDashboard').classList.remove('hidden');
+        document.getElementById('adminDashboard').classList.add('hidden');
 
+        // 대시보드 제목 및 사용자 정보 설정
+        const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
+        document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
+        
+        // 사용자 정보 표시
+        document.getElementById('userGroupName').textContent = username;
+        
+        // 지역 뱃지 업데이트
+        const regionBadge = document.getElementById('regionBadge');
+        regionBadge.textContent = region === 'south' ? '남부' : '북부';
+        regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
+            region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+        }`;
+
+        try {
+            // 예약 시스템 상태 확인
+            const settings = await apiRequest('/api/booking-settings');
+            updateUserDashboardState(settings.data?.is_active);
+
+            // 캘린더 초기화
+            initializeCalendar();
+            
+            // 시간 선택 초기화
+            initializeTimeSelects();
+            
+            // 예약 상태 업데이트
+            await debouncedUpdateCalendarStatus();
+            
+            // 예약 목록 로드
+            await loadBookings();
+            
+            // 공지사항 로드 추가
+            await loadUserNotices();  // 여기서 새로운 함수 호출
+
+            // 남은 예약 횟수 표시 업데이트
+            updateRemainingBookingsDisplay();
+
+        } catch (error) {
+            console.error('User dashboard initialization error:', error);
+            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+            throw error;
+        }
     } catch (error) {
         console.error('User dashboard initialization error:', error);
-        showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
-        throw error;
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -2030,6 +2096,51 @@ document.getElementById('userProfileForm').addEventListener('submit', async func
 
 // 모달 닫기 버튼 이벤트
 document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
+
+// 여기에 새로운 사용자 대시보드 공지사항 로드 함수 추가
+async function loadUserNotices() {
+    try {
+        const response = await apiRequest('/api/notices');
+        const noticesList = document.getElementById('noticesList');  // 사용자 대시보드의 공지사항 컨테이너 ID
+
+        if (response.success && response.data) {
+            const sortedNotices = sortAndRenderNotices(response.data);
+            
+            noticesList.innerHTML = sortedNotices.map(notice => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
+                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
+                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-2">
+                            ${notice.is_important ? 
+                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
+                                : ''}
+                            <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        </div>
+                        <span class="text-sm text-gray-500">
+                            ${new Date(notice.created_at).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                        <span class="px-2 py-1 rounded-full text-sm ${
+                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${notice.region === 'all' ? '전체공지' :
+                              notice.region === 'south' ? '남부공지' : '북부공지'}
+                        </span>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        }
+    } catch (error) {
+        console.error('User notices loading error:', error);
+        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
+    }
+}
 
 async function initializeAdminDashboard(region, username) {
     try {
@@ -2515,15 +2626,12 @@ async function loadNotices() {
     }
 }
 
-// 공지사항 목록 렌더링 함수
-function renderNoticesList(notices) {
-    console.log('Rendering notices:', notices);
-    
-    const container = document.getElementById('homeNoticesList');
+// 공통 정렬 로직
+function sortAndRenderNotices(notices) {
+    console.log('Sorting notices:', notices);
     
     if (!notices || !notices.length) {
-        container.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
-        return;
+        return [];
     }
 
     // 데이터 구조 확인을 위한 로그
@@ -2550,9 +2658,23 @@ function renderNoticesList(notices) {
     const sortedRegularNotices = regularNotices.sort(sortByDate);
 
     // 중요 공지를 상단에, 일반 공지를 하단에 배치
-    const allNotices = [...sortedImportantNotices, ...sortedRegularNotices];
+    return [...sortedImportantNotices, ...sortedRegularNotices];
+}
 
-    container.innerHTML = allNotices.map(notice => `
+// 공지사항 목록 렌더링 함수
+function renderNoticesList(notices) {
+    console.log('Rendering notices:', notices);
+    
+    const container = document.getElementById('homeNoticesList');
+    
+    if (!notices || !notices.length) {
+        container.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        return;
+    }
+
+    const sortedNotices = sortAndRenderNotices(notices);
+
+    container.innerHTML = sortedNotices.map(notice => `
         <div class="notice-item cursor-pointer ${notice.is_important ? 'bg-red-50' : 'bg-white'} 
             rounded-lg p-4 hover:shadow-md transition-all duration-200"
             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
@@ -2570,7 +2692,7 @@ function renderNoticesList(notices) {
         </div>
     `).join('');
 
-    console.log('Final rendered notices:', allNotices);
+    console.log('Final rendered notices:', sortedNotices);
 }
 
 async function loadAdminBookings() {
