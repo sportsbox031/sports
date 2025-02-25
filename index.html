@@ -415,7 +415,7 @@
                         </button>
                     </div>
                 </div>
-                <div id="homeNoticesList" class="space-y-4 max-h-[800px] overflow-y-auto">
+                <div id="homeNoticesList" class="space-y-2 max-h-[600px] overflow-y-auto">
                     <!-- 공지사항이 여기에 동적으로 추가됨 -->
                 </div>
             </div>
@@ -452,6 +452,13 @@
                     <option value="south">남부 지역만</option>
                     <option value="north">북부 지역만</option>
                 </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="isImportant" 
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="isImportant" class="text-sm font-medium text-gray-700">
+                    중요 공지로 등록
+                </label>
             </div>
             <button type="submit" 
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
@@ -2387,18 +2394,16 @@ async function createNotice(noticeData) {
     try {
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
-            body: JSON.stringify(noticeData)
+            body: JSON.stringify({
+                ...noticeData,
+                is_important: document.getElementById('isImportant').checked
+            })
         });
 
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
-            // noticeForm 대신 noticeWriteForm으로 수정
             document.getElementById('noticeWriteForm').reset();
-            // 두 곳의 공지사항 목록을 모두 새로고침
-            await Promise.all([
-                loadNotices(),      // 대시보드의 공지사항
-                loadHomeNotices()   // 홈화면의 공지사항
-            ]);
+            await loadNotices();
         }
     } catch (error) {
         console.error('Notice creation error:', error);
@@ -2419,32 +2424,62 @@ async function loadNotices() {
     }
 }
 
+
+
 // 공지사항 목록 렌더링 함수
-function renderNoticesList(notices, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = notices.map(notice => `
-        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
-             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold">${notice.title}</h3>
+function renderNoticesList(notices) {
+    const container = document.getElementById('homeNoticesList');
+    
+    // 중요 공지와 일반 공지 분리
+    const importantNotices = notices.filter(notice => notice.is_important);
+    const regularNotices = notices.filter(notice => !notice.is_important);
+    
+    // 중요 공지와 일반 공지 각각 정렬 (날짜 기준 내림차순)
+    const sortedNotices = [
+        ...importantNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
+        ...regularNotices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    ];
+
+    container.innerHTML = sortedNotices.map(notice => `
+        <div class="notice-item cursor-pointer ${notice.is_important ? 'bg-red-50' : 'bg-white'} 
+            rounded-lg p-4 hover:shadow-md transition-all duration-200"
+            onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    ${notice.is_important ? 
+                        '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
+                        : ''}
+                    <h3 class="font-medium ${notice.is_important ? 'text-red-900' : 'text-gray-900'}">${notice.title}</h3>
+                </div>
                 <span class="text-sm text-gray-500">
                     ${new Date(notice.created_at).toLocaleDateString()}
                 </span>
             </div>
-            <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                <span class="px-2 py-1 rounded-full text-sm ${
-                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                }">
-                    ${notice.region === 'all' ? '전체공지' :
-                      notice.region === 'south' ? '남부공지' : '북부공지'}
-                </span>
-            </div>
         </div>
-    `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+    `).join('');
+}
+
+// 공지사항 상세보기
+function showNoticeDetail(notice) {
+    currentNoticeId = notice.id;
+    document.getElementById('noticeDetailTitle').textContent = notice.title;
+    document.getElementById('noticeDetailContent').textContent = notice.content;
+    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
+    document.getElementById('noticeDetailDate').textContent = 
+        new Date(notice.created_at).toLocaleDateString();
+
+    // 관리자 권한 확인
+    const role = sessionStorage.getItem('role');
+    const region = sessionStorage.getItem('region');
+    const noticeActions = document.getElementById('noticeDetailActions');
+    
+    if (role === 'admin' && (region === 'all' || region === notice.region)) {
+        noticeActions.classList.remove('hidden');
+    } else {
+        noticeActions.classList.add('hidden');
+    }
+
+    document.getElementById('noticeDetailModal').classList.add('show');
 }
 
 async function loadAdminBookings() {
