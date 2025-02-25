@@ -1356,97 +1356,160 @@ async function loadHomeNotices() {
 
 // 공지사항 상세보기
 function showNoticeDetail(notice) {
-    currentNoticeId = notice.id;
+    // 문자열로 전달된 경우 파싱
+    if (typeof notice === 'string') {
+        try {
+            notice = JSON.parse(notice);
+        } catch (error) {
+            console.error('Notice parsing error:', error);
+            return;
+        }
+    }
+
+    const modal = document.getElementById('noticeDetailModal');
+    if (!modal) {
+        console.error('Notice detail modal not found');
+        return;
+    }
+
+    // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
     document.getElementById('noticeDetailContent').textContent = notice.content;
     document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
-    document.getElementById('noticeDetailDate').textContent = 
-        new Date(notice.created_at).toLocaleDateString();
+    document.getElementById('noticeDetailDate').textContent = formatDate(notice.created_at);
 
-    // 중요 공지 체크박스 상태 설정
-    const importantCheckbox = document.getElementById('noticeDetailImportant');
-    if (importantCheckbox) {
-        const isImportant = Number(notice.is_important) === 1;
-        importantCheckbox.checked = isImportant;
-        
-        // 중요 공지 상태 표시 (선택적)
-        const statusLabel = document.createElement('span');
-        statusLabel.className = `ml-2 text-sm ${isImportant ? 'text-red-600' : 'text-gray-500'}`;
-        statusLabel.textContent = isImportant ? '(중요 공지)' : '';
-        importantCheckbox.parentElement.appendChild(statusLabel);
+    // 중요 공지 표시
+    const titleContainer = document.getElementById('noticeDetailTitle').parentElement;
+    if (notice.is_important) {
+        const importantBadge = document.createElement('span');
+        importantBadge.className = 'text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full mr-2';
+        importantBadge.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>중요';
+        titleContainer.insertBefore(importantBadge, titleContainer.firstChild);
     }
 
-    // 관리자 권한 확인
+    // 지역 뱃지 추가
+    const regionBadge = document.createElement('span');
+    regionBadge.className = `px-2 py-1 rounded-full text-sm ${
+        notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+        notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+        'bg-green-100 text-green-800'
+    }`;
+    regionBadge.textContent = notice.region === 'all' ? '전체공지' :
+                             notice.region === 'south' ? '남부공지' : '북부공지';
+    document.getElementById('noticeDetailAuthor').parentElement.appendChild(regionBadge);
+
+    // 관리자 권한 확인 및 관리 버튼 표시
     const role = sessionStorage.getItem('role');
-    const region = sessionStorage.getItem('region');
+    const userRegion = sessionStorage.getItem('region');
     const noticeActions = document.getElementById('noticeDetailActions');
     
-    if (role === 'admin' && (region === 'all' || region === notice.region)) {
+    if (role === 'admin' && (userRegion === 'all' || userRegion === notice.region)) {
         noticeActions.classList.remove('hidden');
+        
+        // 중요 공지 체크박스 상태 설정
+        const importantCheckbox = document.getElementById('noticeDetailImportant');
+        if (importantCheckbox) {
+            importantCheckbox.checked = notice.is_important;
+        }
     } else {
         noticeActions.classList.add('hidden');
     }
 
-    document.getElementById('noticeDetailModal').classList.add('show');
+    // 현재 공지사항 ID 저장
+    currentNoticeId = notice.id;
+
+    // 모달 표시
+    modal.classList.add('show');
+
+    // ESC 키로 모달 닫기 이벤트 리스너 추가
+    const handleEscKey = (e) => {
+        if (e.key === 'Escape') {
+            closeNoticeDetail();
+            document.removeEventListener('keydown', handleEscKey);
+        }
+    };
+    document.addEventListener('keydown', handleEscKey);
 }
 
-// 중요 공지 상태 업데이트 함수
-async function updateNoticeImportant() {
-    try {
-        if (!currentNoticeId) return;
+// 공지사항 모달 닫기 함수
+function closeNoticeDetail() {
+    const modal = document.getElementById('noticeDetailModal');
+    modal.classList.remove('show');
+    
+    // 모달 내용 초기화
+    document.getElementById('noticeDetailTitle').textContent = '';
+    document.getElementById('noticeDetailContent').textContent = '';
+    document.getElementById('noticeDetailAuthor').textContent = '';
+    document.getElementById('noticeDetailDate').textContent = '';
+    
+    // 중요 공지 뱃지 제거
+    const importantBadge = document.querySelector('#noticeDetailTitle').parentElement.querySelector('.text-red-600');
+    if (importantBadge) {
+        importantBadge.remove();
+    }
 
-        const importantCheckbox = document.getElementById('noticeDetailImportant');
-        const isImportant = importantCheckbox.checked;
-        
-        // 상태 변경 메시지 설정
-        const statusMessage = isImportant ? 
-            '중요 공지로 등록하시겠습니까?' : 
-            '중요 공지를 해제하시겠습니까?';
+    // 지역 뱃지 제거
+    const regionBadge = document.querySelector('#noticeDetailAuthor').parentElement.querySelector('[class*="rounded-full"]');
+    if (regionBadge) {
+        regionBadge.remove();
+    }
+}
 
-        // 사용자 확인
-        if (!confirm(statusMessage)) {
-            // 취소 시 체크박스 상태 원복
-            importantCheckbox.checked = !isImportant;
-            return;
-        }
+// 공지사항 렌더링 함수 수정 (홈화면용)
+function renderHomeNotices(notices) {
+    const noticesList = document.getElementById('homeNoticesList');
+    if (!noticesList) return;
 
-        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                is_important: isImportant ? 1 : 0
-            })
-        });
+    const noticesHTML = notices.map(notice => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-200 cursor-pointer mb-4
+            ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
+            onclick='showNoticeDetail(${JSON.stringify(notice).replace(/'/g, "&apos;")})'>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-2">
+                    ${notice.is_important ? 
+                        '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
+                        : ''}
+                    <h3 class="text-xl font-semibold">${notice.title}</h3>
+                </div>
+                <span class="text-sm text-gray-500">
+                    ${formatDate(notice.created_at)}
+                </span>
+            </div>
+            <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                <span class="px-2 py-1 rounded-full text-sm ${
+                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                    'bg-green-100 text-green-800'
+                }">
+                    ${notice.region === 'all' ? '전체공지' :
+                      notice.region === 'south' ? '남부공지' : '북부공지'}
+                </span>
+            </div>
+        </div>
+    `).join('');
 
-        if (response.success) {
-            // 성공 메시지 표시
-            showAlert(
-                isImportant ? 
-                '중요 공지로 등록되었습니다.' : 
-                '중요 공지가 해제되었습니다.', 
-                'success'
-            );
+    noticesList.innerHTML = noticesHTML || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+}
 
-            closeNoticeDetail();
-            
-            // 목록 새로고침
-            await Promise.all([
-                loadNotices(),
-                loadHomeNotices()
-            ]);
+// 날짜 포맷팅 함수 (이미 있다면 생략)
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-            // 디버깅용 로그
-            console.log('Notice updated:', {
-                noticeId: currentNoticeId,
-                isImportant: isImportant
-            });
-        }
-    } catch (error) {
-        console.error('Notice update error:', error);
-        showAlert(error.message || '공지사항 업데이트 중 오류가 발생했습니다.', 'error');
-        
-        // 에러 발생 시 체크박스 상태 원복
-        const importantCheckbox = document.getElementById('noticeDetailImportant');
-        importantCheckbox.checked = !importantCheckbox.checked;
+    if (diffDays === 0) {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `오늘 ${hours}:${minutes}`;
+    } else if (diffDays === 1) {
+        return '어제';
+    } else if (diffDays < 7) {
+        return `${diffDays}일 전`;
+    } else {
+        return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
     }
 }
 
@@ -3625,11 +3688,6 @@ function handleModalClick(event) {
     if (event.target.id === 'noticeDetailModal') {
         closeNoticeDetail();
     }
-}
-
-function closeNoticeDetail() {
-    const modal = document.getElementById('noticeDetailModal');
-    modal.classList.remove('show');
 }
 
 // 연락처 모달 컨트롤
