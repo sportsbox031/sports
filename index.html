@@ -49,7 +49,7 @@
         opacity: 1;
         transform: translateY(0);
     }
-
+    
     /* 캘린더 기본 스타일 */
     .calendar-day:hover {
         background-color: rgba(59, 130, 246, 0.1);
@@ -845,12 +845,12 @@
                         </div>
 
                        <!-- 여기에 공지사항 섹션 추가 -->
-        <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-            <div id="noticesList" class="space-y-4">
-                <!-- 공지사항이 여기에 동적으로 추가됨 -->
-            </div>
-        </div>
+                       <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+                        <div id="noticesList" class="space-y-4">
+                            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+                        </div>
+                    </div>
 
                         <!-- 내 예약 목록 -->
                         <div class="mt-8 bg-white rounded-lg shadow-lg p-6 col-span-2">
@@ -1346,25 +1346,42 @@ async function loadHomeNotices() {
 
 // 공지사항 상세보기
 function renderNotices(notices) {
-    const noticesList = document.getElementById('homeNoticesList');
+    const noticesList = document.getElementById('homeNoticesList') || document.getElementById('noticesList');
     if (!noticesList) return;
 
     const sortedNotices = sortAndRenderNotices(notices);
     
     const noticesHTML = sortedNotices.map(notice => `
-        <div class="notice-item bg-white rounded-lg p-4 mb-2 hover:bg-gray-50 transition-all duration-200 cursor-pointer flex justify-between items-center border border-gray-100"
+        <div class="notice-item bg-white rounded-lg p-5 hover:bg-gray-50 transition-all duration-200 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md"
              onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-            <div class="flex items-center space-x-2">
-                ${notice.is_important ? 
-                    '<span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">중요</span>' 
-                    : ''}
-                <h3 class="font-medium text-gray-900">${notice.title}</h3>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 flex-1">
+                    ${notice.is_important ? 
+                        '<span class="shrink-0 bg-red-100 text-red-600 text-sm font-semibold px-3 py-1 rounded-full flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>중요</span>' 
+                        : ''}
+                    <h3 class="font-medium text-gray-900 text-lg truncate">${notice.title}</h3>
+                </div>
+                <div class="flex items-center space-x-4 shrink-0">
+                    <span class="px-3 py-1 rounded-full text-sm ${
+                        notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                        notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                    }">
+                        ${notice.region === 'all' ? '전체공지' :
+                          notice.region === 'south' ? '남부공지' : '북부공지'}
+                    </span>
+                    <span class="text-sm text-gray-500 whitespace-nowrap">${formatDate(notice.created_at)}</span>
+                </div>
             </div>
-            <span class="text-sm text-gray-500">${formatDate(notice.created_at)}</span>
         </div>
     `).join('');
 
-    noticesList.innerHTML = noticesHTML || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+    noticesList.innerHTML = noticesHTML || `
+        <div class="text-center py-8">
+            <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-4"></i>
+            <p class="text-gray-500">등록된 공지사항이 없습니다.</p>
+        </div>
+    `;
 }
 
 function showNoticeDetail(notice) {
@@ -2107,16 +2124,40 @@ function highlightNewNotices() {
     localStorage.setItem('lastNoticeCheck', currentTime);
 }
 
-// CSS 스타일 추가 (스타일 섹션에 추가)
+// 스타일 통합
 const styles = `
     .notice-item {
+        position: relative;
+        overflow: hidden;
         opacity: 0;
         animation: fadeIn 0.5s ease-out forwards;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+    .notice-item:hover {
+        transform: translateY(-1px);
+    }
+
+    .notice-item h3 {
+        max-width: calc(100% - 200px);
+    }
+
+    #homeNoticesList, #noticesList {
+        scrollbar-width: thin;
+        scrollbar-color: #CBD5E0 #EDF2F7;
+    }
+
+    #homeNoticesList::-webkit-scrollbar, #noticesList::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #homeNoticesList::-webkit-scrollbar-track, #noticesList::-webkit-scrollbar-track {
+        background: #EDF2F7;
+        border-radius: 3px;
+    }
+
+    #homeNoticesList::-webkit-scrollbar-thumb, #noticesList::-webkit-scrollbar-thumb {
+        background-color: #CBD5E0;
+        border-radius: 3px;
     }
 
     .line-clamp-3 {
@@ -2124,6 +2165,17 @@ const styles = `
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 `;
 
