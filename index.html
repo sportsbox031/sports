@@ -1015,45 +1015,6 @@
                             </button>
                         </div>
                     </div>
-                    <!-- 관리자 공지사항 -->
-                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항 관리</h2>
-                        <form id="noticeForm" class="space-y-4">
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
-                                <input type="text" id="noticeTitle" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                                <textarea id="noticeContent" required rows="4"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
-                                <select id="noticeRegion" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                                    <option value="">선택해주세요</option>
-                                    <option value="all">전체 공개</option>
-                                    <option value="south">남부 지역만</option>
-                                    <option value="north">북부 지역만</option>
-                                </select>
-                            </div>
-                            <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                                공지사항 등록
-                            </button>
-                        </form>
-                    </div>
-
-                        <!-- 공지사항 목록 -->
-    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-        <div id="noticesList" class="space-y-4">
-            <!-- 공지사항이 여기에 동적으로 추가됨 -->
-        </div>
-    </div>
-</div>
 
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1908,59 +1869,6 @@ async function showDashboard(role) {
     }
 }
 
-// 관리자 대시보드 공지사항 로드 함수 추가
-async function loadAdminNotices() {
-    try {
-        const response = await apiRequest('/api/notices');
-        const noticesList = document.getElementById('adminNoticesList');
-
-        if (response.success && response.data) {
-            const sortedNotices = sortAndRenderNotices(response.data);
-            
-            noticesList.innerHTML = sortedNotices.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
-                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-                     onclick="showAdminNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center space-x-2">
-                            ${notice.is_important ? 
-                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
-                                : ''}
-                            <h3 class="text-xl font-semibold">${notice.title}</h3>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">
-                                ${new Date(notice.created_at).toLocaleDateString()}
-                            </span>
-                            <button onclick="editNotice(${notice.id})" class="text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteNotice(${notice.id})" class="text-red-600 hover:text-red-800">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                        <span class="px-2 py-1 rounded-full text-sm ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
-        }
-    } catch (error) {
-        console.error('Admin notices loading error:', error);
-        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
-    }
-}
-
 async function initializeUserDashboard(region, username) {
     try {
         // 대시보드 표시
@@ -1981,37 +1889,103 @@ async function initializeUserDashboard(region, username) {
             region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
         }`;
 
-        try {
-            // 예약 시스템 상태 확인
-            const settings = await apiRequest('/api/booking-settings');
-            updateUserDashboardState(settings.data?.is_active);
+        // 자동 새로고침 간격 설정 (밀리초)
+        const REFRESH_INTERVALS = {
+            notices: 30000,    // 공지사항: 30초
+            bookings: 60000,   // 예약 목록: 1분
+            calendar: 60000    // 캘린더 상태: 1분
+        };
 
+        // 초기 데이터 로드
+        await Promise.all([
+            // 예약 시스템 상태 확인
+            (async () => {
+                const settings = await apiRequest('/api/booking-settings');
+                updateUserDashboardState(settings.data?.is_active);
+            })(),
+            
             // 캘린더 초기화
-            initializeCalendar();
+            initializeCalendar(),
             
             // 시간 선택 초기화
-            initializeTimeSelects();
+            initializeTimeSelects(),
             
             // 예약 상태 업데이트
-            await debouncedUpdateCalendarStatus();
+            debouncedUpdateCalendarStatus(),
             
             // 예약 목록 로드
-            await loadBookings();
+            loadBookings(),
             
-            // 공지사항 로드 추가
-            await loadUserNotices();  // 여기서 새로운 함수 호출
+            // 공지사항 로드
+            loadUserNotices()
+        ]);
 
-            // 남은 예약 횟수 표시 업데이트
-            updateRemainingBookingsDisplay();
+        // 남은 예약 횟수 표시 업데이트
+        updateRemainingBookingsDisplay();
 
-        } catch (error) {
-            console.error('User dashboard initialization error:', error);
-            showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
-            throw error;
-        }
+        // 자동 새로고침 설정
+        const refreshIntervals = {};
+
+        // 공지사항 자동 새로고침
+        refreshIntervals.notices = setInterval(async () => {
+            try {
+                await loadUserNotices();
+            } catch (error) {
+                console.error('Notices refresh error:', error);
+            }
+        }, REFRESH_INTERVALS.notices);
+
+        // 예약 목록 자동 새로고침
+        refreshIntervals.bookings = setInterval(async () => {
+            try {
+                await loadBookings();
+            } catch (error) {
+                console.error('Bookings refresh error:', error);
+            }
+        }, REFRESH_INTERVALS.bookings);
+
+        // 캘린더 상태 자동 새로고침
+        refreshIntervals.calendar = setInterval(async () => {
+            try {
+                await debouncedUpdateCalendarStatus();
+            } catch (error) {
+                console.error('Calendar status refresh error:', error);
+            }
+        }, REFRESH_INTERVALS.calendar);
+
+        // 대시보드 종료 시 인터벌 정리를 위한 클린업 함수 설정
+        window.addEventListener('beforeunload', () => {
+            Object.values(refreshIntervals).forEach(interval => clearInterval(interval));
+        });
+
+        // 페이지 가시성 변경 감지
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                // 페이지가 다시 보일 때 데이터 새로고침
+                try {
+                    await Promise.all([
+                        loadUserNotices(),
+                        loadBookings(),
+                        debouncedUpdateCalendarStatus()
+                    ]);
+                } catch (error) {
+                    console.error('Visibility change refresh error:', error);
+                }
+            }
+        });
+
     } catch (error) {
         console.error('User dashboard initialization error:', error);
         showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        
+        // 에러 발생 시 추가 정보 로깅
+        console.error('Error details:', {
+            region,
+            username,
+            timestamp: new Date().toISOString(),
+            errorMessage: error.message,
+            errorStack: error.stack
+        });
     }
 }
 
@@ -2100,31 +2074,68 @@ document.getElementById('closeUserProfile').addEventListener('click', closeUserP
 // 여기에 새로운 사용자 대시보드 공지사항 로드 함수 추가
 async function loadUserNotices() {
     try {
+        const userRegion = sessionStorage.getItem('region');
         const response = await apiRequest('/api/notices');
-        const noticesList = document.getElementById('noticesList');  // 사용자 대시보드의 공지사항 컨테이너 ID
+        const noticesList = document.getElementById('noticesList');
+
+        if (!noticesList) {
+            console.error('Notices container not found');
+            return;
+        }
 
         if (response.success && response.data) {
-            const sortedNotices = sortAndRenderNotices(response.data);
+            // 공지사항 필터링 (전체 공지 + 해당 지역 공지)
+            const filteredNotices = response.data.filter(notice => 
+                notice.region === 'all' || notice.region === userRegion
+            );
+
+            // 정렬 및 렌더링
+            const sortedNotices = sortAndRenderNotices(filteredNotices);
             
-            noticesList.innerHTML = sortedNotices.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
+            // 애니메이션을 위한 클래스 추가
+            const noticeElements = sortedNotices.map(notice => `
+                <div class="notice-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg 
+                    transition-all duration-200 transform hover:-translate-y-1
                     ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+                    onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+                    
+                    <!-- 공지사항 헤더 -->
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center space-x-2">
-                            ${notice.is_important ? 
-                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
-                                : ''}
-                            <h3 class="text-xl font-semibold">${notice.title}</h3>
+                            ${notice.is_important ? `
+                                <span class="flex items-center space-x-1 text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>중요</span>
+                                </span>
+                            ` : ''}
+                            <h3 class="text-xl font-semibold ${notice.is_important ? 'text-red-900' : 'text-gray-900'}">
+                                ${notice.title}
+                            </h3>
                         </div>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">
+                                ${formatDate(notice.created_at)}
+                            </span>
+                        </div>
                     </div>
-                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                        <span class="px-2 py-1 rounded-full text-sm ${
+
+                    <!-- 공지사항 내용 -->
+                    <div class="relative">
+                        <p class="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
+                            ${notice.content}
+                        </p>
+                        ${notice.content.length > 200 ? `
+                            <div class="absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-transparent w-12 h-full"></div>
+                        ` : ''}
+                    </div>
+
+                    <!-- 공지사항 푸터 -->
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-user-edit text-gray-400"></i>
+                            <span class="text-sm text-gray-500">${notice.author}</span>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium ${
                             notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
                             notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
                             'bg-green-100 text-green-800'
@@ -2134,13 +2145,91 @@ async function loadUserNotices() {
                         </span>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            `).join('');
+
+            // 컨테이너 업데이트
+            if (noticeElements.length > 0) {
+                noticesList.innerHTML = noticeElements;
+            } else {
+                noticesList.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500">등록된 공지사항이 없습니다.</p>
+                    </div>
+                `;
+            }
+
+            // 새로운 공지사항 강조 효과
+            highlightNewNotices();
         }
     } catch (error) {
         console.error('User notices loading error:', error);
         showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
     }
 }
+
+// 날짜 포맷팅 함수
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `오늘 ${hours}:${minutes}`;
+    } else if (diffDays === 1) {
+        return '어제';
+    } else if (diffDays < 7) {
+        return `${diffDays}일 전`;
+    } else {
+        return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
+    }
+}
+
+// 새로운 공지사항 강조 효과
+function highlightNewNotices() {
+    const lastCheckTime = localStorage.getItem('lastNoticeCheck') || '0';
+    const currentTime = new Date().getTime().toString();
+    
+    document.querySelectorAll('.notice-item').forEach(notice => {
+        const createdAt = new Date(notice.dataset.createdAt).getTime();
+        if (createdAt > parseInt(lastCheckTime)) {
+            notice.classList.add('animate-pulse');
+            setTimeout(() => {
+                notice.classList.remove('animate-pulse');
+            }, 3000);
+        }
+    });
+
+    localStorage.setItem('lastNoticeCheck', currentTime);
+}
+
+// CSS 스타일 추가 (스타일 섹션에 추가)
+const styles = `
+    .notice-item {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+`;
+
+// 스타일 적용
+const styleSheet = document.createElement('style');
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
 
 async function initializeAdminDashboard(region, username) {
     try {
