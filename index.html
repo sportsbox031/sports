@@ -1335,40 +1335,9 @@ async function loadHomeNotices() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
         const data = await response.json();
-        const noticesList = document.getElementById('homeNoticesList');
-
+        
         if (data.success && data.data) {
-            const sortedNotices = sortAndRenderNotices(data.data);
-            
-            noticesList.innerHTML = sortedNotices.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer 
-                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center space-x-2">
-                            ${notice.is_important ? 
-                                '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
-                                : ''}
-                            <h3 class="text-xl font-semibold">${notice.title}</h3>
-                        </div>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                        <span class="px-2 py-1 rounded-full text-sm ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            renderNotices(data.data);
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
@@ -1391,10 +1360,7 @@ function renderNotices(notices) {
                     : ''}
                 <h3 class="font-medium text-gray-900">${notice.title}</h3>
             </div>
-            <div class="flex items-center space-x-4">
-                <span class="text-sm text-gray-500">${formatDate(notice.created_at)}</span>
-                <i class="fas fa-chevron-right text-gray-400"></i>
-            </div>
+            <span class="text-sm text-gray-500">${formatDate(notice.created_at)}</span>
         </div>
     `).join('');
 
@@ -2092,83 +2058,10 @@ async function loadUserNotices() {
         }
 
         if (response.success && response.data) {
-            // 공지사항 필터링 (전체 공지 + 해당 지역 공지)
             const filteredNotices = response.data.filter(notice => 
                 notice.region === 'all' || notice.region === userRegion
             );
-
-            // 정렬 및 렌더링
-            const sortedNotices = sortAndRenderNotices(filteredNotices);
-            
-            // 애니메이션을 위한 클래스 추가
-            const noticeElements = sortedNotices.map(notice => `
-                <div class="notice-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg 
-                    transition-all duration-200 transform hover:-translate-y-1
-                    ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-                    onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-                    
-                    <!-- 공지사항 헤더 -->
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center space-x-2">
-                            ${notice.is_important ? `
-                                <span class="flex items-center space-x-1 text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    <span>중요</span>
-                                </span>
-                            ` : ''}
-                            <h3 class="text-xl font-semibold ${notice.is_important ? 'text-red-900' : 'text-gray-900'}">
-                                ${notice.title}
-                            </h3>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">
-                                ${formatDate(notice.created_at)}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- 공지사항 내용 -->
-                    <div class="relative">
-                        <p class="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
-                            ${notice.content}
-                        </p>
-                        ${notice.content.length > 200 ? `
-                            <div class="absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-transparent w-12 h-full"></div>
-                        ` : ''}
-                    </div>
-
-                    <!-- 공지사항 푸터 -->
-                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-user-edit text-gray-400"></i>
-                            <span class="text-sm text-gray-500">${notice.author}</span>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
-
-            // 컨테이너 업데이트
-            if (noticeElements.length > 0) {
-                noticesList.innerHTML = noticeElements;
-            } else {
-                noticesList.innerHTML = `
-                    <div class="text-center py-8">
-                        <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-4"></i>
-                        <p class="text-gray-500">등록된 공지사항이 없습니다.</p>
-                    </div>
-                `;
-            }
-
-            // 새로운 공지사항 강조 효과
-            highlightNewNotices();
+            renderNotices(filteredNotices);
         }
     } catch (error) {
         console.error('User notices loading error:', error);
