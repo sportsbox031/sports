@@ -2430,18 +2430,24 @@ async function loadBookings() {
 // 공지사항 작성
 async function createNotice(noticeData) {
     try {
+        // 중요 공지 체크박스 상태 가져오기
+        const isImportant = document.getElementById('isImportant').checked;
+
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
             body: JSON.stringify({
                 ...noticeData,
-                is_important: document.getElementById('isImportant').checked
+                is_important: isImportant ? 1 : 0  // 체크박스 상태에 따라 1 또는 0
             })
         });
 
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
             document.getElementById('noticeWriteForm').reset();
-            await loadNotices();
+            await Promise.all([
+                loadNotices(),
+                loadHomeNotices()
+            ]);
         }
     } catch (error) {
         console.error('Notice creation error:', error);
