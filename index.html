@@ -1339,7 +1339,8 @@ async function loadHomeNotices() {
         const data = await response.json();
         
         if (data.success && data.data) {
-            renderNotices(data.data);
+            const sortedNotices = sortAndRenderNotices(data.data);
+            renderNotices(sortedNotices);  // 동일한 renderNotices 함수 사용
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
@@ -1368,7 +1369,8 @@ function renderNotices(notices) {
     const sortedNotices = sortAndRenderNotices(notices);
     
     const noticesHTML = sortedNotices.map(notice => `
-        <div class="notice-item bg-white rounded-lg p-5 hover:bg-gray-50 transition-all duration-200 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md"
+        <div class="notice-item bg-white rounded-lg p-5 hover:bg-gray-50 transition-all duration-200 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md
+            ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
              onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3 flex-1">
@@ -1392,7 +1394,7 @@ function renderNotices(notices) {
         </div>
     `).join('');
 
-    noticesList.innerHTML = noticesHTML || `
+    targetList.innerHTML = noticesHTML || `
         <div class="text-center py-8">
             <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-4"></i>
             <p class="text-gray-500">등록된 공지사항이 없습니다.</p>
