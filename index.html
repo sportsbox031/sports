@@ -1317,7 +1317,12 @@
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
 
-
+// 자동 새로고침 간격 설정 추가
+const REFRESH_INTERVALS = {
+    notices: 30000,    // 공지사항: 30초
+    bookings: 60000,   // 예약 목록: 1분
+    calendar: 60000    // 캘린더 상태: 1분
+};
 
 // 시군 분류 데이터
 const REGION_MAPPING = {
@@ -1339,8 +1344,10 @@ async function loadHomeNotices() {
         const data = await response.json();
         
         if (data.success && data.data) {
-            const sortedNotices = sortAndRenderNotices(data.data);
-            renderNotices(sortedNotices);  // 동일한 renderNotices 함수 사용
+            console.log('Home notices data:', data.data); // 데이터 확인용 로그
+            renderNotices(data.data);
+        } else {
+            console.error('No notices data received');
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
@@ -1363,6 +1370,11 @@ function renderNotices(notices) {
 
     if (!targetList) {
         console.error('Notice list container not found');
+        return;
+    }
+
+    if (!notices || !Array.isArray(notices)) {
+        console.error('Invalid notices data:', notices);
         return;
     }
 
@@ -1547,6 +1559,16 @@ document.addEventListener('DOMContentLoaded', function() {
         loadHomeNotices(); // 홈화면 공지사항 새로고침
     });
 });
+
+    // 홈으로 돌아갈 때도 공지사항 새로고침
+    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
+        const originalClick = button.onclick;
+        button.onclick = async function() {
+            originalClick.call(this);
+            await loadHomeNotices();
+            checkAdminStatus();
+        };
+    });
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
