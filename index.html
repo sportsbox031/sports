@@ -143,6 +143,18 @@
         cursor: pointer;
     }
 
+    .booking-row {
+    transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.status-badge {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.calendar-day {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
     /* 로딩 인디케이터 */
     .loading {
         position: fixed;
@@ -1317,12 +1329,73 @@
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
 
-// 자동 새로고침 간격 설정 추가
-const REFRESH_INTERVALS = {
-    notices: 30000,    // 공지사항: 30초
-    bookings: 60000,   // 예약 목록: 1분
-    calendar: 60000    // 캘린더 상태: 1분
-};
+// REFRESH_INTERVALS 상수 대신 다음 클래스 추가
+class SmartPolling {
+    constructor() {
+        this.config = {
+            minInterval: 10000,  // 10초
+            maxInterval: 60000,  // 1분
+            currentInterval: 10000,
+            multiplier: 1.5
+        };
+        this.lastUpdate = null;
+        this.isPolling = false;
+        this.previousData = null;
+    }
+
+    async start() {
+        if (this.isPolling) return;
+        this.isPolling = true;
+        this.poll();
+    }
+
+    async poll() {
+        if (!this.isPolling) return;
+
+        try {
+            // 캘린더 상태와 예약 목록을 한 번에 조회
+            const response = await apiRequest('/api/bookings/status');
+            const newData = response.data;
+
+            if (this.hasChanges(newData)) {
+                await this.updateUI(newData);
+                this.config.currentInterval = this.config.minInterval;
+            } else {
+                this.config.currentInterval = Math.min(
+                    this.config.currentInterval * this.config.multiplier,
+                    this.config.maxInterval
+                );
+            }
+
+            this.previousData = newData;
+            this.lastUpdate = Date.now();
+
+        } catch (error) {
+            console.error('Polling error:', error);
+            this.config.currentInterval = this.config.minInterval;
+        }
+
+        setTimeout(() => this.poll(), this.config.currentInterval);
+    }
+
+    hasChanges(newData) {
+        if (!this.previousData) return true;
+        return JSON.stringify(newData) !== JSON.stringify(this.previousData);
+    }
+
+    async updateUI(data) {
+        if (data.bookings) {
+            await updateBookingsList(data.bookings);
+        }
+        if (data.calendarStatus) {
+            updateCalendarState(data.calendarStatus);
+        }
+    }
+
+    stop() {
+        this.isPolling = false;
+    }
+}
 
 // 시군 분류 데이터
 const REGION_MAPPING = {
@@ -1940,62 +2013,29 @@ async function initializeUserDashboard(region, username) {
             // 예약 목록 로드
             loadBookings(),
             
-            // 공지사항 로드 - 이 부분 추가
+            // 공지사항 로드
             loadUserNotices()
         ]);
 
         // 남은 예약 횟수 표시 업데이트
         updateRemainingBookingsDisplay();
 
-        // 자동 새로고침 설정
-        const refreshIntervals = {};
-
-        // 공지사항 자동 새로고침
-        refreshIntervals.notices = setInterval(async () => {
-            try {
-                await loadUserNotices();
-            } catch (error) {
-                console.error('Notices refresh error:', error);
-            }
-        }, REFRESH_INTERVALS.notices);
-
-        // 예약 목록 자동 새로고침
-        refreshIntervals.bookings = setInterval(async () => {
-            try {
-                await loadBookings();
-            } catch (error) {
-                console.error('Bookings refresh error:', error);
-            }
-        }, REFRESH_INTERVALS.bookings);
-
-        // 캘린더 상태 자동 새로고침
-        refreshIntervals.calendar = setInterval(async () => {
-            try {
-                await debouncedUpdateCalendarStatus();
-            } catch (error) {
-                console.error('Calendar status refresh error:', error);
-            }
-        }, REFRESH_INTERVALS.calendar);
-
-        // 대시보드 종료 시 인터벌 정리를 위한 클린업 함수 설정
-        window.addEventListener('beforeunload', () => {
-            Object.values(refreshIntervals).forEach(interval => clearInterval(interval));
-        });
+        // SmartPolling 초기화 및 시작
+        const polling = new SmartPolling();
+        polling.start();
 
         // 페이지 가시성 변경 감지
-        document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible') {
-                // 페이지가 다시 보일 때 데이터 새로고침
-                try {
-                    await Promise.all([
-                        loadUserNotices(),
-                        loadBookings(),
-                        debouncedUpdateCalendarStatus()
-                    ]);
-                } catch (error) {
-                    console.error('Visibility change refresh error:', error);
-                }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                polling.stop();
+            } else {
+                polling.start();
             }
+        });
+
+        // 페이지 종료 시 폴링 중지
+        window.addEventListener('beforeunload', () => {
+            polling.stop();
         });
 
     } catch (error) {
@@ -2458,6 +2498,11 @@ function logout() {
     document.getElementById('loginAndReservationSystem').classList.remove('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
     
+    // 폴링 중지
+    if (window.polling) {
+        window.polling.stop();
+    }
+
     // 폼 초기화
     document.getElementById('loginForm').reset();
     
@@ -2606,50 +2651,64 @@ async function createBooking(bookingData) {
 }
 
 // 예약 목록 로드 함수
-async function loadBookings() {
+async function updateBookingsList(bookings) {
     try {
-        const data = await apiRequest('/api/bookings');
         const tbody = document.getElementById('bookingsList');
-        
-        if (data.success && data.data) {
-            tbody.innerHTML = data.data
-                .filter(booking => booking.status !== 'cancelled')
-                .map(booking => {
-                    const bookingDate = new Date(booking.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    const canCancel = bookingDate >= today && 
-                        booking.status !== 'cancelled' && 
-                        booking.status !== 'rejected';
+        if (!tbody) return;
 
-                    return `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${canCancel ? `
-                                    <button onclick="cancelBooking(${booking.id})" 
-                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                        취소
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
-        }
+        bookings
+            .filter(booking => booking.status !== 'cancelled')
+            .forEach(booking => {
+                const existingRow = tbody.querySelector(`[data-booking-id="${booking.id}"]`);
+                const bookingDate = new Date(booking.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const canCancel = bookingDate >= today && 
+                    booking.status !== 'cancelled' && 
+                    booking.status !== 'rejected';
+
+                const rowHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${getStatusClass(booking.status)}">
+                            ${getStatusText(booking.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${canCancel ? `
+                            <button onclick="cancelBooking(${booking.id})" 
+                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                취소
+                            </button>
+                        ` : ''}
+                    </td>
+                `;
+
+                if (existingRow) {
+                    if (existingRow.innerHTML !== rowHTML) {
+                        existingRow.innerHTML = rowHTML;
+                    }
+                } else {
+                    const newRow = document.createElement('tr');
+                    newRow.dataset.bookingId = booking.id;
+                    newRow.innerHTML = rowHTML;
+                    newRow.style.opacity = '0';
+                    tbody.insertBefore(newRow, tbody.firstChild);
+                    requestAnimationFrame(() => {
+                        newRow.style.transition = 'opacity 0.3s ease-in';
+                        newRow.style.opacity = '1';
+                    });
+                }
+            });
+
     } catch (error) {
-        console.error('Error loading bookings:', error);
-        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+        console.error('Error updating bookings:', error);
+        showAlert('예약 목록 업데이트 중 오류가 발생했습니다.', 'error');
     }
 }
 
