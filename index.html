@@ -1285,12 +1285,21 @@
             <div class="border-t pt-4">
                 <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
             </div>
-            <!-- 관리자일 때만 보이는 버튼들 -->
+            <!-- 관리자용 액션 버튼 -->
             <div id="noticeDetailActions" class="flex justify-end space-x-2 pt-4 border-t hidden">
-                <button onclick="editNotice()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    수정
+                <div class="flex items-center space-x-2 mr-4">
+                    <input type="checkbox" id="noticeDetailImportant" 
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="noticeDetailImportant" class="text-sm font-medium text-gray-700">
+                        중요 공지
+                    </label>
+                </div>
+                <button onclick="updateNoticeImportant()" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    저장
                 </button>
-                <button onclick="deleteNotice()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                <button onclick="deleteNotice()" 
+                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                     삭제
                 </button>
             </div>
@@ -1384,6 +1393,12 @@ function showNoticeDetail(notice) {
     document.getElementById('noticeDetailDate').textContent = 
         new Date(notice.created_at).toLocaleDateString();
 
+    // 중요 공지 체크박스 상태 설정
+    const importantCheckbox = document.getElementById('noticeDetailImportant');
+    if (importantCheckbox) {
+        importantCheckbox.checked = notice.is_important === 1;
+    }
+
     // 관리자 권한 확인
     const role = sessionStorage.getItem('role');
     const region = sessionStorage.getItem('region');
@@ -1398,9 +1413,31 @@ function showNoticeDetail(notice) {
     document.getElementById('noticeDetailModal').classList.add('show');
 }
 
-function closeNoticeDetail() {
-    document.getElementById('noticeDetailModal').classList.remove('show');
-    currentNoticeId = null;
+// 중요 공지 상태 업데이트 함수
+async function updateNoticeImportant() {
+    try {
+        if (!currentNoticeId) return;
+
+        const isImportant = document.getElementById('noticeDetailImportant').checked;
+
+        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                is_important: isImportant ? 1 : 0
+            })
+        });
+
+        if (response.success) {
+            showAlert('공지사항이 업데이트되었습니다.', 'success');
+            closeNoticeDetail();
+            // 공지사항 목록 새로고침
+            await loadNotices();
+            await loadHomeNotices();
+        }
+    } catch (error) {
+        console.error('Notice update error:', error);
+        showAlert(error.message || '공지사항 업데이트 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // 공지사항 수정
@@ -2457,29 +2494,6 @@ function renderNoticesList(notices) {
             </div>
         </div>
     `).join('');
-}
-
-// 공지사항 상세보기
-function showNoticeDetail(notice) {
-    currentNoticeId = notice.id;
-    document.getElementById('noticeDetailTitle').textContent = notice.title;
-    document.getElementById('noticeDetailContent').textContent = notice.content;
-    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
-    document.getElementById('noticeDetailDate').textContent = 
-        new Date(notice.created_at).toLocaleDateString();
-
-    // 관리자 권한 확인
-    const role = sessionStorage.getItem('role');
-    const region = sessionStorage.getItem('region');
-    const noticeActions = document.getElementById('noticeDetailActions');
-    
-    if (role === 'admin' && (region === 'all' || region === notice.region)) {
-        noticeActions.classList.remove('hidden');
-    } else {
-        noticeActions.classList.add('hidden');
-    }
-
-    document.getElementById('noticeDetailModal').classList.add('show');
 }
 
 async function loadAdminBookings() {
