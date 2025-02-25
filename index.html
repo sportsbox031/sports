@@ -1421,6 +1421,12 @@ async function updateNoticeImportant() {
 
         const isImportant = document.getElementById('noticeDetailImportant').checked;
 
+        // 요청 데이터 로깅
+        console.log('Sending update request:', {
+            currentNoticeId,
+            is_important: isImportant ? 1 : 0
+        });
+
         const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -1428,9 +1434,20 @@ async function updateNoticeImportant() {
             })
         });
 
+        // 응답 로깅
+        console.log('Update response:', response);
+
         if (response.success) {
             showAlert('공지사항이 업데이트되었습니다.', 'success');
             closeNoticeDetail();
+            // 목록 새로고침 전후 로깅
+            console.log('Before refresh - current notices:', notices);
+            await Promise.all([
+                loadNotices(),
+                loadHomeNotices()
+            ]);
+            console.log('After refresh - updated notices:', notices);
+
             // 공지사항 목록 새로고침
             await loadNotices();
             await loadHomeNotices();
@@ -2458,6 +2475,7 @@ async function createNotice(noticeData) {
 async function loadNotices() {
     try {
         const response = await apiRequest('/api/notices');
+        console.log('Loaded notices:', response);  // 응답 데이터 확인
         if (response.success && response.data) {
             renderNoticesList(response.data, 'noticesList');
         }
@@ -2471,6 +2489,7 @@ async function loadNotices() {
 
 // 공지사항 목록 렌더링 함수
 function renderNoticesList(notices) {
+    console.log('Rendering notices:', notices);  // 전체 데이터 확인
     const container = document.getElementById('homeNoticesList');
     
     if (!notices || !notices.length) {
@@ -2478,10 +2497,22 @@ function renderNoticesList(notices) {
         return;
     }
 
+    // 중요 공지와 일반 공지 분리 전 데이터 확인
+    console.log('Before filtering - notices:', notices.map(n => ({
+        id: n.id,
+        title: n.title,
+        is_important: n.is_important
+    })));
+
+
     // 중요 공지와 일반 공지 분리 (Number로 변환하여 비교)
     const importantNotices = notices.filter(notice => Number(notice.is_important) === 1);
     const regularNotices = notices.filter(notice => Number(notice.is_important) === 0);
-    
+
+        // 필터링 결과 확인
+        console.log('Important notices:', importantNotices);
+    console.log('Regular notices:', regularNotices);
+
     // 각각 날짜순 정렬
     const sortByDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
     const sortedImportantNotices = importantNotices.sort(sortByDate);
