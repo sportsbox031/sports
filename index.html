@@ -2732,40 +2732,6 @@ function sortAndRenderNotices(notices) {
     return [...sortedImportantNotices, ...sortedRegularNotices];
 }
 
-// 공지사항 목록 렌더링 함수
-function renderNoticesList(notices) {
-    console.log('Rendering notices:', notices);
-    
-    const container = document.getElementById('homeNoticesList');
-    
-    if (!notices || !notices.length) {
-        container.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
-        return;
-    }
-
-    const sortedNotices = sortAndRenderNotices(notices);
-
-    container.innerHTML = sortedNotices.map(notice => `
-        <div class="notice-item cursor-pointer ${notice.is_important ? 'bg-red-50' : 'bg-white'} 
-            rounded-lg p-4 hover:shadow-md transition-all duration-200"
-            onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    ${notice.is_important ? 
-                        '<span class="text-red-600 text-sm font-semibold px-2 py-1 bg-red-100 rounded-full">중요</span>' 
-                        : ''}
-                    <h3 class="font-medium ${notice.is_important ? 'text-red-900' : 'text-gray-900'}">${notice.title}</h3>
-                </div>
-                <span class="text-sm text-gray-500">
-                    ${new Date(notice.created_at).toLocaleDateString()}
-                </span>
-            </div>
-        </div>
-    `).join('');
-
-    console.log('Final rendered notices:', sortedNotices);
-}
-
 async function loadAdminBookings() {
     try {
         const region = localStorage.getItem('region');
