@@ -2795,67 +2795,97 @@ function sortAndRenderNotices(notices) {
     return [...sortedImportantNotices, ...sortedRegularNotices];
 }
 
+async function loadBookings() {
+    try {
+        const response = await apiRequest('/api/bookings');
+        if (response.success && response.data) {
+            await updateBookingsList(response.data);
+        }
+    } catch (error) {
+        console.error('Error loading bookings:', error);
+        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
 async function loadAdminBookings() {
     try {
         const region = localStorage.getItem('region');
         let endpoint = '/api/admin/bookings/';
-        
-        if (region === 'all') {
-            endpoint += 'all';
-        } else {
-            endpoint += region;
-        }
+        endpoint += region === 'all' ? 'all' : region;
 
         const response = await apiRequest(endpoint);
         if (response.success) {
-            const tbody = document.getElementById('adminBookingsList');
-            
-            if (tbody) {
-                tbody.innerHTML = response.data
-                    .map(booking => `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${booking.group_name}
-                                <span class="ml-2 px-2 py-1 text-xs rounded-full 
-                                    ${booking.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                    ${booking.region === 'south' ? '남부' : '북부'}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${booking.status === 'pending' ? `
-                                    <button onclick="approveBooking(${booking.id})" 
-                                        class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm mr-2">
-                                        승인
-                                    </button>
-                                    <button onclick="rejectBooking(${booking.id})"
-                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                        거부
-                                    </button>
-                                ` : booking.status === 'approved' ? `
-                                    <button onclick="forceCancel(${booking.id})"
-                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                        강제취소
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('') || '<tr><td colspan="8" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
-            }
+            await updateAdminBookingsList(response.data);
         }
     } catch (error) {
         console.error('Error loading admin bookings:', error);
         showAlert(error.message || '예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+async function updateAdminBookingsList(bookings) {
+    try {
+        const tbody = document.getElementById('adminBookingsList');
+        if (!tbody) return;
+
+        const currentBookings = Array.from(tbody.children).map(row => row.dataset.bookingId);
+        
+        const bookingsHTML = bookings.map(booking => `
+            <tr data-booking-id="${booking.id}" data-status="${booking.status}"
+                class="booking-row transition-all duration-300">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${booking.group_name}
+                    <span class="ml-2 px-2 py-1 text-xs rounded-full 
+                        ${booking.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                        ${booking.region === 'south' ? '남부' : '북부'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${getStatusClass(booking.status)}">
+                        ${getStatusText(booking.status)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${booking.status === 'pending' ? `
+                        <button onclick="approveBooking(${booking.id})" 
+                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm mr-2">
+                            승인
+                        </button>
+                        <button onclick="rejectBooking(${booking.id})"
+                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                            거부
+                        </button>
+                    ` : booking.status === 'approved' ? `
+                        <button onclick="forceCancel(${booking.id})"
+                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                            강제취소
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+
+        // 변경사항이 있을 때만 DOM 업데이트
+        if (tbody.innerHTML !== bookingsHTML) {
+            tbody.innerHTML = bookingsHTML;
+
+            // 새로운 행에 페이드인 효과 적용
+            tbody.querySelectorAll('.booking-row').forEach(row => {
+                row.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    row.style.opacity = '1';
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error updating admin bookings list:', error);
+        showAlert('예약 목록 업데이트 중 오류가 발생했습니다.', 'error');
     }
 }
 
