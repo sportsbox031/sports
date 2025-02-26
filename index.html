@@ -1295,7 +1295,10 @@ async function loadHomeNotices() {
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            // 제목만 표시하는 간소화된 목록 - onclick 속성 제거
+            // 공지사항 데이터를 전역 객체에 저장
+            window.noticesData = sortedNotices;
+            
+            // HTML 생성 - 각 항목에 data-notice-id 속성 추가
             noticesList.innerHTML = `
                 <ul class="divide-y divide-gray-200">
                     ${sortedNotices.map((notice, index) => `
@@ -1312,10 +1315,7 @@ async function loadHomeNotices() {
                 </ul>
             `;
             
-            // 공지사항 데이터를 전역 객체에 저장
-            window.noticesData = sortedNotices;
-            
-            // 모든 공지사항 항목에 클릭 이벤트 리스너 추가
+            // 이벤트 리스너 추가 - 직접 각 요소에 바인딩
             document.querySelectorAll('.notice-item').forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault(); // 기본 동작 방지
@@ -1350,7 +1350,7 @@ function openModal(modalId) {
         return;
     }
     
-    // 모달 표시 설정
+    // 모달 표시 설정 - display를 직접 설정
     modal.style.display = 'flex';
     
     // 약간의 지연 후 show 클래스 추가 (CSS 트랜지션을 위해)
@@ -1361,7 +1361,7 @@ function openModal(modalId) {
     console.log(`Modal ${modalId} opened`);
 }
 
-// 공지사항 상세보기
+// 공지사항 상세 보기 함수 수정
 function showNoticeDetail(notice) {
     console.log('Show notice detail called with:', notice);
     
@@ -1554,6 +1554,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkAdminStatus();
         };
     });
+});
     
     // 공지사항 작성 폼 제출
     document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
@@ -1590,7 +1591,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (submitButton) submitButton.disabled = false;
         }
     });
-});
+;
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
