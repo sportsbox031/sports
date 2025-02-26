@@ -1428,10 +1428,22 @@ function checkAdminStatus() {
     const isAdmin = sessionStorage.getItem('role') === 'admin'; // 관리자 역할 확인
     const noticeActions = document.getElementById('noticeActions');
     
-    if (isAdmin) {
-        noticeActions.classList.remove('hidden'); // 관리자일 경우 글쓰기 버튼 보이기
+    console.log('Admin status check:', {
+        role: sessionStorage.getItem('role'),
+        isAdmin: isAdmin,
+        noticeActionsElement: noticeActions ? 'exists' : 'not found'
+    });
+    
+    if (noticeActions) {
+        if (isAdmin) {
+            noticeActions.classList.remove('hidden'); // 관리자일 경우 글쓰기 버튼 보이기
+            console.log('Admin detected: Showing write button');
+        } else {
+            noticeActions.classList.add('hidden'); // 일반 사용자일 경우 글쓰기 버튼 숨기기
+            console.log('Not admin: Hiding write button');
+        }
     } else {
-        noticeActions.classList.add('hidden'); // 일반 사용자일 경우 글쓰기 버튼 숨기기
+        console.warn('Notice actions element not found in the DOM');
     }
 }
 
@@ -1624,7 +1636,7 @@ function showHomeScreen() {
 
     // 모든 화면 숨기기
     const homeScreen = document.getElementById('mainContainer')?.querySelector('#homeScreen');
-    if (!homeScreen) return; // homeScreen이 없으면 함수 종료
+    if (!homeScreen) return; 
 
     homeScreen.classList.remove('hidden');
     document.getElementById('loginAndReservationSystem')?.classList.add('hidden');
@@ -1632,17 +1644,16 @@ function showHomeScreen() {
     document.getElementById('userDashboard')?.classList.add('hidden');
     document.getElementById('adminDashboard')?.classList.add('hidden');
 
-    // 공지사항 새로고침 및 관리자 상태 확인
+    // 공지사항 새로고침
     loadHomeNotices();
-    checkAdminStatus();
-
+    
     // 로그인 상태일 경우 네비게이션 바 수정
     if (token && role) {
         const homeNav = homeScreen.querySelector('nav');
-        if (!homeNav) return; // 네비게이션 바가 없으면 함수 종료
+        if (!homeNav) return; 
 
         const navButtons = homeNav.querySelector('.items-center.space-x-8');
-        if (!navButtons) return; // 버튼 컨테이너가 없으면 함수 종료
+        if (!navButtons) return; 
 
         const username = sessionStorage.getItem('username');
         const region = sessionStorage.getItem('region');
@@ -1694,6 +1705,9 @@ function showHomeScreen() {
 
         navButtons.appendChild(newButtons);
     }
+    
+    // 중요: 네비게이션 바 수정 후 관리자 상태 확인
+    checkAdminStatus();
 }
 
 // 대시보드로 돌아가는 함수
