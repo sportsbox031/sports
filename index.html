@@ -2075,7 +2075,8 @@ function updateStatisticsUI(region) {
 // 통계 로드 함수
 async function loadRegionStatistics() {
     try {
-        const adminRegion = localStorage.getItem('region');
+        // localStorage 대신 sessionStorage 사용
+        const adminRegion = sessionStorage.getItem('region');
         updateStatisticsUI(adminRegion);
 
         const today = new Date().toISOString().split('T')[0];
@@ -2083,6 +2084,9 @@ async function loadRegionStatistics() {
             .toISOString().split('T')[0];
         const lastDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
             .toISOString().split('T')[0];
+
+        // 디버깅 정보 추가
+        console.log('Admin region:', adminRegion);
 
         if (adminRegion === 'all' || adminRegion === 'south') {
             // 남부 통계
@@ -3302,11 +3306,13 @@ async function login(username, password) {
         });
 
         if (response.success) {
-            // localStorage 대신 sessionStorage 사용
+            // sessionStorage 사용으로 통일
             sessionStorage.setItem('token', response.token);
             sessionStorage.setItem('role', response.user.role);
             sessionStorage.setItem('username', response.user.group_name);
             sessionStorage.setItem('region', response.user.region);
+            sessionStorage.setItem('city', response.user.city);
+            sessionStorage.setItem('manager', response.user.manager);
 
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('userDashboard').classList.add('hidden');
