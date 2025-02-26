@@ -2962,9 +2962,22 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
-        const region = sessionStorage.getItem('region'); // localStorage에서 sessionStorage로 변경
-        const targetRegion = region === 'all' ? 
-            document.getElementById('regionFilter')?.value : region;
+        // sessionStorage에서 region 값 가져오기
+        const region = sessionStorage.getItem('region');
+        
+        // 디버깅을 위한 로그 추가
+        console.log('User region from storage:', region);
+        
+        // 관리자 지역 필터 값 가져오기
+        const regionFilterElement = document.getElementById('regionFilter');
+        const selectedRegion = regionFilterElement ? regionFilterElement.value : null;
+        
+        console.log('Selected region from filter:', selectedRegion);
+        
+        // 지역 결정 로직
+        const targetRegion = region === 'all' ? selectedRegion : region;
+        
+        console.log('Target region for API call:', targetRegion);
 
         if (!targetRegion) {
             throw new Error('지역을 선택해주세요.');
@@ -2985,7 +2998,7 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 즉시 달력 상태 업데이트 - 이 부분이 중요합니다!
+            // 즉시 달력 상태 업데이트
             await updateCalendarStatus();
             
             // 날짜별 예약 목록 새로고침
