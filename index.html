@@ -49,7 +49,7 @@
         opacity: 1;
         transform: translateY(0);
     }
-    
+
     /* 캘린더 기본 스타일 */
     .calendar-day:hover {
         background-color: rgba(59, 130, 246, 0.1);
@@ -142,18 +142,6 @@
     #adminCalendar .calendar-day.partially-blocked {
         cursor: pointer;
     }
-
-    .booking-row {
-    transition: opacity 0.3s ease, transform 0.2s ease;
-}
-
-.status-badge {
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.calendar-day {
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
 
     /* 로딩 인디케이터 */
     .loading {
@@ -285,35 +273,6 @@
     .validation-message.success {
         color: #10B981;
     }
-
-    /* 공지사항 스타일 개선 */
-#homeNoticesList {
-    scrollbar-width: thin;
-    scrollbar-color: #CBD5E0 #EDF2F7;
-}
-
-#homeNoticesList::-webkit-scrollbar {
-    width: 6px;
-}
-
-#homeNoticesList::-webkit-scrollbar-track {
-    background: #EDF2F7;
-    border-radius: 3px;
-}
-
-#homeNoticesList::-webkit-scrollbar-thumb {
-    background-color: #CBD5E0;
-    border-radius: 3px;
-}
-
-.notice-item {
-    transition: all 0.3s ease;
-}
-
-.notice-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
 </style>
 </head>
 
@@ -351,10 +310,10 @@
                             <div class="text-2xl font-bold text-primary">스포츠박스</div>
                         </div>
                         <nav class="hidden md:flex items-center space-x-8">
-                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -384,122 +343,36 @@
     </div>
 </section>
 
-                <!-- 사업소개와 공지사항 섹션 -->
-<section class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="grid md:grid-cols-2 gap-12">
-            <!-- 왼쪽: 사업소개 섹션 -->
-            <div class="space-y-8">
-                <h2 class="text-3xl font-bold mb-8">사업소개</h2>
-                <div class="relative h-[400px] rounded-lg overflow-hidden mb-8">
-                    <img src="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/37e4760851bd5a23c2838ccd027fd4f3.png"
-                        class="w-full h-full object-cover" alt="스포츠박스 활동">
-                </div>
-                <div>
-                    <h3 class="text-2xl font-bold mb-6">찾아가는 스포츠 프로그램</h3>
-                    <p class="text-gray-600 leading-relaxed mb-8">
-                        스포츠박스는 경기도민의 건강한 생활을 위해 찾아가는 스포츠 프로그램을 운영합니다.
-                        스포츠 취약계층을 위한 맞춤형 프로그램과 다양한 체험 기회를 제공하여
-                        모든 도민이 스포츠를 즐길 수 있도록 지원합니다.
-                    </p>
-                    <div class="flex space-x-4">
-                        <div class="flex items-center space-x-2">
-                            <i class="ri-user-heart-line text-primary text-xl"></i>
-                            <span>취약계층 지원</span>
+                <!-- 사업소개 섹션 -->
+                <section id="intro" class="py-20 bg-gray-50">
+                    <div class="container mx-auto px-6">
+                        <h2 class="text-3xl font-bold text-center mb-16">사업소개</h2>
+                        <div class="grid md:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold mb-6">찾아가는 스포츠 프로그램</h3>
+                                <p class="text-gray-600 leading-relaxed mb-8">
+                                    스포츠박스는 경기도민의 건강한 생활을 위해 찾아가는 스포츠 프로그램을 운영합니다.
+                                    스포츠 취약계층을 위한 맞춤형 프로그램과 다양한 체험 기회를 제공하여
+                                    모든 도민이 스포츠를 즐길 수 있도록 지원합니다.
+                                </p>
+                                <div class="flex space-x-4">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="ri-user-heart-line text-primary text-xl"></i>
+                                        <span>취약계층 지원</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <i class="ri-community-line text-primary text-xl"></i>
+                                        <span>생활체육 활성화</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative h-[400px] rounded-lg overflow-hidden">
+                                <img src="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/37e4760851bd5a23c2838ccd027fd4f3.png"
+                                    class="w-full h-full object-cover" alt="스포츠박스 활동">
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="ri-community-line text-primary text-xl"></i>
-                            <span>생활체육 활성화</span>
-                        </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- 오른쪽: 공지사항 섹션 -->
-            <!-- 공지사항 섹션 -->
-            <div>
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold">공지사항</h2>
-                    <div id="noticeActions" class="hidden">
-                        <button onclick="showNoticeWriteModal()" 
-                            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                            <i class="fas fa-pen"></i>
-                            <span>글쓰기</span>
-                        </button>
-                    </div>
-                </div>
-                <div id="homeNoticesList" class="space-y-2 max-h-[600px] overflow-y-auto">
-                    <div class="notice-items">
-                        <!-- 공지사항이 여기에 동적으로 추가됨 -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- 공지사항 팝업 모달 추가 -->
-<div id="noticeDetailModal" class="modal">
-    <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
-        <div class="flex justify-between items-center mb-4">
-            <h3 id="noticeDetailTitle" class="text-xl font-bold"></h3>
-            <button onclick="closeNoticeDetail()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="text-sm text-gray-500 mb-4">
-            <span id="noticeDetailDate"></span>
-        </div>
-        <div class="prose max-w-none border-t pt-4">
-            <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
-        </div>
-    </div>
-</div>
-
-<!-- 공지사항 작성 모달 -->
-<div id="noticeWriteModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">공지사항 작성</h2>
-            <button onclick="closeNoticeWriteModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="noticeWriteForm" class="space-y-4">
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
-                <input type="text" id="noticeTitle" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="noticeContent" required rows="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
-                <select id="noticeRegion" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <option value="">선택해주세요</option>
-                    <option value="all">전체 공개</option>
-                    <option value="south">남부 지역만</option>
-                    <option value="north">북부 지역만</option>
-                </select>
-            </div>
-            <div class="flex items-center space-x-2">
-                <input type="checkbox" id="isImportant" 
-                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                <label for="isImportant" class="text-sm font-medium text-gray-700">
-                    중요 공지로 등록
-                </label>
-            </div>
-            <button type="submit" 
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
-                등록하기
-            </button>
-        </form>
-    </div>
-</div>
+                </section>
 
                 <!-- 운영프로그램 섹션 -->
                 <section id="programs" class="py-20">
@@ -595,6 +468,63 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- 운영프로그램 섹션 다음에 추가 -->
+<section id="notices" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+        <div class="flex justify-between items-center mb-16">
+            <h2 class="text-3xl font-bold">공지사항</h2>
+            <div id="noticeActions" class="hidden"> <!-- 관리자 로그인 시 보임 -->
+                <button onclick="showNoticeWriteModal()" 
+                    class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-pen"></i>
+                    <span>글쓰기</span>
+                </button>
+            </div>
+        </div>
+        <div id="homeNoticesList" class="grid gap-6">
+            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+        </div>
+    </div>
+</section>
+
+<!-- 공지사항 작성 모달 -->
+<div id="noticeWriteModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">공지사항 작성</h2>
+            <button onclick="closeNoticeWriteModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="noticeWriteForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
+                <input type="text" id="noticeTitle" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                <textarea id="noticeContent" required rows="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
+                <select id="noticeRegion" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="">선택해주세요</option>
+                    <option value="all">전체 공개</option>
+                    <option value="south">남부 지역만</option>
+                    <option value="north">북부 지역만</option>
+                </select>
+            </div>
+            <button type="submit" 
+                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
+                등록하기
+            </button>
+        </form>
+    </div>
+</div>
 
                 <!-- 푸터 -->
                 <footer class="bg-gray-900 text-white py-12">
@@ -857,12 +787,12 @@
                         </div>
 
                        <!-- 여기에 공지사항 섹션 추가 -->
-                       <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-                        <div id="noticesList" class="space-y-4">
-                            <!-- 공지사항이 여기에 동적으로 추가됨 -->
-                        </div>
-                    </div>
+        <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+            <div id="noticesList" class="space-y-4">
+                <!-- 공지사항이 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
 
                         <!-- 내 예약 목록 -->
                         <div class="mt-8 bg-white rounded-lg shadow-lg p-6 col-span-2">
@@ -1048,6 +978,45 @@
                             </button>
                         </div>
                     </div>
+                    <!-- 관리자 공지사항 -->
+                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항 관리</h2>
+                        <form id="noticeForm" class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
+                                <input type="text" id="noticeTitle" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                                <textarea id="noticeContent" required rows="4"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
+                                <select id="noticeRegion" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    <option value="">선택해주세요</option>
+                                    <option value="all">전체 공개</option>
+                                    <option value="south">남부 지역만</option>
+                                    <option value="north">북부 지역만</option>
+                                </select>
+                            </div>
+                            <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                                공지사항 등록
+                            </button>
+                        </form>
+                    </div>
+
+                        <!-- 공지사항 목록 -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+        <div id="noticesList" class="space-y-4">
+            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+        </div>
+    </div>
+</div>
 
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1263,13 +1232,12 @@
 </div>
 
 <!-- 공지사항 상세보기 모달 -->
-<div id="noticeDetailModal" class="modal" onclick="handleModalClick(event)">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto relative">
+<div id="noticeDetailModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold" id="noticeDetailTitle"></h2>
-            <button type="button" onclick="closeNoticeDetail()" 
-                class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <i class="fas fa-times text-xl"></i>
+            <button onclick="closeNoticeDetail()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="space-y-4">
@@ -1280,21 +1248,12 @@
             <div class="border-t pt-4">
                 <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
             </div>
-            <!-- 관리자용 액션 버튼 -->
+            <!-- 관리자일 때만 보이는 버튼들 -->
             <div id="noticeDetailActions" class="flex justify-end space-x-2 pt-4 border-t hidden">
-                <div class="flex items-center space-x-2 mr-4">
-                    <input type="checkbox" id="noticeDetailImportant" 
-                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                    <label for="noticeDetailImportant" class="text-sm font-medium text-gray-700">
-                        중요 공지
-                    </label>
-                </div>
-                <button type="button" onclick="updateNoticeImportant()" 
-                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-                    저장
+                <button onclick="editNotice()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    수정
                 </button>
-                <button type="button" onclick="deleteNotice()" 
-                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors">
+                <button onclick="deleteNotice()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                     삭제
                 </button>
             </div>
@@ -1329,74 +1288,6 @@
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
 
-// REFRESH_INTERVALS 상수 대신 다음 클래스 추가
-class SmartPolling {
-    constructor() {
-        this.config = {
-            minInterval: 10000,  // 10초
-            maxInterval: 60000,  // 1분
-            currentInterval: 10000,
-            multiplier: 1.5
-        };
-        this.lastUpdate = null;
-        this.isPolling = false;
-        this.previousData = null;
-    }
-
-    async start() {
-        if (this.isPolling) return;
-        this.isPolling = true;
-        this.poll();
-    }
-
-    async poll() {
-        if (!this.isPolling) return;
-
-        try {
-            // 캘린더 상태와 예약 목록을 한 번에 조회
-            const response = await apiRequest('/api/bookings/status');
-            const newData = response.data;
-
-            if (this.hasChanges(newData)) {
-                await this.updateUI(newData);
-                this.config.currentInterval = this.config.minInterval;
-            } else {
-                this.config.currentInterval = Math.min(
-                    this.config.currentInterval * this.config.multiplier,
-                    this.config.maxInterval
-                );
-            }
-
-            this.previousData = newData;
-            this.lastUpdate = Date.now();
-
-        } catch (error) {
-            console.error('Polling error:', error);
-            this.config.currentInterval = this.config.minInterval;
-        }
-
-        setTimeout(() => this.poll(), this.config.currentInterval);
-    }
-
-    hasChanges(newData) {
-        if (!this.previousData) return true;
-        return JSON.stringify(newData) !== JSON.stringify(this.previousData);
-    }
-
-    async updateUI(data) {
-        if (data.bookings) {
-            await updateBookingsList(data.bookings);
-        }
-        if (data.calendarStatus) {
-            updateCalendarState(data.calendarStatus);
-        }
-    }
-
-    stop() {
-        this.isPolling = false;
-    }
-}
-
 // 시군 분류 데이터
 const REGION_MAPPING = {
     south: [
@@ -1415,12 +1306,32 @@ async function loadHomeNotices() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
         const data = await response.json();
-        
+        const noticesList = document.getElementById('homeNoticesList');
+
         if (data.success && data.data) {
-            console.log('Home notices data:', data.data); // 데이터 확인용 로그
-            renderNotices(data.data);
-        } else {
-            console.error('No notices data received');
+            noticesList.innerHTML = data.data.map(notice => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        <span class="text-sm text-gray-500">
+                            ${new Date(notice.created_at).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                        <span class="px-2 py-1 rounded-full text-sm ${
+                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${notice.region === 'all' ? '전체공지' :
+                              notice.region === 'south' ? '남부공지' : '북부공지'}
+                        </span>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
@@ -1428,120 +1339,31 @@ async function loadHomeNotices() {
 }
 
 // 공지사항 상세보기
-function renderNotices(notices) {
-    // homeNoticesList와 noticesList 둘 다 확인
-    const homeNoticesList = document.getElementById('homeNoticesList');
-    const userNoticesList = document.getElementById('noticesList');
-    const targetList = homeNoticesList || userNoticesList;
-
-    console.log('Rendering notices:', {
-        homeNoticesList,
-        userNoticesList,
-        targetList,
-        notices
-    });
-
-    if (!targetList) {
-        console.error('Notice list container not found');
-        return;
-    }
-
-    if (!notices || !Array.isArray(notices)) {
-        console.error('Invalid notices data:', notices);
-        return;
-    }
-
-    const sortedNotices = sortAndRenderNotices(notices);
-    
-    const noticesHTML = sortedNotices.map(notice => `
-        <div class="notice-item bg-white rounded-lg p-5 hover:bg-gray-50 transition-all duration-200 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md
-            ${notice.is_important ? 'border-l-4 border-red-500 bg-red-50' : ''}"
-             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3 flex-1">
-                    ${notice.is_important ? 
-                        '<span class="shrink-0 bg-red-100 text-red-600 text-sm font-semibold px-3 py-1 rounded-full flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>중요</span>' 
-                        : ''}
-                    <h3 class="font-medium text-gray-900 text-lg truncate">${notice.title}</h3>
-                </div>
-                <div class="flex items-center space-x-4 shrink-0">
-                    <span class="px-3 py-1 rounded-full text-sm ${
-                        notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                        notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                        'bg-green-100 text-green-800'
-                    }">
-                        ${notice.region === 'all' ? '전체공지' :
-                          notice.region === 'south' ? '남부공지' : '북부공지'}
-                    </span>
-                    <span class="text-sm text-gray-500 whitespace-nowrap">${formatDate(notice.created_at)}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    targetList.innerHTML = noticesHTML || `
-        <div class="text-center py-8">
-            <i class="fas fa-clipboard-list text-gray-300 text-4xl mb-4"></i>
-            <p class="text-gray-500">등록된 공지사항이 없습니다.</p>
-        </div>
-    `;
-}
-
 function showNoticeDetail(notice) {
-    const modal = document.getElementById('noticeDetailModal');
-    
-    // 모달 내용 설정
+    currentNoticeId = notice.id;
     document.getElementById('noticeDetailTitle').textContent = notice.title;
     document.getElementById('noticeDetailContent').textContent = notice.content;
-    document.getElementById('noticeDetailDate').textContent = formatDate(notice.created_at);
+    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
+    document.getElementById('noticeDetailDate').textContent = 
+        new Date(notice.created_at).toLocaleDateString();
+
+    // 관리자 권한 확인
+    const role = sessionStorage.getItem('role');
+    const region = sessionStorage.getItem('region');
+    const noticeActions = document.getElementById('noticeDetailActions');
     
-    // 중요 공지 표시
-    const titleContainer = document.getElementById('noticeDetailTitle').parentElement;
-    const existingBadge = titleContainer.querySelector('.badge-important');
-    if (existingBadge) existingBadge.remove();
-    
-    if (notice.is_important) {
-        const importantBadge = document.createElement('span');
-        importantBadge.className = 'badge-important bg-red-100 text-red-600 text-sm px-2 py-1 rounded-full mr-2';
-        importantBadge.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>중요';
-        titleContainer.insertBefore(importantBadge, titleContainer.firstChild);
+    if (role === 'admin' && (region === 'all' || region === notice.region)) {
+        noticeActions.classList.remove('hidden');
+    } else {
+        noticeActions.classList.add('hidden');
     }
 
-    // 작성자 정보 표시 (있는 경우)
-    if (notice.author) {
-        const authorText = document.createElement('div');
-        authorText.className = 'text-sm text-gray-600 mt-2';
-        authorText.textContent = `작성자: ${notice.author}`;
-        document.getElementById('noticeDetailDate').after(authorText);
-    }
-
-    // 모달 표시
-    modal.classList.add('show');
+    document.getElementById('noticeDetailModal').classList.add('show');
 }
 
 function closeNoticeDetail() {
-    const modal = document.getElementById('noticeDetailModal');
-    modal.classList.remove('show');
-}
-
-// 날짜 포맷팅 함수 (이미 있다면 생략)
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `오늘 ${hours}:${minutes}`;
-    } else if (diffDays === 1) {
-        return '어제';
-    } else if (diffDays < 7) {
-        return `${diffDays}일 전`;
-    } else {
-        return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
-    }
+    document.getElementById('noticeDetailModal').classList.remove('show');
+    currentNoticeId = null;
 }
 
 // 공지사항 수정
@@ -1632,16 +1454,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadHomeNotices(); // 홈화면 공지사항 새로고침
     });
 });
-
-    // 홈으로 돌아갈 때도 공지사항 새로고침
-    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
-        const originalClick = button.onclick;
-        button.onclick = async function() {
-            originalClick.call(this);
-            await loadHomeNotices();
-            checkAdminStatus();
-        };
-    });
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
@@ -1974,82 +1786,51 @@ async function showDashboard(role) {
 }
 
 async function initializeUserDashboard(region, username) {
+    // 대시보드 표시
+    document.getElementById('userDashboard').classList.remove('hidden');
+    document.getElementById('adminDashboard').classList.add('hidden');
+
+    // 대시보드 제목 및 사용자 정보 설정
+    const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
+    document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
+    
+    // 사용자 정보 표시
+    document.getElementById('userGroupName').textContent = username;
+    
+    // 지역 뱃지 업데이트
+    const regionBadge = document.getElementById('regionBadge');
+    regionBadge.textContent = region === 'south' ? '남부' : '북부';
+    regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
+        region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+    }`;
+
     try {
-        // 대시보드 표시
-        document.getElementById('userDashboard').classList.remove('hidden');
-        document.getElementById('adminDashboard').classList.add('hidden');
+        // 예약 시스템 상태 확인
+        const settings = await apiRequest('/api/booking-settings');
+        updateUserDashboardState(settings.data?.is_active);
 
-        // 대시보드 제목 및 사용자 정보 설정
-        const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
-        document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
+        // 캘린더 초기화
+        initializeCalendar();
         
-        // 사용자 정보 표시
-        document.getElementById('userGroupName').textContent = username;
+        // 시간 선택 초기화
+        initializeTimeSelects();
         
-        // 지역 뱃지 업데이트
-        const regionBadge = document.getElementById('regionBadge');
-        regionBadge.textContent = region === 'south' ? '남부' : '북부';
-        regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
-            region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-        }`;
-
-        // 초기 데이터 로드
-        await Promise.all([
-            // 예약 시스템 상태 확인
-            (async () => {
-                const settings = await apiRequest('/api/booking-settings');
-                updateUserDashboardState(settings.data?.is_active);
-            })(),
-            
-            // 캘린더 초기화
-            initializeCalendar(),
-            
-            // 시간 선택 초기화
-            initializeTimeSelects(),
-            
-            // 예약 상태 업데이트
-            debouncedUpdateCalendarStatus(),
-            
-            // 예약 목록 로드
-            loadBookings(),
-            
-            // 공지사항 로드
-            loadUserNotices()
-        ]);
+        // 예약 상태 업데이트
+        await debouncedUpdateCalendarStatus();
+        
+        // 예약 목록 로드
+        await loadBookings();
+        
+        // 공지사항 로드 추가
+        await loadNotices();
 
         // 남은 예약 횟수 표시 업데이트
         updateRemainingBookingsDisplay();
 
-        // SmartPolling 초기화 및 시작
-        const polling = new SmartPolling();
-        polling.start();
-
-        // 페이지 가시성 변경 감지
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                polling.stop();
-            } else {
-                polling.start();
-            }
-        });
-
-        // 페이지 종료 시 폴링 중지
-        window.addEventListener('beforeunload', () => {
-            polling.stop();
-        });
-
     } catch (error) {
         console.error('User dashboard initialization error:', error);
-        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
-        
-        // 에러 발생 시 추가 정보 로깅
-        console.error('Error details:', {
-            region,
-            username,
-            timestamp: new Date().toISOString(),
-            errorMessage: error.message,
-            errorStack: error.stack
-        });
+        showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
+        throw error;
     }
 }
 
@@ -2134,128 +1915,6 @@ document.getElementById('userProfileForm').addEventListener('submit', async func
 
 // 모달 닫기 버튼 이벤트
 document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
-
-// 여기에 새로운 사용자 대시보드 공지사항 로드 함수 추가
-async function loadUserNotices() {
-    try {
-        const userRegion = sessionStorage.getItem('region');
-        const response = await apiRequest('/api/notices');
-        const noticesList = document.getElementById('noticesList');
-
-        if (!noticesList) {
-            console.error('Notices container not found');
-            return;
-        }
-
-        if (response.success && response.data) {
-            const filteredNotices = response.data.filter(notice => 
-                notice.region === 'all' || notice.region === userRegion
-            );
-            renderNotices(filteredNotices);
-        }
-    } catch (error) {
-        console.error('User notices loading error:', error);
-        showAlert('공지사항을 불러오는데 실패했습니다.', 'error');
-    }
-}
-
-// 날짜 포맷팅 함수
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `오늘 ${hours}:${minutes}`;
-    } else if (diffDays === 1) {
-        return '어제';
-    } else if (diffDays < 7) {
-        return `${diffDays}일 전`;
-    } else {
-        return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`;
-    }
-}
-
-// 새로운 공지사항 강조 효과
-function highlightNewNotices() {
-    const lastCheckTime = localStorage.getItem('lastNoticeCheck') || '0';
-    const currentTime = new Date().getTime().toString();
-    
-    document.querySelectorAll('.notice-item').forEach(notice => {
-        const createdAt = new Date(notice.dataset.createdAt).getTime();
-        if (createdAt > parseInt(lastCheckTime)) {
-            notice.classList.add('animate-pulse');
-            setTimeout(() => {
-                notice.classList.remove('animate-pulse');
-            }, 3000);
-        }
-    });
-
-    localStorage.setItem('lastNoticeCheck', currentTime);
-}
-
-// 스타일 통합
-const styles = `
-    .notice-item {
-        position: relative;
-        overflow: hidden;
-        opacity: 0;
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    .notice-item:hover {
-        transform: translateY(-1px);
-    }
-
-    .notice-item h3 {
-        max-width: calc(100% - 200px);
-    }
-
-    #homeNoticesList, #noticesList {
-        scrollbar-width: thin;
-        scrollbar-color: #CBD5E0 #EDF2F7;
-    }
-
-    #homeNoticesList::-webkit-scrollbar, #noticesList::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #homeNoticesList::-webkit-scrollbar-track, #noticesList::-webkit-scrollbar-track {
-        background: #EDF2F7;
-        border-radius: 3px;
-    }
-
-    #homeNoticesList::-webkit-scrollbar-thumb, #noticesList::-webkit-scrollbar-thumb {
-        background-color: #CBD5E0;
-        border-radius: 3px;
-    }
-
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-
-// 스타일 적용
-const styleSheet = document.createElement('style');
-styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);
 
 async function initializeAdminDashboard(region, username) {
     try {
@@ -2498,11 +2157,6 @@ function logout() {
     document.getElementById('loginAndReservationSystem').classList.remove('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
     
-    // 폴링 중지
-    if (window.polling) {
-        window.polling.stop();
-    }
-
     // 폼 초기화
     document.getElementById('loginForm').reset();
     
@@ -2651,86 +2305,69 @@ async function createBooking(bookingData) {
 }
 
 // 예약 목록 로드 함수
-async function updateBookingsList(bookings) {
+async function loadBookings() {
     try {
+        const data = await apiRequest('/api/bookings');
         const tbody = document.getElementById('bookingsList');
-        if (!tbody) return;
+        
+        if (data.success && data.data) {
+            tbody.innerHTML = data.data
+                .filter(booking => booking.status !== 'cancelled')
+                .map(booking => {
+                    const bookingDate = new Date(booking.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const canCancel = bookingDate >= today && 
+                        booking.status !== 'cancelled' && 
+                        booking.status !== 'rejected';
 
-        bookings
-            .filter(booking => booking.status !== 'cancelled')
-            .forEach(booking => {
-                const existingRow = tbody.querySelector(`[data-booking-id="${booking.id}"]`);
-                const bookingDate = new Date(booking.date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const canCancel = bookingDate >= today && 
-                    booking.status !== 'cancelled' && 
-                    booking.status !== 'rejected';
-
-                const rowHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${getStatusClass(booking.status)}">
-                            ${getStatusText(booking.status)}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        ${canCancel ? `
-                            <button onclick="cancelBooking(${booking.id})" 
-                                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                                취소
-                            </button>
-                        ` : ''}
-                    </td>
-                `;
-
-                if (existingRow) {
-                    if (existingRow.innerHTML !== rowHTML) {
-                        existingRow.innerHTML = rowHTML;
-                    }
-                } else {
-                    const newRow = document.createElement('tr');
-                    newRow.dataset.bookingId = booking.id;
-                    newRow.innerHTML = rowHTML;
-                    newRow.style.opacity = '0';
-                    tbody.insertBefore(newRow, tbody.firstChild);
-                    requestAnimationFrame(() => {
-                        newRow.style.transition = 'opacity 0.3s ease-in';
-                        newRow.style.opacity = '1';
-                    });
-                }
-            });
-
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${getStatusClass(booking.status)}">
+                                    ${getStatusText(booking.status)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${canCancel ? `
+                                    <button onclick="cancelBooking(${booking.id})" 
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                        취소
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+        }
     } catch (error) {
-        console.error('Error updating bookings:', error);
-        showAlert('예약 목록 업데이트 중 오류가 발생했습니다.', 'error');
+        console.error('Error loading bookings:', error);
+        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
     }
 }
 
 // 공지사항 작성
 async function createNotice(noticeData) {
     try {
-        const isImportant = document.getElementById('isImportant').checked;
-        
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
-            body: JSON.stringify({
-                ...noticeData,
-                is_important: isImportant ? 1 : 0
-            })
+            body: JSON.stringify(noticeData)
         });
 
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
+            // noticeForm 대신 noticeWriteForm으로 수정
             document.getElementById('noticeWriteForm').reset();
+            // 두 곳의 공지사항 목록을 모두 새로고침
             await Promise.all([
-                loadNotices(),
-                loadHomeNotices()
+                loadNotices(),      // 대시보드의 공지사항
+                loadHomeNotices()   // 홈화면의 공지사항
             ]);
         }
     } catch (error) {
@@ -2743,16 +2380,8 @@ async function createNotice(noticeData) {
 async function loadNotices() {
     try {
         const response = await apiRequest('/api/notices');
-        console.log('API Response:', response);
-        
         if (response.success && response.data) {
-            // 응답 데이터 구조 확인
-            console.log('Response data structure:', {
-                firstNotice: response.data[0],
-                is_important_types: response.data.map(n => typeof n.is_important)
-            });
-            
-            renderNotices(response.data);
+            renderNoticesList(response.data, 'noticesList');
         }
     } catch (error) {
         console.error('Notices loading error:', error);
@@ -2760,132 +2389,95 @@ async function loadNotices() {
     }
 }
 
-// 공통 정렬 로직
-function sortAndRenderNotices(notices) {
-    console.log('Sorting notices:', notices);
-    
-    if (!notices || !notices.length) {
-        return [];
-    }
-
-    // 데이터 구조 확인을 위한 로그
-    console.log('Sample notice:', notices[0]);
-
-    // 중요 공지와 일반 공지 분리 (더 유연한 비교)
-    const importantNotices = notices.filter(notice => {
-        const isImportant = notice.is_important;
-        console.log(`Notice ${notice.id} is_important value:`, isImportant, typeof isImportant);
-        return isImportant === 1 || isImportant === '1' || isImportant === true;
-    });
-
-    const regularNotices = notices.filter(notice => {
-        const isImportant = notice.is_important;
-        return isImportant === 0 || isImportant === '0' || isImportant === false || !isImportant;
-    });
-
-    console.log('Filtered important notices:', importantNotices);
-    console.log('Filtered regular notices:', regularNotices);
-
-    // 각각 날짜순 정렬
-    const sortByDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
-    const sortedImportantNotices = importantNotices.sort(sortByDate);
-    const sortedRegularNotices = regularNotices.sort(sortByDate);
-
-    // 중요 공지를 상단에, 일반 공지를 하단에 배치
-    return [...sortedImportantNotices, ...sortedRegularNotices];
-}
-
-async function loadBookings() {
-    try {
-        const response = await apiRequest('/api/bookings');
-        if (response.success && response.data) {
-            await updateBookingsList(response.data);
-        }
-    } catch (error) {
-        console.error('Error loading bookings:', error);
-        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error');
-    }
+// 공지사항 목록 렌더링 함수
+function renderNoticesList(notices, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = notices.map(notice => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+             onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">${notice.title}</h3>
+                <span class="text-sm text-gray-500">
+                    ${new Date(notice.created_at).toLocaleDateString()}
+                </span>
+            </div>
+            <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
+                <span class="px-2 py-1 rounded-full text-sm ${
+                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                    'bg-green-100 text-green-800'
+                }">
+                    ${notice.region === 'all' ? '전체공지' :
+                      notice.region === 'south' ? '남부공지' : '북부공지'}
+                </span>
+            </div>
+        </div>
+    `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
 }
 
 async function loadAdminBookings() {
     try {
         const region = localStorage.getItem('region');
         let endpoint = '/api/admin/bookings/';
-        endpoint += region === 'all' ? 'all' : region;
+        
+        if (region === 'all') {
+            endpoint += 'all';
+        } else {
+            endpoint += region;
+        }
 
         const response = await apiRequest(endpoint);
         if (response.success) {
-            await updateAdminBookingsList(response.data);
+            const tbody = document.getElementById('adminBookingsList');
+            
+            if (tbody) {
+                tbody.innerHTML = response.data
+                    .map(booking => `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${booking.group_name}
+                                <span class="ml-2 px-2 py-1 text-xs rounded-full 
+                                    ${booking.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                    ${booking.region === 'south' ? '남부' : '북부'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${getStatusClass(booking.status)}">
+                                    ${getStatusText(booking.status)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${booking.status === 'pending' ? `
+                                    <button onclick="approveBooking(${booking.id})" 
+                                        class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm mr-2">
+                                        승인
+                                    </button>
+                                    <button onclick="rejectBooking(${booking.id})"
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                        거부
+                                    </button>
+                                ` : booking.status === 'approved' ? `
+                                    <button onclick="forceCancel(${booking.id})"
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                                        강제취소
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="8" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+            }
         }
     } catch (error) {
         console.error('Error loading admin bookings:', error);
         showAlert(error.message || '예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
-    }
-}
-
-async function updateAdminBookingsList(bookings) {
-    try {
-        const tbody = document.getElementById('adminBookingsList');
-        if (!tbody) return;
-
-        const currentBookings = Array.from(tbody.children).map(row => row.dataset.bookingId);
-        
-        const bookingsHTML = bookings.map(booking => `
-            <tr data-booking-id="${booking.id}" data-status="${booking.status}"
-                class="booking-row transition-all duration-300">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    ${booking.group_name}
-                    <span class="ml-2 px-2 py-1 text-xs rounded-full 
-                        ${booking.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                        ${booking.region === 'south' ? '남부' : '북부'}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${getStatusClass(booking.status)}">
-                        ${getStatusText(booking.status)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    ${booking.status === 'pending' ? `
-                        <button onclick="approveBooking(${booking.id})" 
-                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm mr-2">
-                            승인
-                        </button>
-                        <button onclick="rejectBooking(${booking.id})"
-                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                            거부
-                        </button>
-                    ` : booking.status === 'approved' ? `
-                        <button onclick="forceCancel(${booking.id})"
-                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
-                            강제취소
-                        </button>
-                    ` : ''}
-                </td>
-            </tr>
-        `).join('') || '<tr><td colspan="8" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
-
-        // 변경사항이 있을 때만 DOM 업데이트
-        if (tbody.innerHTML !== bookingsHTML) {
-            tbody.innerHTML = bookingsHTML;
-
-            // 새로운 행에 페이드인 효과 적용
-            tbody.querySelectorAll('.booking-row').forEach(row => {
-                row.style.opacity = '0';
-                requestAnimationFrame(() => {
-                    row.style.opacity = '1';
-                });
-            });
-        }
-    } catch (error) {
-        console.error('Error updating admin bookings list:', error);
-        showAlert('예약 목록 업데이트 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -3661,36 +3253,12 @@ function showDateBookingsModal() {
     calendarContainer.classList.add('modal-open');
 }
 
-// 공지사항 모달 컨트롤 함수들 추가
-function handleModalClick(event) {
-    if (event.target.id === 'noticeDetailModal') {
-        closeNoticeDetail();
-    }
+function closeDateBookingsModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    const calendarContainer = document.getElementById('adminCalendar').parentElement;
+    modal.classList.remove('show');
+    calendarContainer.classList.remove('modal-open');
 }
-
-// 연락처 모달 컨트롤
-function showContactInfo() {
-    document.getElementById('contactModal').classList.add('show');
-}
-
-function hideContactInfo() {
-    document.getElementById('contactModal').classList.remove('show');
-}
-
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDateBookingsModal();
-        document.getElementById('signupModal').classList.remove('show');
-        document.getElementById('contactModal').classList.remove('show');
-        
-        // 공지사항 모달 닫기 추가
-        const noticeModal = document.getElementById('noticeDetailModal');
-        if (noticeModal && noticeModal.classList.contains('show')) {
-            closeNoticeDetail();
-        }
-    }
-});
 
 // 캘린더 관련 변수와 함수들
 let currentDate = new Date();
@@ -4254,6 +3822,9 @@ async function initializeAdminDashboard(region, username) {
         
         // 예약 상태 업데이트
         await debouncedUpdateCalendarStatus();
+        
+       // 공지사항 로드 추가
+       await loadNotices();   
 
         // 통계 로드
         await loadRegionStatistics();
@@ -4283,6 +3854,7 @@ async function initializeAdminDashboard(region, username) {
     }
 }
 
+// 비밀번호 변경 관련 함수들
 // 비밀번호 변경 모달 컨트롤
 function showChangePasswordModal() {
     document.getElementById('changePasswordModal').classList.add('show');
@@ -4697,20 +4269,13 @@ document.getElementById('noticeForm')?.addEventListener('submit', async function
     });
 
     // ESC 키로 모달 닫기
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        // 기존 모달들 닫기
-        closeDateBookingsModal();
-        document.getElementById('signupModal').classList.remove('show');
-        document.getElementById('contactModal').classList.remove('show');
-        
-        // 공지사항 모달 닫기 추가
-        const noticeModal = document.getElementById('noticeDetailModal');
-        if (noticeModal && noticeModal.classList.contains('show')) {
-            closeNoticeDetail();
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDateBookingsModal();
+            document.getElementById('signupModal').classList.remove('show');
+            document.getElementById('contactModal').classList.remove('show');
         }
-    }
-});
+    });
 
     // 프로필 모달 이벤트 리스너 초기화
     document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
