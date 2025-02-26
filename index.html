@@ -1294,34 +1294,23 @@ async function loadHomeNotices() {
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            noticesList.innerHTML = sortedNotices.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
-                     onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center">
-                            <h3 class="text-xl font-semibold">${notice.title}</h3>
-                            ${notice.is_important ? 
-                                '<span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                ''}
-                        </div>
-                        <span class="text-sm text-gray-500">
-                            ${new Date(notice.created_at).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">작성자: ${notice.author}</span>
-                        <span class="px-2 py-1 rounded-full text-sm ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
+            // 제목만 표시하는 간소화된 목록
+            noticesList.innerHTML = `
+                <ul class="divide-y divide-gray-200">
+                    ${sortedNotices.map(notice => `
+                        <li class="py-3 cursor-pointer hover:bg-gray-50 transition-colors" 
+                            data-notice='${JSON.stringify(notice)}'
+                            onclick="showNoticeDetailFromElement(this)">
+                            <div class="flex items-center">
+                                ${notice.is_important ? 
+                                    '<span class="mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                    ''}
+                                <span class="text-gray-800 font-medium">${notice.title}</span>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
@@ -1337,29 +1326,91 @@ async function loadHomeNotices() {
 
 // 공지사항 상세보기
 function showNoticeDetail(notice) {
+    console.log('Show notice detail called with:', notice);
+    
+    // notice가 문자열로 전달된 경우 파싱
+    if (typeof notice === 'string') {
+        try {
+            notice = JSON.parse(notice);
+        } catch (e) {
+            console.error('Failed to parse notice JSON:', e);
+        }
+    }
+    
+    // notice 객체 검증
+    if (!notice || typeof notice !== 'object') {
+        console.error('Invalid notice object:', notice);
+        showAlert('공지사항 정보를 불러올 수 없습니다.', 'error');
+        return;
+    }
+    
     currentNoticeId = notice.id;
-    document.getElementById('noticeDetailTitle').textContent = notice.title;
-    document.getElementById('noticeDetailContent').textContent = notice.content;
-    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
-    document.getElementById('noticeDetailDate').textContent = 
-        new Date(notice.created_at).toLocaleDateString();
+    
+    // DOM 요소 확인 및 업데이트
+    const titleElement = document.getElementById('noticeDetailTitle');
+    const contentElement = document.getElementById('noticeDetailContent');
+    const authorElement = document.getElementById('noticeDetailAuthor');
+    const dateElement = document.getElementById('noticeDetailDate');
+    
+    if (!titleElement || !contentElement || !authorElement || !dateElement) {
+        console.error('Notice detail modal elements not found');
+        showAlert('공지사항 상세 보기를 표시할 수 없습니다.', 'error');
+        return;
+    }
+    
+    titleElement.textContent = notice.title;
+    contentElement.textContent = notice.content;
+    authorElement.textContent = `작성자: ${notice.author}`;
+    dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
 
     // 관리자 권한 확인
     const role = sessionStorage.getItem('role');
     const region = sessionStorage.getItem('region');
     const noticeActions = document.getElementById('noticeDetailActions');
     
-    if (role === 'admin' && (region === 'all' || region === notice.region)) {
-        noticeActions.classList.remove('hidden');
-    } else {
-        noticeActions.classList.add('hidden');
+    if (noticeActions) {
+        if (role === 'admin' && (region === 'all' || region === notice.region)) {
+            noticeActions.classList.remove('hidden');
+        } else {
+            noticeActions.classList.add('hidden');
+        }
     }
 
-    document.getElementById('noticeDetailModal').classList.add('show');
+    // 모달 표시
+    const modal = document.getElementById('noticeDetailModal');
+    if (modal) {
+        modal.classList.add('show');
+        console.log('Notice detail modal shown');
+    } else {
+        console.error('Notice detail modal element not found');
+        showAlert('모달 창을 찾을 수 없습니다.', 'error');
+    }
+}
+
+function showNoticeDetailFromElement(element) {
+    try {
+        console.log('Showing notice from element:', element);
+        
+        // data-notice 속성에서 공지사항 데이터 가져오기
+        const noticeData = element.getAttribute('data-notice');
+        if (!noticeData) {
+            console.error('No notice data found in element');
+            return;
+        }
+        
+        const notice = JSON.parse(noticeData);
+        showNoticeDetail(notice);
+    } catch (error) {
+        console.error('Error showing notice detail from element:', error);
+        showAlert('공지사항을 표시하는 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 function closeNoticeDetail() {
-    document.getElementById('noticeDetailModal').classList.remove('show');
+    const modal = document.getElementById('noticeDetailModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
     currentNoticeId = null;
 }
 
