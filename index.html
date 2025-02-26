@@ -3049,17 +3049,17 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 즉시 달력 상태 업데이트 (디바운스 없이)
-    await updateCalendarStatus();
-    
-    // 날짜별 예약 목록 새로고침
-    if (currentSelectedDate) {
-        await loadDateBookings(currentSelectedDate);
-    }
-    
-    // 모달 닫기
-    closeDateBookingsModal();
-}
+            // 중요: 즉시 달력 상태 업데이트 (디바운스 없이)
+            await updateCalendarStatus();
+            
+            // 날짜별 예약 목록 새로고침
+            if (currentSelectedDate) {
+                await loadDateBookings(currentSelectedDate);
+            }
+            
+            // 모달 닫기
+            closeDateBookingsModal();
+        }
     } catch (error) {
         console.error('Date blocking error:', error);
         showAlert(error.message || '날짜 마감 처리 중 오류가 발생했습니다.', 'error');
@@ -4253,10 +4253,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             updateBookingStatusUI(regionSettings?.is_active || false);
         }
 
-        // 데이터 새로고침 - 디바운스 없이 즉시 업데이트
+        // 중요: 디바운스 없이 즉시 업데이트
+        await updateCalendarStatus(); // 디바운스된 함수 대신 즉시 실행 함수 호출
+        
+        // 다른 데이터 새로고침
         await Promise.all([
             loadRegionStatistics(),
-            updateCalendarStatus(), // 디바운스 없이 즉시 업데이트
             loadPendingBookings()
         ]);
         
