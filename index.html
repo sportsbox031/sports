@@ -1522,6 +1522,12 @@ function checkAdminStatus() {
 
 // 공지사항 목록 로드 함수
 async function loadNotices() {
+    const token = sessionStorage.getItem('token'); // 토큰 확인
+    if (!token) {
+        showAlert('로그인이 필요합니다.', 'error'); // 로그인 필요 알림
+        return;
+    }
+
     try {
         const response = await apiRequest('/api/notices'); // API 요청
         const noticeList = document.getElementById('noticeList');
@@ -1548,6 +1554,48 @@ async function loadNotices() {
         showAlert('공지사항을 불러오는 중 오류가 발생했습니다.', 'error');
     }
 }
+
+// 공지사항 작성 함수
+async function createNotice() {
+    const title = document.getElementById('noticeTitle').value;
+    const content = document.getElementById('noticeContent').value;
+    const isImportant = document.getElementById('noticeImportant').checked;
+
+    const response = await apiRequest('/api/admin/notices', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            title, 
+            content, 
+            region: 'all', // 또는 특정 지역
+            is_important: isImportant ? 1 : 0
+        })
+    });
+
+    if (response.success) {
+        showAlert('공지사항이 등록되었습니다.', 'success');
+        loadNotices(); // 공지사항 목록 새로 로드
+        closeNoticeWriteModal(); // 모달 닫기
+    } else {
+        showAlert(response.message || '공지사항 등록에 실패했습니다.', 'error');
+    }
+}
+
+// 공지사항 작성 모달 표시 / 닫기
+function showNoticeWriteModal() {
+    document.getElementById('noticeWriteModal').classList.add('show');
+}
+
+function closeNoticeWriteModal() {
+    document.getElementById('noticeWriteModal').classList.remove('show');
+    document.getElementById('noticeTitle').value = '';
+    document.getElementById('noticeContent').value = '';
+    document.getElementById('noticeImportant').checked = false;
+}
+
+// 페이지 로드시에 처음 공지사항 목록 불러오기
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotices(); // 초기 공지사항 로드
+});
 
 // 공지사항 작성 함수
 async function createNotice() {
