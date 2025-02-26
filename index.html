@@ -942,57 +942,91 @@
                 </nav>
             
                 <!-- 관리자 통계 섹션 -->
-                <div class="container mx-auto px-4 py-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                        <!-- 남부 통계 -->
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">남부 지역 현황</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-blue-50 rounded-lg p-4">
-                                    <p class="text-sm text-gray-600">금일 예약</p>
-                                    <p id="southTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
-                                </div>
-                                <div class="bg-green-50 rounded-lg p-4">
-                                    <p class="text-sm text-gray-600">이번 달 총 예약</p>
-                                    <p id="southMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 북부 통계 -->
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">북부 지역 현황</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-blue-50 rounded-lg p-4">
-                                    <p class="text-sm text-gray-600">금일 예약</p>
-                                    <p id="northTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
-                                </div>
-                                <div class="bg-green-50 rounded-lg p-4">
-                                    <p class="text-sm text-gray-600">이번 달 총 예약</p>
-                                    <p id="northMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- 남부 통계 -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">남부 지역 현황</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-600">금일 예약</p>
+                    <p id="southTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-600">이번 달 총 예약</p>
+                    <p id="southMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
+                </div>
+            </div>
+        </div>
+        <!-- 북부 통계 -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">북부 지역 현황</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-600">금일 예약</p>
+                    <p id="northTodayBookings" class="text-2xl font-bold text-blue-600">0건</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-600">이번 달 총 예약</p>
+                    <p id="northMonthBookings" class="text-2xl font-bold text-green-600">0건</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 예약 시스템 설정 섹션 -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
+        <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
+            <div class="flex flex-col">
+                <span class="text-lg font-semibold text-gray-700">예약 상태</span>
+                <span id="bookingStatusText" class="text-sm text-gray-500">
+                    현재 예약을 받고 있지 않습니다
+                </span>
+            </div>
+            <button type="button" id="toggleBookingStatus" 
+                class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                예약 시작하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 공지사항 관리 섹션 추가 -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">공지사항 관리</h3>
+        <div id="noticeList" class="max-h-[300px] overflow-y-auto mb-4">
+            <!-- 공지사항 목록이 여기에 동적으로 추가됨 -->
+        </div>
+        <button onclick="showNoticeWriteModal()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg mb-4">
+            글쓰기
+        </button>
+        <div id="noticeWriteModal" class="modal">
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold">공지사항 작성</h2>
+                <label class="block text-gray-700 mt-4">제목</label>
+                <input type="text" id="noticeTitle" required class="border rounded px-2 py-1 w-full"/>
+
+                <label class="block text-gray-700 mt-4">내용</label>
+                <textarea id="noticeContent" required class="border rounded px-2 py-1 w-full" rows="4"></textarea>
+
+                <div>
+                    <input type="checkbox" id="noticeImportant" class="mr-2" />
+                    <label for="noticeImportant">중요 공지</label>
                 </div>
 
-                <!-- 관리자 메인 컨텐츠 -->
-                <div class="container mx-auto px-4 py-8">
-                    <!-- 예약 시스템 설정 섹션 -->
-                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
-                        <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
-                            <div class="flex flex-col">
-                                <span class="text-lg font-semibold text-gray-700">예약 상태</span>
-                                <span id="bookingStatusText" class="text-sm text-gray-500">
-                                    현재 예약을 받고 있지 않습니다
-                                </span>
-                            </div>
-                            <button type="button" id="toggleBookingStatus" 
-                                class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
-                                예약 시작하기
-                            </button>
-                        </div>
-                    </div>
+                <button type="button" onclick="createNotice()"
+                    class="bg-blue-500 text-white px-4 py-2 mt-4 rounded">
+                    등록하기
+                </button>
+                <button type="button" onclick="closeNoticeWriteModal()"
+                    class="text-gray-500 hover:text-gray-700 mt-4">
+                    취소
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1485,6 +1519,82 @@ function checkAdminStatus() {
         noticeActions.style.display = 'none';
     }
 }
+
+// 공지사항 목록 로드 함수
+async function loadNotices() {
+    try {
+        const response = await apiRequest('/api/notices'); // API 요청
+        const noticeList = document.getElementById('noticeList');
+        noticeList.innerHTML = ''; // 기존의 공지사항 목록 초기화
+
+        // 공지사항 목록 작성
+        if (response.success && response.data.length > 0) {
+            response.data.forEach(notice => {
+                noticeList.innerHTML += `
+                    <div class="border-b border-gray-200 p-2">
+                        <h4 class="font-semibold">${notice.title}</h4>
+                        <p>${notice.content}</p>
+                        <div class="text-sm text-gray-500">
+                            ${new Date(notice.created_at).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            noticeList.innerHTML = `<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>`;
+        }
+    } catch (error) {
+        console.error('Error loading notices:', error);
+        showAlert('공지사항을 불러오는 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 공지사항 작성 함수
+async function createNotice() {
+    try {
+        const title = document.getElementById('noticeTitle').value;
+        const content = document.getElementById('noticeContent').value;
+        const isImportant = document.getElementById('noticeImportant').checked;
+
+        const response = await apiRequest('/api/admin/notices', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                title, 
+                content, 
+                region: 'all', // 또는 특정 지역
+                is_important: isImportant ? 1 : 0
+            })
+        });
+
+        if (response.success) {
+            showAlert('공지사항이 등록되었습니다.', 'success');
+            loadNotices(); // 공지사항 목록 새로 로드
+            closeNoticeWriteModal(); // 모달 닫기
+        } else {
+            showAlert(response.message || '공지사항 등록에 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating notice:', error);
+        showAlert('공지사항 작성 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 공지사항 작성 모달 표시 / 닫기
+function showNoticeWriteModal() {
+    document.getElementById('noticeWriteModal').classList.add('show');
+}
+
+function closeNoticeWriteModal() {
+    document.getElementById('noticeWriteModal').classList.remove('show');
+    document.getElementById('noticeTitle').value = '';
+    document.getElementById('noticeContent').value = '';
+    document.getElementById('noticeImportant').checked = false;
+}
+
+// 페이지 로드시에 처음 공지사항 목록 불러오기
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotices(); // 초기 공지사항 로드
+});
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
