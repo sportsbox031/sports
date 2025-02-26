@@ -523,23 +523,23 @@
                 </section>
 
                 <!-- 운영프로그램 섹션 다음에 추가 -->
-<section id="notices" class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="flex justify-between items-center mb-16">
-            <h2 class="text-3xl font-bold">공지사항</h2>
-            <div id="noticeActions" class="hidden"> <!-- 관리자 로그인 시 보임 -->
-                <button onclick="showNoticeWriteModal()" 
-                    class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                    <i class="fas fa-pen"></i>
-                    <span>글쓰기</span>
-                </button>
-            </div>
-        </div>
-        <div id="homeNoticesList" class="grid gap-6">
-            <!-- 공지사항이 여기에 동적으로 추가됨 -->
-        </div>
-    </div>
-</section>
+                <section id="notices" class="py-20 bg-gray-50">
+                    <div class="container mx-auto px-6">
+                        <div class="flex justify-between items-center mb-16">
+                            <h2 class="text-3xl font-bold">공지사항</h2>
+                            <div id="noticeActions" class="hidden"> <!-- 관리자 로그인 시 보임 -->
+                                <button onclick="showNoticeWriteModal()" 
+                                    class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                                    <i class="fas fa-pen"></i>
+                                    <span>글쓰기</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="homeNoticesList" class="grid gap-6">
+                            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+                        </div>
+                    </div>
+                </section>
 
                 <!-- 푸터 -->
                 <footer class="bg-gray-900 text-white py-12">
@@ -1441,6 +1441,16 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
     
+    // 홈으로 돌아갈 때도 공지사항 새로고침
+    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
+        const originalClick = button.onclick;
+        button.onclick = async function() {
+            originalClick.call(this);
+            await loadHomeNotices();
+            checkAdminStatus();
+        };
+    });
+    
     // 공지사항 작성 폼 제출
     document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -1616,6 +1626,10 @@ function showHomeScreen() {
     document.getElementById('loginScreen')?.classList.add('hidden');
     document.getElementById('userDashboard')?.classList.add('hidden');
     document.getElementById('adminDashboard')?.classList.add('hidden');
+
+    // 공지사항 새로고침 및 관리자 상태 확인
+    loadHomeNotices();
+    checkAdminStatus();
 
     // 로그인 상태일 경우 네비게이션 바 수정
     if (token && role) {
@@ -2186,6 +2200,9 @@ function logout() {
     
     // 폼 초기화
     document.getElementById('loginForm').reset();
+    
+    // 관리자 상태 확인 (공지사항 글쓰기 버튼 숨김)
+    checkAdminStatus();
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
 }
@@ -2973,27 +2990,29 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
-        // sessionStorage에서 region 값 가져오기
-        const region = sessionStorage.getItem('region');
+        // 1. sessionStorage에서 관리자 지역 정보 가져오기
+        const adminRegion = sessionStorage.getItem('region');
         
-        // 디버깅을 위한 로그 추가
-        console.log('User region from storage:', region);
+        // 2. 디버깅 로그 추가
+        console.log('Admin region from sessionStorage:', adminRegion);
         
-        // 관리자 지역 필터 값 가져오기
+        // 3. 지역 필터 요소에서 선택된 값 가져오기
         const regionFilterElement = document.getElementById('regionFilter');
         const selectedRegion = regionFilterElement ? regionFilterElement.value : null;
         
         console.log('Selected region from filter:', selectedRegion);
         
-        // 지역 결정 로직
-        const targetRegion = region === 'all' ? selectedRegion : region;
+        // 4. 최종 대상 지역 결정 (전체 관리자면 선택된 지역, 아니면 관리자 자신의 지역)
+        const targetRegion = adminRegion === 'all' ? selectedRegion : adminRegion;
         
         console.log('Target region for API call:', targetRegion);
 
-        if (!targetRegion) {
-            throw new Error('지역을 선택해주세요.');
+        // 5. 지역 값 검증
+        if (!targetRegion || !['south', 'north'].includes(targetRegion)) {
+            throw new Error('유효한 지역을 선택해주세요.');
         }
 
+        // 6. API 요청
         const response = await apiRequest('/api/admin/dates/block', {
             method: 'POST',
             body: JSON.stringify({ 
@@ -3009,10 +3028,10 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 즉시 달력 상태 업데이트
+            // 7. 달력 상태 업데이트
             await updateCalendarStatus();
             
-            // 날짜별 예약 목록 새로고침
+            // 8. 날짜별 예약 목록 새로고침
             if (currentSelectedDate) {
                 await loadDateBookings(currentSelectedDate);
             }
@@ -3025,12 +3044,21 @@ async function blockDate(date, blockType) {
 
 async function unblockDate(date) {
     try {
-        const region = sessionStorage.getItem('region'); // localStorage에서 sessionStorage로 변경
-        const targetRegion = region === 'all' ? 
-            document.getElementById('regionFilter')?.value : region;
+        // sessionStorage에서 관리자 지역 정보 가져오기
+        const adminRegion = sessionStorage.getItem('region');
+        
+        // 지역 필터 요소에서 선택된 값 가져오기
+        const regionFilterElement = document.getElementById('regionFilter');
+        const selectedRegion = regionFilterElement ? regionFilterElement.value : null;
+        
+        // 최종 대상 지역 결정
+        const targetRegion = adminRegion === 'all' ? selectedRegion : adminRegion;
+        
+        console.log('Target region for unblock:', targetRegion);
 
-        if (!targetRegion) {
-            throw new Error('지역을 선택해주세요.');
+        // 지역 값 검증
+        if (!targetRegion || !['south', 'north'].includes(targetRegion)) {
+            throw new Error('유효한 지역을 선택해주세요.');
         }
 
         const response = await apiRequest('/api/admin/dates/unblock', {
@@ -3044,7 +3072,7 @@ async function unblockDate(date) {
         if (response.success) {
             showAlert('날짜 마감이 해제되었습니다.', 'success');
             
-            // 즉시 달력 상태 업데이트 - 이 부분이 중요합니다!
+            // 달력 상태 업데이트
             await updateCalendarStatus();
             
             // 날짜별 예약 목록 새로고침
@@ -3403,10 +3431,14 @@ async function login(username, password) {
             sessionStorage.setItem('region', response.user.region);
             sessionStorage.setItem('city', response.user.city);
             sessionStorage.setItem('manager', response.user.manager);
+            sessionStorage.setItem('contact', response.user.contact);
 
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('userDashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.add('hidden');
+
+            // 관리자 상태 확인 (공지사항 글쓰기 버튼 표시 여부)
+            checkAdminStatus();
 
             await showDashboard(response.user.role);
             showAlert('로그인되었습니다.', 'success', 2000);
