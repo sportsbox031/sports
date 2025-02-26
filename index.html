@@ -1584,6 +1584,9 @@ async function apiRequest(endpoint, options = {}) {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
+        // 로깅 추가
+        console.log(`[apiRequest] Requesting: ${endpoint}`, options);
+        
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
@@ -1598,9 +1601,10 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         const data = await response.json();
+        console.log(`[apiRequest] Response from ${endpoint}:`, data);
         return data;
     } catch (error) {
-        console.error('API Request Error:', error);
+        console.error(`[apiRequest] Error for ${endpoint}:`, error);
         if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')
             && !endpoint.includes('/public')) {
             logout();
@@ -2990,19 +2994,18 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
-        // 디버깅 로그 추가
-        console.log('blockDate called with:', { date, blockType });
+        console.log('[blockDate] Called with:', { date, blockType });
         
         // 관리자 정보 확인
         const adminRegion = sessionStorage.getItem('region');
-        console.log('Admin region from sessionStorage:', adminRegion);
+        console.log('[blockDate] Admin region:', adminRegion);
         
         // 지역 선택 확인
         const regionFilter = document.getElementById('regionFilter');
         const selectedRegion = regionFilter ? regionFilter.value : null;
-        console.log('Selected region from filter:', selectedRegion);
+        console.log('[blockDate] Selected region from filter:', selectedRegion);
         
-        // 지역 결정 로직 명확화
+        // 지역 결정 로직
         let targetRegion;
         if (adminRegion === 'all') {
             // 전체 관리자인 경우 선택된 지역 사용
@@ -3012,8 +3015,22 @@ async function blockDate(date, blockType) {
             targetRegion = adminRegion;
         }
         
-        console.log('Final target region:', targetRegion);
+        console.log('[blockDate] Final target region:', targetRegion);
         
+        // 날짜 및 blockType 검증
+        if (!date || typeof date !== 'string') {
+            throw new Error('유효한 날짜가 필요합니다.');
+        }
+        
+        if (!blockType || !['full', 'partial'].includes(blockType)) {
+            throw new Error('유효한 마감 유형이 필요합니다.');
+        }
+        
+        // 지역 검증
+        if (!targetRegion || !['south', 'north'].includes(targetRegion)) {
+            throw new Error('유효한 지역을 선택해주세요.');
+        }
+
         // API 요청 데이터 구성
         const requestData = {
             date: date,
@@ -3021,6 +3038,8 @@ async function blockDate(date, blockType) {
             blockType: blockType
         };
         
+        console.log('[blockDate] Sending request data:', requestData);
+
         // API 요청
         const response = await apiRequest('/api/admin/dates/block', {
             method: 'POST',
@@ -3033,19 +3052,28 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 중요: 즉시 달력 상태 업데이트 (디바운스 없이)
-            await updateCalendarStatus();
+            // 중요: 상태 업데이트 시 지역 정보 명시적 전달
+            const url = `/api/bookings/status?region=${targetRegion}`;
+            console.log('[blockDate] Refreshing with URL:', url);
+            
+            const statusData = await apiRequest(url);
+            bookingStatus = statusData.data;
+            
+            // 즉시 달력 다시 렌더링
+            renderAdminCalendar(adminCurrentDate);
             
             // 날짜별 예약 목록 새로고침
             if (currentSelectedDate) {
                 await loadDateBookings(currentSelectedDate);
             }
             
+            console.log('[blockDate] Calendar updated successfully');
+            
             // 모달 닫기
             closeDateBookingsModal();
         }
     } catch (error) {
-        console.error('Date blocking error:', error);
+        console.error('[blockDate] Error:', error);
         showAlert(error.message || '날짜 마감 처리 중 오류가 발생했습니다.', 'error');
     }
 }
@@ -3097,7 +3125,7 @@ async function unblockDate(date) {
 // 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
 async function updateCalendarStatus() {
     try {
-        console.log('Updating calendar status immediately...');
+        console.log('[updateCalendarStatus] Updating calendar status immediately...');
         
         // 1. 관리자 정보와 선택된 지역 확인
         const role = sessionStorage.getItem('role');
@@ -3112,10 +3140,14 @@ async function updateCalendarStatus() {
             }
         }
         
-        console.log('Calendar update for region:', targetRegion);
+        console.log('[updateCalendarStatus] Target region:', targetRegion);
         
-        // 3. 지역 정보를 API 요청에 포함 (필요한 경우)
-        const data = await apiRequest('/api/bookings/status');
+        // 3. 중요: 지역 정보를 쿼리 파라미터로 명시적 전달
+        const url = `/api/bookings/status?region=${targetRegion}`;
+        console.log('[updateCalendarStatus] Requesting URL:', url);
+        
+        const data = await apiRequest(url);
+        console.log('[updateCalendarStatus] Received data:', data);
         
         // 4. 받아온 데이터 저장
         bookingStatus = data.data;
@@ -3127,9 +3159,14 @@ async function updateCalendarStatus() {
             renderCalendar(currentDate);
         }
         
-        console.log('Calendar status updated successfully');
+        // 6. 남은 예약 횟수 업데이트 (필요한 경우)
+        if (data.remainingBookings !== undefined) {
+            updateRemainingBookingsDisplay(data.remainingBookings);
+        }
+        
+        console.log('[updateCalendarStatus] Calendar status updated successfully');
     } catch (error) {
-        console.error('Calendar status update error:', error);
+        console.error('[updateCalendarStatus] Error:', error);
     }
 }
 
@@ -3722,12 +3759,7 @@ function renderAdminCalendar(date) {
     const adminCalendar = document.getElementById('adminCalendar');
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
     
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // 관리자 지역과 선택된 지역 필터 확인
+    // 1. 중요: 관리자 유형과 선택된 지역 확인 - 명확하게 로깅
     const adminRegion = sessionStorage.getItem('region');
     let targetRegion = adminRegion;
     
@@ -3738,7 +3770,14 @@ function renderAdminCalendar(date) {
         }
     }
     
-    console.log('Rendering admin calendar for region:', targetRegion);
+    console.log('[renderAdminCalendar] Rendering for region:', targetRegion);
+    console.log('[renderAdminCalendar] Admin type:', adminRegion === 'all' ? '전체관리자' : '지역관리자');
+    console.log('[renderAdminCalendar] Current booking status:', bookingStatus);
+
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
 
@@ -3747,37 +3786,75 @@ function renderAdminCalendar(date) {
     
     adminCalendar.innerHTML = '';
 
-    // 달력 날짜 요소 생성 함수
-    function createDayElement(currentDay, isEmptyDay = false) {
-        if (isEmptyDay) {
-            const emptyDay = document.createElement('div');
-            emptyDay.className = 'h-12 rounded-lg';
-            return emptyDay;
-        }
+    // 빈 날짜 칸 추가
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'h-12 rounded-lg';
+        adminCalendar.appendChild(emptyDay);
+    }
 
+    // 날짜 칸 추가
+    for (let currentDay = 1; currentDay <= lastDay.getDate(); currentDay++) {
         const dayElement = document.createElement('div');
         const selectedDateObj = new Date(year, month, currentDay);
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+        
+        // 중요: 날짜 상태 로깅
+        console.log(`[renderAdminCalendar] Date ${dateString} status:`, bookingStatus[dateString]);
+        
         const dateStatus = bookingStatus[dateString];
         const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
 
-        // 날짜 상태에 따른 클래스와 스타일 설정
-        const dayConfig = getDayConfiguration(selectedDateObj, dateStatus, baseClass);
-        dayElement.className = dayConfig.className;
-        dayElement.title = dayConfig.title;
-        if (dayConfig.backgroundColor) {
-            dayElement.style.backgroundColor = dayConfig.backgroundColor;
+        // 날짜 상태에 따른 클래스 설정
+        if (selectedDateObj < today) {
+            dayElement.className = `${baseClass} past`;
+            dayElement.title = '지난 날짜';
+        } else if (dateStatus?.isFullyBlocked) {
+            dayElement.className = `${baseClass} blocked cursor-pointer`;
+            dayElement.title = '전체 마감 (클릭하여 해제)';
+        } else if (dateStatus?.isPartiallyBlocked) {
+            // 부분 마감인 경우
+            dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
+            dayElement.title = '부분 마감 (1개 예약만 가능)';
+            dayElement.style.backgroundColor = '#F97316';
+        } else if (dateStatus?.isFull) {
+            dayElement.className = `${baseClass} full cursor-pointer`;
+            dayElement.title = '예약 마감';
+        } else if (dateStatus?.hasBooking) {
+            dayElement.className = `${baseClass} booked cursor-pointer`;
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+        } else {
+            dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+            dayElement.title = '클릭하여 마감 설정';
         }
 
-        // 클릭 이벤트 추가 (관리자용으로 변경)
+        // 날짜 클릭 이벤트 추가
         if (selectedDateObj >= today) {
-            // 날짜 문자열과 함께 선택된 지역 정보도 전달
-            addAdminDateClickHandler(dayElement, dateString, targetRegion);
+            // 중요: 날짜 클릭시 targetRegion 정보 전달
+            dayElement.addEventListener('click', async () => {
+                console.log(`[dateClick] Clicked date: ${dateString}, region: ${targetRegion}`);
+                currentSelectedDate = dateString;
+                // 선택된 지역 정보를 세션에 저장
+                sessionStorage.setItem('selectedTargetRegion', targetRegion);
+                await loadDateBookings(dateString);
+                showDateBookingsModal();
+                setupModalButtons(dateString);
+            });
         }
 
         // 예약 수 배지 추가
         if (dateStatus?.bookingCount > 0) {
-            addBookingCountBadge(dayElement, dateStatus);
+            const countBadge = document.createElement('div');
+            countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-white shadow-sm';
+            
+            if (dateStatus.isPartiallyBlocked) {
+                countBadge.textContent = `${dateStatus.bookingCount}/1`;
+                countBadge.style.backgroundColor = '#FEF3C7';
+            } else {
+                countBadge.textContent = `${dateStatus.bookingCount}`;
+            }
+            
+            dayElement.appendChild(countBadge);
         }
 
         // 날짜 텍스트 추가
@@ -3787,21 +3864,15 @@ function renderAdminCalendar(date) {
         dayElement.insertBefore(dateText, dayElement.firstChild);
 
         // 오늘 날짜 강조
-        if (isToday(currentDay, date, today)) {
+        if (
+            currentDay === today.getDate() &&
+            month === today.getMonth() &&
+            year === today.getFullYear()
+        ) {
             dayElement.classList.add('font-bold');
         }
 
-        return dayElement;
-    }
-
-    // 빈 날짜 칸 추가
-    for (let i = 0; i < firstDay.getDay(); i++) {
-        adminCalendar.appendChild(createDayElement(null, true));
-    }
-
-    // 날짜 칸 추가
-    for (let currentDay = 1; currentDay <= lastDay.getDate(); currentDay++) {
-        adminCalendar.appendChild(createDayElement(currentDay));
+        adminCalendar.appendChild(dayElement);
     }
 }
 
