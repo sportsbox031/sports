@@ -2990,36 +2990,57 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
-        // 1. sessionStorage에서 관리자 지역 정보 가져오기
-        const adminRegion = sessionStorage.getItem('region');
+        // 디버깅을 위한 로그 추가
+        console.log('blockDate called with:', { date, blockType });
         
-        // 2. 디버깅 로그 추가
+        // 관리자 정보 확인
+        const adminRegion = sessionStorage.getItem('region');
         console.log('Admin region from sessionStorage:', adminRegion);
         
-        // 3. 지역 필터 요소에서 선택된 값 가져오기
-        const regionFilterElement = document.getElementById('regionFilter');
-        const selectedRegion = regionFilterElement ? regionFilterElement.value : null;
-        
+        // 지역 선택 확인
+        const regionFilter = document.getElementById('regionFilter');
+        const selectedRegion = regionFilter ? regionFilter.value : null;
         console.log('Selected region from filter:', selectedRegion);
         
-        // 4. 최종 대상 지역 결정 (전체 관리자면 선택된 지역, 아니면 관리자 자신의 지역)
-        const targetRegion = adminRegion === 'all' ? selectedRegion : adminRegion;
+        // 날짜 및 blockType 검증
+        if (!date || typeof date !== 'string') {
+            throw new Error('유효한 날짜가 필요합니다.');
+        }
         
-        console.log('Target region for API call:', targetRegion);
-
-        // 5. 지역 값 검증
+        if (!blockType || !['full', 'partial'].includes(blockType)) {
+            throw new Error('유효한 마감 유형이 필요합니다.');
+        }
+        
+        // 지역 결정 로직
+        let targetRegion;
+        if (adminRegion === 'all') {
+            // 전체 관리자인 경우 선택된 지역 사용
+            targetRegion = selectedRegion;
+        } else {
+            // 지역 관리자인 경우 자신의 지역 사용
+            targetRegion = adminRegion;
+        }
+        
+        console.log('Final target region:', targetRegion);
+        
+        // 지역 검증
         if (!targetRegion || !['south', 'north'].includes(targetRegion)) {
             throw new Error('유효한 지역을 선택해주세요.');
         }
 
-        // 6. API 요청
+        // API 요청 데이터 구성
+        const requestData = {
+            date: date,
+            region: targetRegion,
+            blockType: blockType
+        };
+        
+        console.log('Sending request data:', requestData);
+
+        // API 요청
         const response = await apiRequest('/api/admin/dates/block', {
             method: 'POST',
-            body: JSON.stringify({ 
-                date, 
-                blockType,
-                region: targetRegion 
-            })
+            body: JSON.stringify(requestData)
         });
 
         if (response.success) {
@@ -3028,10 +3049,10 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 7. 달력 상태 업데이트
+            // 즉시 달력 상태 업데이트
             await updateCalendarStatus();
             
-            // 8. 날짜별 예약 목록 새로고침
+            // 날짜별 예약 목록 새로고침
             if (currentSelectedDate) {
                 await loadDateBookings(currentSelectedDate);
             }
@@ -3789,6 +3810,7 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
 function setupModalButtons(dateString) {
     document.getElementById('partialBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
+            console.log('Blocking date partially:', dateString);
             await blockDate(dateString, 'partial');
             closeDateBookingsModal();
         }
@@ -3796,6 +3818,7 @@ function setupModalButtons(dateString) {
 
     document.getElementById('fullBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
+            console.log('Blocking date fully:', dateString);
             await blockDate(dateString, 'full');
             closeDateBookingsModal();
         }
@@ -3803,6 +3826,7 @@ function setupModalButtons(dateString) {
 
     document.getElementById('unblockDateBtn').onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
+            console.log('Unblocking date:', dateString);
             await unblockDate(dateString);
             closeDateBookingsModal();
         }
