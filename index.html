@@ -518,6 +518,10 @@
                     <option value="north">북부 지역만</option>
                 </select>
             </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="noticeImportant" class="w-4 h-4 text-blue-600 rounded">
+                <label for="noticeImportant" class="ml-2 text-gray-700 text-sm font-bold">중요 공지</label>
+            </div>
             <button type="submit" 
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
                 등록하기
@@ -978,45 +982,6 @@
                             </button>
                         </div>
                     </div>
-                    <!-- 관리자 공지사항 -->
-                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항 관리</h2>
-                        <form id="noticeForm" class="space-y-4">
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
-                                <input type="text" id="noticeTitle" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                                <textarea id="noticeContent" required rows="4"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
-                                <select id="noticeRegion" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                                    <option value="">선택해주세요</option>
-                                    <option value="all">전체 공개</option>
-                                    <option value="south">남부 지역만</option>
-                                    <option value="north">북부 지역만</option>
-                                </select>
-                            </div>
-                            <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                                공지사항 등록
-                            </button>
-                        </form>
-                    </div>
-
-                        <!-- 공지사항 목록 -->
-    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-        <div id="noticesList" class="space-y-4">
-            <!-- 공지사항이 여기에 동적으로 추가됨 -->
-        </div>
-    </div>
-</div>
 
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1305,15 +1270,37 @@ const REGION_MAPPING = {
 async function loadHomeNotices() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
+        
+        if (!response.ok) {
+            console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
+            document.getElementById('homeNoticesList').innerHTML = 
+                '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
+            return;
+        }
+        
         const data = await response.json();
         const noticesList = document.getElementById('homeNoticesList');
 
-        if (data.success && data.data) {
-            noticesList.innerHTML = data.data.map(notice => `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+        if (data.success && data.data && data.data.length > 0) {
+            // 중요 공지를 상단으로 정렬
+            const sortedNotices = [...data.data].sort((a, b) => {
+                // 중요 공지가 먼저 오도록 정렬
+                if (a.is_important && !b.is_important) return -1;
+                if (!a.is_important && b.is_important) return 1;
+                // 그 다음 날짜순 정렬
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            noticesList.innerHTML = sortedNotices.map(notice => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
                      onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        <div class="flex items-center">
+                            <h3 class="text-xl font-semibold">${notice.title}</h3>
+                            ${notice.is_important ? 
+                                '<span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                ''}
+                        </div>
                         <span class="text-sm text-gray-500">
                             ${new Date(notice.created_at).toLocaleDateString()}
                         </span>
@@ -1331,10 +1318,14 @@ async function loadHomeNotices() {
                         </span>
                     </div>
                 </div>
-            `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            `).join('');
+        } else {
+            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
+        document.getElementById('homeNoticesList').innerHTML = 
+            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
     }
 }
 
@@ -1443,15 +1434,36 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const noticeData = {
-            title: document.getElementById('noticeTitle').value.trim(),
-            content: document.getElementById('noticeContent').value.trim(),
-            region: document.getElementById('noticeRegion').value
-        };
+        // 폼 제출 버튼 비활성화 (중복 제출 방지)
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        
+        try {
+            const noticeData = {
+                title: document.getElementById('noticeTitle').value.trim(),
+                content: document.getElementById('noticeContent').value.trim(),
+                region: document.getElementById('noticeRegion').value,
+                is_important: document.getElementById('noticeImportant').checked ? 1 : 0
+            };
 
-        await createNotice(noticeData);
-        closeNoticeWriteModal();
-        loadHomeNotices(); // 홈화면 공지사항 새로고침
+            // 필수 필드 검증
+            if (!noticeData.title || !noticeData.content || !noticeData.region) {
+                showAlert('제목, 내용, 공개 범위를 모두 입력해주세요.', 'error');
+                return;
+            }
+
+            await createNotice(noticeData);
+            closeNoticeWriteModal();
+            
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+        } catch (error) {
+            console.error('Notice submission error:', error);
+            showAlert('공지사항 등록 중 오류가 발생했습니다.', 'error');
+        } finally {
+            // 폼 제출 버튼 다시 활성화
+            if (submitButton) submitButton.disabled = false;
+        }
     });
 });
 
@@ -2366,13 +2378,12 @@ async function createNotice(noticeData) {
 
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
-            // noticeForm 대신 noticeWriteForm으로 수정
             document.getElementById('noticeWriteForm').reset();
-            // 두 곳의 공지사항 목록을 모두 새로고침
-            await Promise.all([
-                loadNotices(),      // 대시보드의 공지사항
-                loadHomeNotices()   // 홈화면의 공지사항
-            ]);
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+            if (document.getElementById('noticesList')) {
+                await loadNotices();
+            }
         }
     } catch (error) {
         console.error('Notice creation error:', error);
@@ -2394,13 +2405,30 @@ async function loadNotices() {
 }
 
 // 공지사항 목록 렌더링 함수
+// 공지사항 목록 렌더링 함수 수정
 function renderNoticesList(notices, containerId) {
     const container = document.getElementById(containerId);
-    container.innerHTML = notices.map(notice => `
-        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+    if (!container) return;
+    
+    // 중요 공지를 상단으로 정렬
+    const sortedNotices = [...notices].sort((a, b) => {
+        // 중요 공지가 먼저 오도록 정렬
+        if (a.is_important && !b.is_important) return -1;
+        if (!a.is_important && b.is_important) return 1;
+        // 그 다음 날짜순 정렬
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    container.innerHTML = sortedNotices.map(notice => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
              onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold">${notice.title}</h3>
+                <div class="flex items-center">
+                    <h3 class="text-xl font-semibold">${notice.title}</h3>
+                    ${notice.is_important ? 
+                        '<span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                        ''}
+                </div>
                 <span class="text-sm text-gray-500">
                     ${new Date(notice.created_at).toLocaleDateString()}
                 </span>
@@ -3859,10 +3887,7 @@ async function initializeAdminDashboard(region, username) {
         initializeAdminCalendar();
         
         // 예약 상태 업데이트
-        await debouncedUpdateCalendarStatus();
-        
-       // 공지사항 로드 추가
-       await loadNotices();   
+        await debouncedUpdateCalendarStatus();  
 
         // 통계 로드
         await loadRegionStatistics();
@@ -4254,19 +4279,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('Form submission error:', error);
         showAlert('회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
     }
-});
-
-// 공지사항 폼 제출 이벤트 리스너 추가
-document.getElementById('noticeForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const noticeData = {
-        title: document.getElementById('noticeTitle').value.trim(),
-        content: document.getElementById('noticeContent').value.trim(),
-        region: document.getElementById('noticeRegion').value
-    };
-
-    await createNotice(noticeData);
 });
 
 
