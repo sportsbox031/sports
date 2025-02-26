@@ -527,7 +527,7 @@
                     <div class="container mx-auto px-6">
                         <div class="flex justify-between items-center mb-16">
                             <h2 class="text-3xl font-bold">공지사항</h2>
-                            <div id="noticeActions" class="hidden" style="display: none !important;"> <!-- 관리자 로그인 시 보임 -->
+                            <div id="noticeActions" class="hidden"> <!-- 관리자 로그인 시 보임 -->
                                 <button onclick="showNoticeWriteModal()" 
                                     class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
                                     <i class="fas fa-pen"></i>
@@ -1415,6 +1415,24 @@ async function deleteNotice() {
 
 // 공지사항 작성 모달 컨트롤
 function showNoticeWriteModal() {
+    const region = sessionStorage.getItem('region');
+    const regionSelect = document.getElementById('noticeRegion');
+    
+    // 지역 관리자는 자신의 지역만 선택 가능하도록 제한
+    if (region !== 'all') {
+        // 모든 옵션 비활성화
+        Array.from(regionSelect.options).forEach(option => {
+            option.disabled = (option.value !== region && option.value !== '');
+        });
+        // 기본값을 자신의 지역으로 설정
+        regionSelect.value = region;
+    } else {
+        // 전체 관리자는 모든 지역 선택 가능
+        Array.from(regionSelect.options).forEach(option => {
+            option.disabled = false;
+        });
+    }
+    
     document.getElementById('noticeWriteModal').classList.add('show');
 }
 
@@ -1427,9 +1445,10 @@ function closeNoticeWriteModal() {
 function checkAdminStatus() {
     const token = sessionStorage.getItem('token');
     const role = sessionStorage.getItem('role');
+    const region = sessionStorage.getItem('region');
     const noticeActions = document.getElementById('noticeActions');
     
-    console.log('[checkAdminStatus] 권한 확인:', { token: !!token, role });
+    console.log('[checkAdminStatus] 권한 확인:', { token: !!token, role, region });
     
     if (!noticeActions) {
         console.warn('[checkAdminStatus] noticeActions 요소를 찾을 수 없습니다');
@@ -1439,11 +1458,11 @@ function checkAdminStatus() {
     if (token && role === 'admin') {
         console.log('[checkAdminStatus] 관리자 권한 확인됨, 글쓰기 버튼 표시');
         noticeActions.classList.remove('hidden');
-        noticeActions.style.display = 'block'; // 인라인 스타일 추가
+        noticeActions.style.display = 'block';
     } else {
         console.log('[checkAdminStatus] 관리자 권한 없음, 글쓰기 버튼 숨김');
         noticeActions.classList.add('hidden');
-        noticeActions.style.display = 'none'; // 인라인 스타일 추가
+        noticeActions.style.display = 'none';
     }
 }
 
@@ -1451,11 +1470,11 @@ function checkAdminStatus() {
 document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     
-    // DOM이 모두 로드된 후 관리자 상태 확인
+    // DOM이 모두 로드된 후 관리자 상태 확인 (시간 증가)
     setTimeout(() => {
         checkAdminStatus();
         console.log('[DOMContentLoaded] 초기 관리자 상태 확인 완료');
-    }, 100);
+    }, 300);
     
     // 홈으로 돌아갈 때도 공지사항 새로고침 및 관리자 상태 확인
     document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
