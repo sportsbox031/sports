@@ -344,46 +344,46 @@
 </section>
 
                 <!-- 사업소개 및 공지사항 섹션 -->
-<section id="intro" class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <!-- 왼쪽: 사업소개 -->
-            <div>
-                <h2 class="text-3xl font-bold mb-8">사업소개</h2>
-                <div class="mb-6">
-                    <img src="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/37e4760851bd5a23c2838ccd027fd4f3.png"
-                        class="w-full h-auto rounded-lg shadow-lg" alt="스포츠박스 활동">
-                </div>
-                <div>
-                    <h3 class="text-2xl font-bold mb-4">찾아가는 스포츠 프로그램</h3>
-                    <p class="text-gray-600 leading-relaxed mb-6">
-                        스포츠박스는 경기도민의 건강한 생활을 위해 찾아가는 스포츠 프로그램을 운영합니다.
-                        스포츠 취약계층을 위한 맞춤형 프로그램과 다양한 체험 기회를 제공하여
-                        모든 도민이 스포츠를 즐길 수 있도록 지원합니다.
-                    </p>
-                    <div class="flex space-x-4">
-                        <div class="flex items-center space-x-2">
-                            <i class="ri-user-heart-line text-primary text-xl"></i>
-                            <span>취약계층 지원</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="ri-community-line text-primary text-xl"></i>
-                            <span>생활체육 활성화</span>
+                <section id="intro" class="py-20 bg-gray-50">
+                    <div class="container mx-auto px-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                            <!-- 왼쪽: 사업소개 -->
+                            <div>
+                                <h2 class="text-3xl font-bold mb-8">사업소개</h2>
+                                <div class="mb-6">
+                                    <img src="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/37e4760851bd5a23c2838ccd027fd4f3.png"
+                                        class="w-full h-auto rounded-lg shadow-lg" alt="스포츠박스 활동">
+                                </div>
+                                <div>
+                                    <h3 class="text-2xl font-bold mb-4">찾아가는 스포츠 프로그램</h3>
+                                    <p class="text-gray-600 leading-relaxed mb-6">
+                                        스포츠박스는 경기도민의 건강한 생활을 위해 찾아가는 스포츠 프로그램을 운영합니다.
+                                        스포츠 취약계층을 위한 맞춤형 프로그램과 다양한 체험 기회를 제공하여
+                                        모든 도민이 스포츠를 즐길 수 있도록 지원합니다.
+                                    </p>
+                                    <div class="flex space-x-4">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="ri-user-heart-line text-primary text-xl"></i>
+                                            <span>취약계층 지원</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <i class="ri-community-line text-primary text-xl"></i>
+                                            <span>생활체육 활성화</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 오른쪽: 공지사항 -->
+                            <div>
+                                <h2 class="text-3xl font-bold mb-8">공지사항</h2>
+                                <div id="introNoticesList" class="bg-white rounded-lg shadow-lg p-6 max-h-[500px] overflow-y-auto">
+                                    <!-- 공지사항이 여기에 동적으로 추가됨 -->
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- 오른쪽: 공지사항 -->
-            <div>
-                <h2 class="text-3xl font-bold mb-8">공지사항</h2>
-                <div id="homeNoticesList" class="bg-white rounded-lg shadow-lg p-6 max-h-[500px] overflow-y-auto">
-                    <!-- 공지사항이 여기에 동적으로 추가됨 -->
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+                </section>
 
 <!-- 공지사항 작성 모달 -->
 <div id="noticeWriteModal" class="modal">
@@ -804,7 +804,7 @@
                        <!-- 여기에 공지사항 섹션 추가 -->
         <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
             <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-            <div id="noticesList" class="space-y-4">
+            <div id="homeNoticesList" class="grid gap-6">
                 <!-- 공지사항이 여기에 동적으로 추가됨 -->
             </div>
         </div>
@@ -1284,13 +1284,22 @@ async function loadHomeNotices() {
         
         if (!response.ok) {
             console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
-            document.getElementById('homeNoticesList').innerHTML = 
-                '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
+            
+            // 두 공지사항 목록 모두 업데이트
+            const introNoticesList = document.getElementById('introNoticesList');
+            const homeNoticesList = document.getElementById('homeNoticesList');
+            
+            const errorMessage = '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
+            if (introNoticesList) introNoticesList.innerHTML = errorMessage;
+            if (homeNoticesList) homeNoticesList.innerHTML = errorMessage;
             return;
         }
         
         const data = await response.json();
-        const noticesList = document.getElementById('homeNoticesList');
+        
+        // 두 공지사항 목록 요소 가져오기
+        const introNoticesList = document.getElementById('introNoticesList');
+        const homeNoticesList = document.getElementById('homeNoticesList');
 
         if (data.success && data.data && data.data.length > 0) {
             // 중요 공지를 상단으로 정렬
@@ -1302,7 +1311,7 @@ async function loadHomeNotices() {
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            noticesList.innerHTML = sortedNotices.map(notice => `
+            const noticeHTML = sortedNotices.map(notice => `
                 <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
                      onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
                     <div class="flex justify-between items-center mb-4">
@@ -1330,13 +1339,24 @@ async function loadHomeNotices() {
                     </div>
                 </div>
             `).join('');
+            
+            // 두 공지사항 목록 모두 업데이트
+            if (introNoticesList) introNoticesList.innerHTML = noticeHTML;
+            if (homeNoticesList) homeNoticesList.innerHTML = noticeHTML;
         } else {
-            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            const emptyMessage = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            if (introNoticesList) introNoticesList.innerHTML = emptyMessage;
+            if (homeNoticesList) homeNoticesList.innerHTML = emptyMessage;
         }
     } catch (error) {
         console.error('Home notices loading error:', error);
-        document.getElementById('homeNoticesList').innerHTML = 
-            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        
+        const introNoticesList = document.getElementById('introNoticesList');
+        const homeNoticesList = document.getElementById('homeNoticesList');
+        
+        const errorMessage = '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        if (introNoticesList) introNoticesList.innerHTML = errorMessage;
+        if (homeNoticesList) homeNoticesList.innerHTML = errorMessage;
     }
 }
 
