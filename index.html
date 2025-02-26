@@ -1581,8 +1581,8 @@ async function apiRequest(endpoint, options = {}) {
 // 화면 전환 함수들
 function showHomeScreen() {
     // 현재 로그인 상태 확인
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    const token = sessionStorage.getItem('token');
+    const role = sessionStorage.getItem('role');
 
     // 모든 화면 숨기기
     const homeScreen = document.getElementById('mainContainer')?.querySelector('#homeScreen');
@@ -1602,8 +1602,8 @@ function showHomeScreen() {
         const navButtons = homeNav.querySelector('.items-center.space-x-8');
         if (!navButtons) return; // 버튼 컨테이너가 없으면 함수 종료
 
-        const username = localStorage.getItem('username');
-        const region = localStorage.getItem('region');
+        const username = sessionStorage.getItem('username');
+        const region = sessionStorage.getItem('region');
 
         // 기존 로그인/회원가입 버튼 찾기
         const loginButton = navButtons.querySelector('button');
@@ -1656,7 +1656,7 @@ function showHomeScreen() {
 
 // 대시보드로 돌아가는 함수
 function returnToDashboard() {
-    const role = localStorage.getItem('role');
+    const role = sessionStorage.getItem('role');
     if (role) {
         showDashboard(role);
     } else {
@@ -1838,9 +1838,9 @@ async function initializeUserDashboard(region, username) {
 function showUserProfileModal() {
     const modal = document.getElementById('userProfileModal');
     // 현재 사용자 정보 표시
-    document.getElementById('userGroupName').value = localStorage.getItem('username');
-    document.getElementById('userManager').value = localStorage.getItem('manager');
-    document.getElementById('userContact').value = localStorage.getItem('contact');
+    document.getElementById('userGroupName').value = sessionStorage.getItem('username');
+    document.getElementById('userManager').value = sessionStorage.getItem('manager');
+    document.getElementById('userContact').value = sessionStorage.getItem('contact');
     
     // 비밀번호 필드 초기화
     document.getElementById('userCurrentPassword').value = '';
@@ -1896,14 +1896,14 @@ document.getElementById('userProfileForm').addEventListener('submit', async func
 
         if (response.success) {
             // 로컬 스토리지 정보 업데이트
-            localStorage.setItem('manager', formData.manager);
-            localStorage.setItem('contact', formData.contact);
+            sessionStorage.setItem('manager', formData.manager);
+            sessionStorage.setItem('contact', formData.contact);
             
             showAlert('계정 정보가 성공적으로 변경되었습니다.', 'success');
             closeUserProfileModal();
             
             // 네비게이션 바 사용자 정보 업데이트
-            document.getElementById('userGroupName').textContent = localStorage.getItem('username');
+            document.getElementById('userGroupName').textContent = sessionStorage.getItem('username');
         }
     } catch (error) {
         console.error('Profile update error:', error);
@@ -2934,7 +2934,7 @@ async function forceCancel(bookingId, dateString) {
 // 날짜 마감 관리 함수들
 async function blockDate(date, blockType) {
     try {
-        const region = localStorage.getItem('region');
+        const region = sessionStorage.getItem('region'); // localStorage에서 sessionStorage로 변경
         const targetRegion = region === 'all' ? 
             document.getElementById('regionFilter')?.value : region;
 
@@ -2956,8 +2956,14 @@ async function blockDate(date, blockType) {
                 blockType === 'full' ? '날짜가 전체 마감되었습니다.' : '날짜가 부분 마감되었습니다.', 
                 'success'
             );
-            await debouncedUpdateCalendarStatus();
-            await loadDateBookings(date);  // 날짜별 예약 목록 새로고침
+            
+            // 즉시 달력 상태 업데이트 - 이 부분이 중요합니다!
+            await updateCalendarStatus();
+            
+            // 날짜별 예약 목록 새로고침
+            if (currentSelectedDate) {
+                await loadDateBookings(currentSelectedDate);
+            }
         }
     } catch (error) {
         console.error('Date blocking error:', error);
@@ -2967,7 +2973,7 @@ async function blockDate(date, blockType) {
 
 async function unblockDate(date) {
     try {
-        const region = localStorage.getItem('region');
+        const region = sessionStorage.getItem('region'); // localStorage에서 sessionStorage로 변경
         const targetRegion = region === 'all' ? 
             document.getElementById('regionFilter')?.value : region;
 
@@ -2985,11 +2991,41 @@ async function unblockDate(date) {
 
         if (response.success) {
             showAlert('날짜 마감이 해제되었습니다.', 'success');
-            await debouncedUpdateCalendarStatus();
+            
+            // 즉시 달력 상태 업데이트 - 이 부분이 중요합니다!
+            await updateCalendarStatus();
+            
+            // 날짜별 예약 목록 새로고침
+            if (currentSelectedDate) {
+                await loadDateBookings(currentSelectedDate);
+            }
         }
     } catch (error) {
         console.error('Date unblocking error:', error);
         showAlert(error.message || '날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
+async function updateCalendarStatus() {
+    try {
+        console.log('Updating calendar status immediately...');
+        const data = await apiRequest('/api/bookings/status');
+        bookingStatus = data.data;
+        
+        // 관리자/사용자에 따라 다른 캘린더 업데이트
+        const role = sessionStorage.getItem('role');
+        if (role === 'admin') {
+            renderAdminCalendar(adminCurrentDate);
+        } else {
+            renderCalendar(currentDate);
+        }
+        
+        if (data.remainingBookings !== undefined) {
+            updateRemainingBookingsDisplay(data.remainingBookings);
+        }
+    } catch (error) {
+        console.error('Calendar status update error:', error);
     }
 }
 
@@ -3070,7 +3106,7 @@ async function loadAdminBookingSettings() {
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
             const settings = response.data;
-            const region = localStorage.getItem('region');
+            const region = sessionStorage.getItem('region');
             const regionSettings = region === 'all' ? settings : settings[region];
             
             updateBookingStatusUI(regionSettings?.is_active || false);
@@ -3100,7 +3136,7 @@ async function loadUserBookingSettings() {
 
 async function toggleBookingStatus() {
     try {
-        const region = localStorage.getItem('region');
+        const region = sessionStorage.getItem('region');
         // 전체 관리자의 경우 선택된 지역 값 사용
         const targetRegion = region === 'all' ? 
             document.getElementById('regionFilter').value : region;
@@ -3145,7 +3181,7 @@ async function toggleBookingStatus() {
 function updateBookingStatusUI(isActive) {
     const toggleButton = document.getElementById('toggleBookingStatus');
     const statusText = document.getElementById('bookingStatusText');
-    const region = localStorage.getItem('region');
+    const region = sessionStorage.getItem('region');
     const selectedRegion = region === 'all' ? 
         document.getElementById('regionFilter').value : region;
     const regionText = selectedRegion === 'south' ? '남부' : '북부';
@@ -3277,14 +3313,16 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
         bookingStatus = data.data;
         
         // 관리자/사용자에 따라 다른 캘린더 업데이트
-        const role = localStorage.getItem('role');
+        const role = sessionStorage.getItem('role'); // localStorage에서 sessionStorage로 변경
         if (role === 'admin') {
             renderAdminCalendar(adminCurrentDate);
         } else {
             renderCalendar(currentDate);
         }
         
-        updateRemainingBookingsDisplay(data.remainingBookings);
+        if (data.remainingBookings !== undefined) {
+            updateRemainingBookingsDisplay(data.remainingBookings);
+        }
     } catch (error) {
         console.error('Calendar status update error:', error);
     }
@@ -3370,7 +3408,7 @@ document.getElementById('signupForm').addEventListener('submit', async function(
 
 // 지역 정보 표시 업데이트
 function updateRegionDisplay() {
-    const region = localStorage.getItem('region');
+    const region = sessionStorage.getItem('region');
     const regionBadge = document.getElementById('regionBadge');
     
     if (regionBadge) {
@@ -3668,8 +3706,6 @@ function setupModalButtons(dateString) {
     document.getElementById('partialBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
             await blockDate(dateString, 'partial');
-            await loadDateBookings(dateString);
-            debouncedUpdateCalendarStatus();
             closeDateBookingsModal();
         }
     };
@@ -3677,8 +3713,6 @@ function setupModalButtons(dateString) {
     document.getElementById('fullBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
             await blockDate(dateString, 'full');
-            await loadDateBookings(dateString);
-            debouncedUpdateCalendarStatus();
             closeDateBookingsModal();
         }
     };
@@ -3686,8 +3720,6 @@ function setupModalButtons(dateString) {
     document.getElementById('unblockDateBtn').onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
             await unblockDate(dateString);
-            await loadDateBookings(dateString);
-            debouncedUpdateCalendarStatus();
             closeDateBookingsModal();
         }
     };
@@ -4013,30 +4045,30 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
-        try {
-            const selectedRegion = e.target.value;
-            
-            // 예약 설정 상태 로드
-            const response = await apiRequest('/api/admin/booking-settings');
-            if (response.success) {
-                const settings = response.data;
-                // 선택된 지역의 설정 가져오기
-                const regionSettings = settings[selectedRegion];
-                // UI 업데이트
-                updateBookingStatusUI(regionSettings?.is_active || false);
-            }
-
-            // 다른 데이터도 새로고침
-            await Promise.all([
-                loadRegionStatistics(),
-                debouncedUpdateCalendarStatus(),
-                loadPendingBookings()
-            ]);
-        } catch (error) {
-            console.error('Region filter change error:', error);
-            showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+    try {
+        const selectedRegion = e.target.value;
+        
+        // 예약 설정 상태 로드
+        const response = await apiRequest('/api/admin/booking-settings');
+        if (response.success) {
+            const settings = response.data;
+            // 선택된 지역의 설정 가져오기
+            const regionSettings = settings[selectedRegion];
+            // UI 업데이트
+            updateBookingStatusUI(regionSettings?.is_active || false);
         }
-    });
+
+        // 다른 데이터도 새로고침
+        await Promise.all([
+            loadRegionStatistics(),
+            updateCalendarStatus(), // 디바운스 없이 즉시 업데이트
+            loadPendingBookings()
+        ]);
+    } catch (error) {
+        console.error('Region filter change error:', error);
+        showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
+    }
+});
 
     // 시군 선택에 따른 지역 자동 분류 함수
     function determineRegion(city) {
@@ -4255,7 +4287,7 @@ document.getElementById('noticeForm')?.addEventListener('submit', async function
             endTime: document.getElementById('endTime').value,
             people: document.getElementById('people').value,
             place: document.getElementById('place').value,
-            region: localStorage.getItem('region') // 사용자의 지역 정보 추가
+            region: sessionStorage.getItem('region') // 사용자의 지역 정보 추가
         };
 
         createBooking(bookingData);
@@ -4324,7 +4356,7 @@ if (DEBUG) {
         bookingStatus,
         currentUser,
         resetState: () => {
-            localStorage.clear();
+            sessionStorage.clear();
             location.reload();
         }
     };
@@ -4334,8 +4366,8 @@ if (DEBUG) {
 window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
         // 뒤로가기로 페이지 복원 시
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
+        const token = sessionStorage.getItem('token');
+        const role = sessionStorage.getItem('role');
         
         if (token && role) {
             validateStoredToken().then(isValid => {
