@@ -65,23 +65,26 @@
 
     /* 모달 스타일 */
     .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        overflow-y: auto;
-        padding: 2rem;
-    }
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
 
-    .modal.show {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+.modal.show {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
 
     .modal-content {
         background-color: white;
@@ -1287,20 +1290,17 @@ async function loadHomeNotices() {
         if (data.success && data.data && data.data.length > 0) {
             // 중요 공지를 상단으로 정렬
             const sortedNotices = [...data.data].sort((a, b) => {
-                // 중요 공지가 먼저 오도록 정렬
                 if (a.is_important && !b.is_important) return -1;
                 if (!a.is_important && b.is_important) return 1;
-                // 그 다음 날짜순 정렬
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            // 제목만 표시하는 간소화된 목록
+            // 제목만 표시하는 간소화된 목록 - onclick 속성 제거
             noticesList.innerHTML = `
                 <ul class="divide-y divide-gray-200">
-                    ${sortedNotices.map(notice => `
-                        <li class="py-3 cursor-pointer hover:bg-gray-50 transition-colors" 
-                            data-notice='${JSON.stringify(notice)}'
-                            onclick="showNoticeDetailFromElement(this)">
+                    ${sortedNotices.map((notice, index) => `
+                        <li class="py-3 cursor-pointer hover:bg-gray-50 transition-colors notice-item" 
+                            data-notice-id="${index}">
                             <div class="flex items-center">
                                 ${notice.is_important ? 
                                     '<span class="mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
@@ -1311,17 +1311,54 @@ async function loadHomeNotices() {
                     `).join('')}
                 </ul>
             `;
+            
+            // 공지사항 데이터를 전역 객체에 저장
+            window.noticesData = sortedNotices;
+            
+            // 모든 공지사항 항목에 클릭 이벤트 리스너 추가
+            document.querySelectorAll('.notice-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault(); // 기본 동작 방지
+                    e.stopPropagation(); // 이벤트 버블링 방지
+                    
+                    const noticeId = parseInt(this.getAttribute('data-notice-id'));
+                    const notice = window.noticesData[noticeId];
+                    
+                    console.log('Notice clicked:', notice);
+                    showNoticeDetail(notice);
+                    
+                    return false; // 추가 이벤트 전파 방지
+                });
+            });
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
         
-        // 공지사항 로드 후 관리자 상태 확인
         checkAdminStatus();
     } catch (error) {
         console.error('Home notices loading error:', error);
         document.getElementById('homeNoticesList').innerHTML = 
             '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
     }
+}
+
+// 모달 직접 제어 함수
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal with ID ${modalId} not found`);
+        return;
+    }
+    
+    // 모달 표시 설정
+    modal.style.display = 'flex';
+    
+    // 약간의 지연 후 show 클래스 추가 (CSS 트랜지션을 위해)
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    console.log(`Modal ${modalId} opened`);
 }
 
 // 공지사항 상세보기
@@ -1376,15 +1413,11 @@ function showNoticeDetail(notice) {
         }
     }
 
-    // 모달 표시
-    const modal = document.getElementById('noticeDetailModal');
-    if (modal) {
-        modal.classList.add('show');
-        console.log('Notice detail modal shown');
-    } else {
-        console.error('Notice detail modal element not found');
-        showAlert('모달 창을 찾을 수 없습니다.', 'error');
-    }
+    // 모달 표시 - 새로운 방식 사용
+    openModal('noticeDetailModal');
+    
+    // 이벤트 전파 중단
+    return false;
 }
 
 function showNoticeDetailFromElement(element) {
