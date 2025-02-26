@@ -3049,14 +3049,17 @@ async function blockDate(date, blockType) {
                 'success'
             );
             
-            // 즉시 달력 상태 업데이트
-            await updateCalendarStatus();
-            
-            // 날짜별 예약 목록 새로고침
-            if (currentSelectedDate) {
-                await loadDateBookings(currentSelectedDate);
-            }
-        }
+            // 즉시 달력 상태 업데이트 (디바운스 없이)
+    await updateCalendarStatus();
+    
+    // 날짜별 예약 목록 새로고침
+    if (currentSelectedDate) {
+        await loadDateBookings(currentSelectedDate);
+    }
+    
+    // 모달 닫기
+    closeDateBookingsModal();
+}
     } catch (error) {
         console.error('Date blocking error:', error);
         showAlert(error.message || '날짜 마감 처리 중 오류가 발생했습니다.', 'error');
@@ -3111,20 +3114,50 @@ async function unblockDate(date) {
 async function updateCalendarStatus() {
     try {
         console.log('Updating calendar status immediately...');
-        const data = await apiRequest('/api/bookings/status');
+        
+        // 1. 관리자 정보와 선택된 지역 확인
+        const role = sessionStorage.getItem('role');
+        const adminRegion = sessionStorage.getItem('region');
+        let targetRegion = adminRegion;
+        
+        // 2. 전체 관리자인 경우 선택된 지역 필터 사용
+        if (role === 'admin' && adminRegion === 'all') {
+            const regionFilter = document.getElementById('regionFilter');
+            if (regionFilter) {
+                targetRegion = regionFilter.value;
+            }
+        }
+        
+        console.log('Calendar update for region:', targetRegion);
+        
+        // 3. 지역 정보를 API 요청에 포함 (필요한 경우)
+        const data = await apiRequest('/api/bookings/status', {
+            method: 'GET',
+            // 필요하다면 지역 정보를 쿼리 파라미터로 추가
+            // url: `/api/bookings/status?region=${targetRegion}`
+        });
+        
+        // 4. 받아온 데이터 저장
         bookingStatus = data.data;
         
-        // 관리자/사용자에 따라 다른 캘린더 업데이트
-        const role = sessionStorage.getItem('role');
+        // 5. 관리자/사용자에 따라 다른 캘린더 업데이트
         if (role === 'admin') {
             renderAdminCalendar(adminCurrentDate);
+            
+            // 6. 지역별 통계 새로고침 (필요한 경우)
+            if (typeof loadRegionStatistics === 'function') {
+                await loadRegionStatistics();
+            }
         } else {
             renderCalendar(currentDate);
         }
         
+        // 7. 남은 예약 횟수 업데이트
         if (data.remainingBookings !== undefined) {
             updateRemainingBookingsDisplay(data.remainingBookings);
         }
+        
+        console.log('Calendar status updated successfully');
     } catch (error) {
         console.error('Calendar status update error:', error);
     }
@@ -3409,21 +3442,47 @@ let adminCurrentDate = new Date();
 const debouncedUpdateCalendarStatus = debounce(async () => {
     try {
         console.log('Updating calendar status...');
+        
+        // 1. 관리자 정보와 선택된 지역 확인
+        const role = sessionStorage.getItem('role');
+        const adminRegion = sessionStorage.getItem('region');
+        let targetRegion = adminRegion;
+        
+        // 2. 전체 관리자인 경우 선택된 지역 필터 사용
+        if (role === 'admin' && adminRegion === 'all') {
+            const regionFilter = document.getElementById('regionFilter');
+            if (regionFilter) {
+                targetRegion = regionFilter.value;
+            }
+        }
+        
+        console.log('Calendar update for region:', targetRegion);
+        
+        // 3. API 요청
         const data = await apiRequest('/api/bookings/status');
         console.log('Received calendar status:', data);
+        
+        // 4. 받아온 데이터 저장
         bookingStatus = data.data;
         
-        // 관리자/사용자에 따라 다른 캘린더 업데이트
-        const role = sessionStorage.getItem('role'); // localStorage에서 sessionStorage로 변경
+        // 5. 관리자/사용자에 따라 다른 캘린더 업데이트
         if (role === 'admin') {
             renderAdminCalendar(adminCurrentDate);
+            
+            // 6. 지역별 통계 새로고침 (필요한 경우)
+            if (typeof loadRegionStatistics === 'function') {
+                await loadRegionStatistics();
+            }
         } else {
             renderCalendar(currentDate);
         }
         
+        // 7. 남은 예약 횟수 업데이트
         if (data.remainingBookings !== undefined) {
             updateRemainingBookingsDisplay(data.remainingBookings);
         }
+        
+        console.log('Calendar status updated successfully');
     } catch (error) {
         console.error('Calendar status update error:', error);
     }
@@ -3594,13 +3653,21 @@ function addDateClickHandler(element, year, month, day) {
 }
 
 // 관리자용 날짜 클릭 핸들러
-function addAdminDateClickHandler(element, dateString) {
+function addAdminDateClickHandler(element, dateString, targetRegion) {
     element.addEventListener('click', async () => {
         if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
             console.error('Invalid date format:', dateString);
             showAlert('올바르지 않은 날짜 형식입니다.', 'error');
             return;
         }
+        
+        // 선택된 지역 정보 저장 (필요한 경우)
+        if (targetRegion) {
+            sessionStorage.setItem('selectedTargetRegion', targetRegion);
+        }
+        
+        console.log(`Loading bookings for date: ${dateString}, region: ${targetRegion}`);
+        
         currentSelectedDate = dateString;
         await loadDateBookings(dateString);
         showDateBookingsModal();
@@ -3690,6 +3757,19 @@ function renderAdminCalendar(date) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // 관리자 지역과 선택된 지역 필터 확인
+    const adminRegion = sessionStorage.getItem('region');
+    let targetRegion = adminRegion;
+    
+    if (adminRegion === 'all') {
+        const regionFilter = document.getElementById('regionFilter');
+        if (regionFilter) {
+            targetRegion = regionFilter.value;
+        }
+    }
+    
+    console.log('Rendering admin calendar for region:', targetRegion);
+
     adminCurrentMonthElement.textContent = `${year}년 ${month + 1}월`;
 
     const firstDay = new Date(year, month, 1);
@@ -3721,7 +3801,8 @@ function renderAdminCalendar(date) {
 
         // 클릭 이벤트 추가 (관리자용으로 변경)
         if (selectedDateObj >= today) {
-            addAdminDateClickHandler(dayElement, dateString);
+            // 날짜 문자열과 함께 선택된 지역 정보도 전달
+            addAdminDateClickHandler(dayElement, dateString, targetRegion);
         }
 
         // 예약 수 배지 추가
@@ -3808,9 +3889,21 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
 
 // 모달 버튼 설정
 function setupModalButtons(dateString) {
+    // 전체 관리자가 선택한 지역 정보 가져오기
+    const adminRegion = sessionStorage.getItem('region');
+    let targetRegion = adminRegion;
+    
+    if (adminRegion === 'all') {
+        const regionFilter = document.getElementById('regionFilter');
+        if (regionFilter) {
+            targetRegion = regionFilter.value;
+        }
+    }
+    
+    console.log(`Setting up modal buttons for date: ${dateString}, region: ${targetRegion}`);
+
     document.getElementById('partialBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
-            console.log('Blocking date partially:', dateString);
             await blockDate(dateString, 'partial');
             closeDateBookingsModal();
         }
@@ -3818,7 +3911,6 @@ function setupModalButtons(dateString) {
 
     document.getElementById('fullBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
-            console.log('Blocking date fully:', dateString);
             await blockDate(dateString, 'full');
             closeDateBookingsModal();
         }
@@ -3826,7 +3918,6 @@ function setupModalButtons(dateString) {
 
     document.getElementById('unblockDateBtn').onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
-            console.log('Unblocking date:', dateString);
             await unblockDate(dateString);
             closeDateBookingsModal();
         }
@@ -4152,23 +4243,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
     try {
         const selectedRegion = e.target.value;
+        console.log('Region filter changed to:', selectedRegion);
         
         // 예약 설정 상태 로드
         const response = await apiRequest('/api/admin/booking-settings');
         if (response.success) {
             const settings = response.data;
-            // 선택된 지역의 설정 가져오기
             const regionSettings = settings[selectedRegion];
-            // UI 업데이트
             updateBookingStatusUI(regionSettings?.is_active || false);
         }
 
-        // 다른 데이터도 새로고침
+        // 데이터 새로고침 - 디바운스 없이 즉시 업데이트
         await Promise.all([
             loadRegionStatistics(),
             updateCalendarStatus(), // 디바운스 없이 즉시 업데이트
             loadPendingBookings()
         ]);
+        
+        console.log('Region change updates completed');
     } catch (error) {
         console.error('Region filter change error:', error);
         showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
