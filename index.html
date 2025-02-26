@@ -804,7 +804,7 @@
                        <!-- 여기에 공지사항 섹션 추가 -->
         <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
             <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-            <div id="noticesList" class="space-y-4">
+            <div id="noticesListSection" class="grid gap-6">
                 <!-- 공지사항이 여기에 동적으로 추가됨 -->
             </div>
         </div>
@@ -1283,26 +1283,30 @@ async function loadHomeNotices() {
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
         
         if (!response.ok) {
-            console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
             document.getElementById('homeNoticesList').innerHTML = 
                 '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
+            
+            // 두 번째 섹션도 업데이트
+            const secondList = document.getElementById('noticesListSection');
+            if (secondList) {
+                secondList.innerHTML = 
+                    '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
+            }
             return;
         }
         
         const data = await response.json();
-        const noticesList = document.getElementById('homeNoticesList');
+        const noticesLists = document.querySelectorAll('#homeNoticesList');
 
         if (data.success && data.data && data.data.length > 0) {
             // 중요 공지를 상단으로 정렬
             const sortedNotices = [...data.data].sort((a, b) => {
-                // 중요 공지가 먼저 오도록 정렬
                 if (a.is_important && !b.is_important) return -1;
                 if (!a.is_important && b.is_important) return 1;
-                // 그 다음 날짜순 정렬
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
-            noticesList.innerHTML = sortedNotices.map(notice => `
+            const noticesHTML = sortedNotices.map(notice => `
                 <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
                      onclick="showNoticeDetail(${JSON.stringify(notice).replace(/"/g, '&quot;')})">
                     <div class="flex justify-between items-center mb-4">
@@ -1330,13 +1334,23 @@ async function loadHomeNotices() {
                     </div>
                 </div>
             `).join('');
+
+            noticesLists.forEach(el => {
+                el.innerHTML = noticesHTML;
+            });
         } else {
-            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            noticesLists.forEach(el => {
+                el.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            });
         }
+        
+        // 공지사항 로드 후 관리자 상태 다시 확인
+        checkAdminStatus();
     } catch (error) {
         console.error('Home notices loading error:', error);
-        document.getElementById('homeNoticesList').innerHTML = 
-            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        document.querySelectorAll('#homeNoticesList').forEach(el => {
+            el.innerHTML = '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        });
     }
 }
 
@@ -1425,25 +1439,39 @@ function closeNoticeWriteModal() {
 
 // 로그인 상태 체크 및 관리자 기능 표시
 function checkAdminStatus() {
-    const isAdmin = sessionStorage.getItem('role') === 'admin'; // 관리자 역할 확인
+    const isAdmin = sessionStorage.getItem('role') === 'admin';
+    
+    // 홈 화면의 공지사항 섹션에 있는 버튼
     const noticeActions = document.getElementById('noticeActions');
     
     console.log('Admin status check:', {
         role: sessionStorage.getItem('role'),
         isAdmin: isAdmin,
-        noticeActionsElement: noticeActions ? 'exists' : 'not found'
+        noticeActionsFound: noticeActions ? true : false
     });
     
     if (noticeActions) {
         if (isAdmin) {
-            noticeActions.classList.remove('hidden'); // 관리자일 경우 글쓰기 버튼 보이기
-            console.log('Admin detected: Showing write button');
+            // 여러 방법으로 확실하게 표시
+            noticeActions.classList.remove('hidden');
+            noticeActions.style.display = 'block';
+            noticeActions.style.visibility = 'visible';
+            noticeActions.style.opacity = '1';
+            console.log('Admin detected: Showing write button with multiple style overrides');
         } else {
-            noticeActions.classList.add('hidden'); // 일반 사용자일 경우 글쓰기 버튼 숨기기
+            noticeActions.classList.add('hidden');
+            noticeActions.style.display = 'none';
             console.log('Not admin: Hiding write button');
         }
     } else {
-        console.warn('Notice actions element not found in the DOM');
+        console.warn('Notice actions element not found - trying to find by selector');
+        // 선택자로 시도
+        const actionsBySelector = document.querySelector('#notices .flex.justify-between div:last-child');
+        if (actionsBySelector && isAdmin) {
+            actionsBySelector.classList.remove('hidden');
+            actionsBySelector.style.display = 'block';
+            console.log('Found by selector and showing');
+        }
     }
 }
 
