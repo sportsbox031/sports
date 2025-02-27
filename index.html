@@ -356,123 +356,7 @@
 </head>
 
 <body class="bg-white">
-    <script>
-        // 공지사항 모달 시스템 (ESC 키 지원 포함)
-        (function() {
-            console.log('새 공지사항 모달 시스템 초기화 시작');
-            
-            // 이미 존재하는 모달 확인 및 제거
-            const existingModal = document.getElementById('independentNoticeModal');
-            if (existingModal) {
-                existingModal.remove();
-                console.log('기존 모달 제거됨');
-            }
-            
-            // 새 모달 HTML 추가
-            const newModalHTML = `
-                <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-                    background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
-                    <div style="background:white; max-width:800px; width:90%; border-radius:10px; padding:20px; position:relative; max-height:80vh; overflow-y:auto;">
-                        <button id="independentModalClose" style="position:absolute; top:10px; right:10px; background:none; border:none; 
-                        font-size:24px; cursor:pointer; width:30px; height:30px; line-height:30px; text-align:center;">×</button>
-                        <h2 id="independentModalTitle" style="margin-bottom:15px; font-size:22px; font-weight:bold;"></h2>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:#666;">
-                            <span id="independentModalAuthor"></span>
-                            <span id="independentModalDate"></span>
-                        </div>
-                        <div style="border-top:1px solid #eee; padding-top:15px;">
-                            <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', newModalHTML);
-            console.log('새 모달 HTML 추가됨');
-            
-            // 모달 요소 가져오기
-            const modal = document.getElementById('independentNoticeModal');
-            
-            // 모달 닫기 함수
-            function closeModal() {
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
-                console.log('모달 닫힘');
-            }
-            
-            // 닫기 버튼 이벤트
-            document.getElementById('independentModalClose').onclick = closeModal;
-            
-            // 외부 클릭 이벤트
-            modal.onclick = function(e) {
-                if (e.target === this) closeModal();
-            };
-            
-            // ESC 키 이벤트 (새로 추가됨)
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && modal.style.display === 'flex') {
-                    closeModal();
-                    console.log('ESC 키로 모달 닫힘');
-                }
-            });
-            
-            // 공지사항 클릭 이벤트 처리
-            function handleNoticeClick(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const noticeItem = e.currentTarget;
-                const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
-                
-                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                    const notice = window.noticesData[noticeId];
-                    console.log('표시할 공지사항:', notice);
-                    
-                    // 모달 내용 설정
-                    document.getElementById('independentModalTitle').textContent = notice.title;
-                    document.getElementById('independentModalContent').textContent = notice.content;
-                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
-                    
-                    // 모달 표시
-                    modal.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                    
-                    console.log('모달 표시됨');
-                }
-            }
-            
-            // 공지사항 항목에 이벤트 추가
-            function addNoticeListeners() {
-                const noticeItems = document.querySelectorAll('.notice-item');
-                console.log('공지사항 항목 수:', noticeItems.length);
-                
-                noticeItems.forEach(item => {
-                    // 기존 이벤트 제거
-                    const clone = item.cloneNode(true);
-                    item.parentNode.replaceChild(clone, item);
-                    
-                    // 새 이벤트 추가
-                    clone.addEventListener('click', handleNoticeClick, true);
-                });
-            }
-            
-            // 초기 실행 및 공지사항 로드 후 실행
-            setTimeout(addNoticeListeners, 1000);
-            
-            // loadHomeNotices 함수 오버라이드
-            if (window.loadHomeNotices) {
-                const originalLoadHomeNotices = window.loadHomeNotices;
-                window.loadHomeNotices = async function() {
-                    await originalLoadHomeNotices.apply(this, arguments);
-                    setTimeout(addNoticeListeners, 500);
-                    console.log('공지사항 로드 후 이벤트 리스너 추가');
-                };
-            }
-            
-            console.log('공지사항 모달 시스템 초기화 완료');
-        })();
-        </script>
-        
+
     <!-- 로딩 인디케이터 -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
@@ -1444,6 +1328,92 @@
 
 <!-- JavaScript 코드 시작 -->
 <script>
+// 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
+function setupIndependentNoticeSystem() {
+    // 1. 새 모달 HTML 추가
+    const newModalHTML = `
+        <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+            background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
+            <div style="background:white; max-width:800px; width:90%; border-radius:10px; padding:20px; position:relative; max-height:80vh; overflow-y:auto;">
+                <button id="independentModalClose" style="position:absolute; top:10px; right:10px; background:none; border:none; 
+                font-size:24px; cursor:pointer; width:30px; height:30px; line-height:30px; text-align:center;">×</button>
+                <h2 id="independentModalTitle" style="margin-bottom:15px; font-size:22px; font-weight:bold;"></h2>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:#666;">
+                    <span id="independentModalAuthor"></span>
+                    <span id="independentModalDate"></span>
+                </div>
+                <div style="border-top:1px solid #eee; padding-top:15px;">
+                    <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', newModalHTML);
+    
+    // 2. 모달 닫기 이벤트 설정
+    document.getElementById('independentModalClose').onclick = function() {
+        document.getElementById('independentNoticeModal').style.display = 'none';
+        document.body.style.overflow = '';
+    };
+    
+    // 3. 모달 외부 클릭 시 닫기
+    document.getElementById('independentNoticeModal').onclick = function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    };
+    
+    // 4. 공지사항 항목에 직접 이벤트 추가
+    function addDirectNoticeListeners() {
+        const noticeItems = document.querySelectorAll('.notice-item');
+        console.log('공지사항 항목 수:', noticeItems.length);
+        
+        noticeItems.forEach(item => {
+            // 기존 이벤트 제거 (이벤트 버블링 방지)
+            item.onclick = null;
+            
+            // 새 이벤트 추가
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const noticeId = parseInt(this.getAttribute('data-notice-id'));
+                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                    const notice = window.noticesData[noticeId];
+                    
+                    // 독립 모달에 내용 설정
+                    document.getElementById('independentModalTitle').textContent = notice.title;
+                    document.getElementById('independentModalContent').textContent = notice.content;
+                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+                    
+                    // 모달 표시
+                    const modal = document.getElementById('independentNoticeModal');
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    console.log('독립 모달 표시됨');
+                }
+            }, true); // 캡처 단계에서 이벤트 처리 (이벤트 버블링 방지)
+        });
+    }
+    
+    // 5. 페이지 로드 및 공지사항 로드 후 리스너 추가
+    setTimeout(addDirectNoticeListeners, 1000);
+    
+    // 6. loadHomeNotices 함수 이후에도 실행되도록 설정
+    const originalLoadHomeNotices = window.loadHomeNotices;
+    window.loadHomeNotices = async function() {
+        await originalLoadHomeNotices.apply(this, arguments);
+        setTimeout(addDirectNoticeListeners, 500);
+    };
+    
+    console.log('독립적인 공지사항 모달 시스템 설정 완료');
+}
+
+// 페이지 로드 후 실행
+window.addEventListener('DOMContentLoaded', setupIndependentNoticeSystem);
 
 // 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
