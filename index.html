@@ -1371,7 +1371,6 @@ function openModal(modalId) {
         console.error(`Modal with ID ${modalId} not found`);
         return;
     }
-    // inline 스타일 대신 클래스만 토글하여 CSS에서 처리되도록 합니다.
     modal.classList.remove('hidden');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
