@@ -1889,14 +1889,15 @@ function checkAdminStatus() {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
+    // 기존 초기화 코드
     initializeNoticeListeners();
     
     // 공지사항 로드
     loadHomeNotices();
     checkAdminStatus();
-
-        // 디버깅 함수 전역으로 노출 (중복이지만 확실히 하기 위해)
-        window.diagnoseModalIssue = diagnoseModalIssue;
+    
+    // 디버깅 함수 전역으로 노출
+    window.diagnoseModalIssue = diagnoseModalIssue;
     
     // 홈으로 돌아갈 때도 공지사항 새로고침
     document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
@@ -1907,64 +1908,267 @@ document.addEventListener('DOMContentLoaded', function() {
             checkAdminStatus();
         };
     });
-});
-
-// 파일 선택 시 파일명 표시
-document.getElementById('noticeFile')?.addEventListener('change', function() {
-    const fileName = this.files[0]?.name || '선택된 파일 없음';
-    document.getElementById('selectedFileName').textContent = fileName;
+    
+    // 파일 선택 이벤트 리스너 추가
+    const fileInput = document.getElementById('noticeFile');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const fileName = this.files[0]?.name || '선택된 파일 없음';
+            const fileNameElement = document.getElementById('selectedFileName');
+            if (fileNameElement) {
+                fileNameElement.textContent = fileName;
+            }
+        });
+    }
+    
+    // 새로 추가된 초기화 코드
+    setTimeout(modifyNoticeFormWithGithubConverter, 2000);
+    setTimeout(enhanceNoticeDetailModal, 2500);
 });
 
     // 공지사항 작성 폼 제출
-    document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
+    function convertToRawGithubUrl(url) {
+  try {
+    // 일반 깃허브 링크 패턴 확인
+    const githubPattern = /https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/;
+    const match = url.match(githubPattern);
     
-    try {
+    if (match) {
+      const [_, username, repo, branch, path] = match;
+      return `https://raw.githubusercontent.com/${username}/${repo}/${branch}/${path}`;
+    }
+    
+    // 이미 Raw 링크인 경우 그대로 반환
+    if (url.includes('raw.githubusercontent.com')) {
+      return url;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('URL 변환 오류:', error);
+    return null;
+  }
+}
+
+// 깃허브 URL에서 파일명 추출
+function extractFileNameFromGithubUrl(url) {
+  try {
+    if (!url) return null;
+    
+    // URL에서 마지막 부분 추출
+    const parts = url.split('/');
+    const lastPart = parts[parts.length - 1];
+    
+    // 쿼리 파라미터 제거
+    return lastPart.split('?')[0];
+  } catch (error) {
+    console.error('파일명 추출 오류:', error);
+    return null;
+  }
+}
+
+// 공지사항 상세 모달 개선 함수
+function enhanceNoticeDetailModal() {
+  // 독립 모달에 첨부파일 섹션 추가
+  const modal = document.getElementById('independentNoticeModal');
+  if (!modal) return;
+  
+  // 첨부파일 섹션이 이미 있는지 확인
+  if (!document.getElementById('independentModalAttachment')) {
+    const modalContent = modal.querySelector('div:first-child');
+    
+    const attachmentSection = document.createElement('div');
+    attachmentSection.id = 'independentModalAttachment';
+    attachmentSection.style.marginTop = '20px';
+    attachmentSection.style.paddingTop = '15px';
+    attachmentSection.style.borderTop = '1px solid #eee';
+    attachmentSection.style.display = 'none';
+    
+    attachmentSection.innerHTML = `
+      <h3 style="font-weight:bold; margin-bottom:10px; font-size:16px;">첨부파일</h3>
+      <div id="independentModalFile" style="display:flex; align-items:center;">
+        <a id="independentModalFileLink" href="#" target="_blank" download
+           style="display:inline-flex; align-items:center; padding:8px 12px; background:#f3f4f6; border-radius:4px; text-decoration:none; color:#374151; font-size:14px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="margin-right:8px;" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+          <span id="independentModalFileName">파일 다운로드</span>
+        </a>
+      </div>
+    `;
+    
+    modalContent.appendChild(attachmentSection);
+  }
+  
+  // 공지사항 처리 함수 수정
+  window.handleNoticeClick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const noticeItem = e.currentTarget;
+    const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+    
+    if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+      const notice = window.noticesData[noticeId];
+      console.log('표시할 공지사항:', notice);
+      
+      // 모달 내용 설정
+      document.getElementById('independentModalTitle').textContent = notice.title;
+      document.getElementById('independentModalContent').textContent = notice.content;
+      document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+      document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+      
+      // 첨부파일 섹션 처리
+      const attachmentSection = document.getElementById('independentModalAttachment');
+      if (attachmentSection) {
+        if (notice.attachment_url) {
+          document.getElementById('independentModalFileName').textContent = 
+            notice.attachment_name || '첨부파일 다운로드';
+          document.getElementById('independentModalFileLink').href = notice.attachment_url;
+          attachmentSection.style.display = 'block';
+        } else {
+          attachmentSection.style.display = 'none';
+        }
+      }
+      
+      // 모달 표시
+      const modal = document.getElementById('independentNoticeModal');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      console.log('모달 표시됨');
+    }
+  };
+}
+
+// 공지사항 작성 폼 수정 - 깃허브 링크 자동 변환 기능 추가
+function modifyNoticeFormWithGithubConverter() {
+  // 첨부파일 섹션을 깃허브 링크 입력으로 변경
+  const fileSection = document.querySelector('#noticeWriteModal [id="noticeFile"]').closest('div');
+  if (fileSection) {
+    fileSection.innerHTML = `
+      <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일 깃허브 링크</label>
+      <div class="flex flex-col space-y-2">
+        <div class="flex items-center space-x-2">
+          <input type="url" id="noticeFileLink" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="일반 깃허브 링크를 입력하세요 (자동으로 Raw 링크로 변환됩니다)">
+          <button type="button" id="convertToRawBtn" 
+            class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex-shrink-0">
+            변환
+          </button>
+        </div>
+        <div id="rawLinkPreview" class="text-sm text-gray-600 bg-gray-100 p-2 rounded-lg hidden">
+          <span class="font-medium">Raw 링크: </span>
+          <span id="rawLinkText"></span>
+        </div>
+        <input type="text" id="noticeFileName" 
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="다운로드 버튼에 표시될 파일 이름 (예: 신청서.hwp)">
+      </div>
+      <p class="text-xs text-gray-500 mt-1">
+        일반 깃허브 링크를 입력하면 자동으로 Raw 링크로 변환됩니다.<br>
+        (예: https://github.com/username/repo/blob/main/file.pdf)
+      </p>
+    `;
+    
+    // 변환 버튼 이벤트 리스너 추가
+    setTimeout(() => {
+      const convertBtn = document.getElementById('convertToRawBtn');
+      const linkInput = document.getElementById('noticeFileLink');
+      const rawPreview = document.getElementById('rawLinkPreview');
+      const rawLinkText = document.getElementById('rawLinkText');
+      
+      if (convertBtn && linkInput) {
+        // 링크 입력 시 자동 파일명 추출
+        linkInput.addEventListener('input', function() {
+          const fileName = extractFileNameFromGithubUrl(this.value);
+          if (fileName) {
+            document.getElementById('noticeFileName').value = fileName;
+          }
+        });
+        
+        // 변환 버튼 클릭 이벤트
+        convertBtn.addEventListener('click', function() {
+          const githubUrl = linkInput.value.trim();
+          if (!githubUrl) {
+            showAlert('깃허브 링크를 입력해주세요.', 'error');
+            return;
+          }
+          
+          const rawUrl = convertToRawGithubUrl(githubUrl);
+          if (rawUrl) {
+            linkInput.value = rawUrl;
+            rawLinkText.textContent = rawUrl;
+            rawPreview.classList.remove('hidden');
+            showAlert('Raw 링크로 변환되었습니다.', 'success');
+          } else {
+            showAlert('유효한 깃허브 링크가 아닙니다.', 'error');
+          }
+        });
+      }
+    }, 100);
+    
+    console.log('첨부파일 섹션이 깃허브 링크 변환 기능으로 업데이트되었습니다.');
+  }
+  
+  // 폼 제출 처리 수정
+  const form = document.getElementById('noticeWriteForm');
+  if (form) {
+    form.onsubmit = async function(e) {
+      e.preventDefault();
+      
+      try {
         showLoading();
         
-        // FormData 객체 생성 (파일 업로드를 위해)
-        const formData = new FormData();
-        formData.append('title', document.getElementById('noticeTitle').value);
-        formData.append('content', document.getElementById('noticeContent').value);
-        formData.append('region', document.getElementById('noticeRegion').value);
-        formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
+        const fileLink = document.getElementById('noticeFileLink')?.value || null;
+        const fileName = document.getElementById('noticeFileName')?.value || extractFileNameFromGithubUrl(fileLink) || '첨부파일';
         
-        // 첨부파일이 있으면 추가
-        const fileInput = document.getElementById('noticeFile');
-        if (fileInput.files[0]) {
-            formData.append('attachment', fileInput.files[0]);
-        }
+        // 링크가 일반 깃허브 링크인 경우 자동 변환
+        const finalLink = fileLink ? convertToRawGithubUrl(fileLink) || fileLink : null;
         
-        // API 요청 (파일 업로드를 위해 Content-Type 헤더 제거)
+        const formData = {
+          title: document.getElementById('noticeTitle').value,
+          content: document.getElementById('noticeContent').value,
+          region: document.getElementById('noticeRegion').value,
+          is_important: document.getElementById('noticeImportant').checked,
+          attachment_url: finalLink,
+          attachment_name: fileName
+        };
+        
         const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-            },
-            body: formData
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify(formData)
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
+          const errorData = await response.json();
+          throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
         }
         
         const data = await response.json();
         
         if (data.success) {
-            showAlert('공지사항이 등록되었습니다.', 'success');
-            closeNoticeWriteModal();
-            loadHomeNotices(); // 공지사항 목록 새로고침
+          showAlert('공지사항이 등록되었습니다.', 'success');
+          closeNoticeWriteModal();
+          loadHomeNotices(); // 공지사항 목록 새로고침
         } else {
-            throw new Error(data.message || '공지사항 등록에 실패했습니다.');
+          throw new Error(data.message || '공지사항 등록에 실패했습니다.');
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Notice submission error:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
-    } finally {
+      } finally {
         hideLoading();
-    }
-});
+      }
+    };
+  }
+}
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
