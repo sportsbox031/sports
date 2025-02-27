@@ -66,27 +66,27 @@
     }
 
     /* 모달 스타일 */
-.modal {
-    display: none !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    z-index: 9999 !important;
-    overflow-y: auto !important;
-    padding: 2rem !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
-    align-items: center !important;
-    justify-content: center !important;
+    .modal {
+    display: none; /* !important 제거 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal.show {
-    display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    display: flex; /* !important 제거 */
+    opacity: 1;
+    visibility: visible;
 }
 
 /* 모달 내용 컨테이너 (모든 모달에 적용) */
@@ -1365,18 +1365,31 @@ function diagnoseModalIssue() {
 window.diagnoseModalIssue = diagnoseModalIssue;
 
 // 모달 직접 제어 함수
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error(`Modal with ID ${modalId} not found`);
-        return;
+function openModal(modalId) { 
+    const modal = document.getElementById(modalId); 
+    if (!modal) { 
+        console.error(`Modal with ID ${modalId} not found`); 
+        return; 
     }
-    modal.classList.remove('hidden');
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-}
+    console.log(`Opening modal: ${modalId}`);
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
 
-function closeModal(modalId) { const modal = document.getElementById(modalId); if (!modal) return; modal.classList.remove('show'); modal.classList.add('hidden'); document.body.style.overflow = ''; }
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+} // openModal 함수 닫기
+
+function closeModal(modalId) { 
+    const modal = document.getElementById(modalId); 
+    if (!modal) return;
+    console.log(`Closing modal: ${modalId}`);
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+} // closeModal 함수 닫기
 
 // 홈화면 공지사항 로드
 async function loadHomeNotices() {
@@ -1445,9 +1458,6 @@ async function loadHomeNotices() {
                     }).join('')}
                 </div>
             `;
-            
-            // 중요: 이벤트 리스너 설정 - 내용 변경 후 반드시 호출
-            setupNoticeClickListener();
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
@@ -1461,50 +1471,49 @@ async function loadHomeNotices() {
 }
 
 function showNoticeDetail(notice) {
-    // 기존 함수를 호출하도록 리다이렉트
-    displayNoticeModal(notice);
-}
-
-function displayNoticeModal(notice) { 
-    console.log('모달 직접 표시 함수 호출:', notice); 
-    const modal = document.getElementById('noticeDetailModal'); 
-    if (!modal) { 
-        console.error('모달 요소를 찾을 수 없음'); 
-        return; 
+    console.log('모달 표시 함수 호출:', notice);
+    const modal = document.getElementById('noticeDetailModal');
+    if (!modal) {
+        console.error('모달 요소를 찾을 수 없음');
+        return;
     }
     
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
     document.getElementById('noticeDetailContent').textContent = notice.content;
-
+    
     const authorElement = document.getElementById('noticeDetailAuthor');
     if (authorElement) {
         authorElement.textContent = `작성자: ${notice.author || '관리자'}`;
     }
-
+    
     const dateElement = document.getElementById('noticeDetailDate');
     if (dateElement) {
         dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
     }
-
-    // 관리자 권한에 따른 수정/삭제 버튼 토글
-    const noticeActions = document.getElementById('noticeDetailActions');
-    if (noticeActions) {
-        const role = sessionStorage.getItem('role');
-        const region = sessionStorage.getItem('region');
-        if (role === 'admin' && (region === 'all' || region === notice.region)) {
-            noticeActions.classList.remove('hidden');
+    
+    // 관리자 액션 버튼 표시/숨김 처리
+    const actionButtons = document.getElementById('noticeDetailActions');
+    if (actionButtons) {
+        if (sessionStorage.getItem('role') === 'admin') {
+            actionButtons.classList.remove('hidden');
+            currentNoticeId = notice.id; // 현재 공지사항 ID 저장
         } else {
-            noticeActions.classList.add('hidden');
+            actionButtons.classList.add('hidden');
         }
     }
-
-    currentNoticeId = notice.id;
-
-    // 기존 openModal 함수를 사용하여 모달 표시
-    openModal('noticeDetailModal');
-
-    console.log('모달 표시 완료 - 현재 모달 클래스:', modal.classList);
+    
+    // 모달 표시
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    
+    // 배경 스크롤 방지
+    document.body.style.overflow = 'hidden';
+    
+    console.log('모달 표시 완료');
 }
 
 function showNoticeDetailFromElement(element) {
@@ -1533,15 +1542,35 @@ function closeNoticeDetail() {
     
     // 모달 숨기기
     modal.classList.add('hidden');
+    modal.classList.remove('show');
     modal.style.display = 'none';
-    modal.style.opacity = '0';
-    modal.style.visibility = 'hidden';
     
     // 배경 스크롤 복원
     document.body.style.overflow = '';
     
+    // 현재 공지사항 ID 초기화
     currentNoticeId = null;
+    
     console.log('모달 닫힘');
+}
+
+function initializeNoticeListeners() {
+    // 기존 리스너 제거 (필요시)
+    const noticesList = document.getElementById('homeNoticesList');
+    if (!noticesList) return;
+    
+    // 이벤트 위임 방식으로 한 번만 등록
+    noticesList.addEventListener('click', function(e) {
+        const noticeItem = e.target.closest('.notice-item');
+        if (noticeItem) {
+            const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+            if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                showNoticeDetail(window.noticesData[noticeId]);
+            }
+        }
+    });
+    
+    console.log('공지사항 클릭 이벤트 리스너 등록 완료');
 }
 
 // 공지사항 수정
@@ -1639,8 +1668,7 @@ function checkAdminStatus() {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
-    // 공지사항 이벤트 리스너 설정
-    setupNoticeClickListener();
+    initializeNoticeListeners();
     
     // 공지사항 로드
     loadHomeNotices();
@@ -1776,12 +1804,6 @@ function cleanupEventListeners() {
         console.log('공지사항 이벤트 리스너 정리됨');
     }
 }
-
-// 공지사항 클릭 이벤트 리스너 등록 (단일)
-function noticeItemClickHandler(e) { const noticeItem = e.target.closest('.notice-item'); if (noticeItem) { e.preventDefault(); const noticeId = parseInt(noticeItem.getAttribute('data-notice-id')); if (window.noticesData && !isNaN(noticeId) && noticeId < window.noticesData.length) { const notice = window.noticesData[noticeId]; displayNoticeModal(notice); } } }
-
-function setupNoticeClickListener() { const noticesList = document.getElementById('homeNoticesList'); if (!noticesList) return; 
- noticesList.removeEventListener('click', noticeItemClickHandler); noticesList.addEventListener('click', noticeItemClickHandler); console.log('공지사항 클릭 이벤트 리스너 재등록 완료'); }
 
 // 남은 예약 횟수 표시 업데이트 함수
 function updateRemainingBookingsDisplay(remainingBookings) {
@@ -4465,18 +4487,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 공지사항 로드
     loadHomeNotices();
     checkAdminStatus();
-
-// 공지사항 목록에 이벤트 리스너 추가
-document.getElementById('homeNoticesList').addEventListener('click', function(e) {
-    const noticeItem = e.target.closest('.notice-item');
-    if (noticeItem) {
-        const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
-        if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-            const notice = window.noticesData[noticeId];
-            showNoticeDetail(notice);
-        }
-    }
-});
 
 // 모달 외부 클릭 시 닫기
 document.getElementById('noticeDetailModal').addEventListener('click', function(e) {
