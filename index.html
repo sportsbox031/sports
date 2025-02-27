@@ -107,20 +107,20 @@
 
 /* 공지사항 모달 특별 스타일 (공지사항 모달에만 적용) */
 #noticeDetailModal {
-    z-index: 10000 !important; /* 모달 중에서 가장 높게 설정 */
-    background-color: rgba(0, 0, 0, 0.7) !important; /* 더 진한 배경색 */
-    padding: 0 !important;
+    z-index: 10000 ; /* 모달 중에서 가장 높게 설정 */
+    background-color: rgba(0, 0, 0, 0.7) ; /* 더 진한 배경색 */
+    padding: 0 ;
 }
 
 /* 이 부분 추가: 공지사항 모달이 show 클래스를 가질 때 */
 #noticeDetailModal.show {
-    display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    display: flex ;
+    opacity: 1 ;
+    visibility: visible ;
 }
 
 #noticeDetailModal:not(.hidden) {
-    display: flex !important;
+    display: flex ;
 }
 
 /* 공지사항 모달 내부 레이아웃 */
