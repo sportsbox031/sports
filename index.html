@@ -1472,11 +1472,6 @@ async function loadHomeNotices() {
 
 function showNoticeDetail(notice) {
     console.log('모달 표시 함수 호출:', notice);
-    const modal = document.getElementById('noticeDetailModal');
-    if (!modal) {
-        console.error('모달 요소를 찾을 수 없음');
-        return;
-    }
     
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
@@ -1492,28 +1487,27 @@ function showNoticeDetail(notice) {
         dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
     }
     
-    // 관리자 액션 버튼 표시/숨김 처리
-    const actionButtons = document.getElementById('noticeDetailActions');
-    if (actionButtons) {
-        if (sessionStorage.getItem('role') === 'admin') {
-            actionButtons.classList.remove('hidden');
-            currentNoticeId = notice.id; // 현재 공지사항 ID 저장
-        } else {
-            actionButtons.classList.add('hidden');
+    // 비동기적으로 모달 표시 (0ms 타임아웃으로 다음 이벤트 루프에서 실행)
+    setTimeout(() => {
+        const modal = document.getElementById('noticeDetailModal');
+        if (!modal) {
+            console.error('모달 요소를 찾을 수 없음');
+            return;
         }
-    }
-    
-    // 모달 표시
-    modal.classList.remove('hidden');
-    modal.classList.add('show');
-    modal.style.display = 'flex';
-    modal.style.opacity = '1';
-    modal.style.visibility = 'visible';
-    
-    // 배경 스크롤 방지
-    document.body.style.overflow = 'hidden';
-    
-    console.log('모달 표시 완료');
+        
+        // 모달 표시
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.visibility = 'visible';
+        modal.style.zIndex = '99999'; // 매우 높은 z-index 설정
+        
+        // 배경 스크롤 방지
+        document.body.style.overflow = 'hidden';
+        
+        console.log('모달 표시 완료 - 타임아웃 내부');
+    }, 0);
 }
 
 function showNoticeDetailFromElement(element) {
@@ -1555,14 +1549,16 @@ function closeNoticeDetail() {
 }
 
 function initializeNoticeListeners() {
-    // 기존 리스너 제거 (필요시)
     const noticesList = document.getElementById('homeNoticesList');
     if (!noticesList) return;
     
-    // 이벤트 위임 방식으로 한 번만 등록
     noticesList.addEventListener('click', function(e) {
         const noticeItem = e.target.closest('.notice-item');
         if (noticeItem) {
+            // 중요: 이벤트 전파 중지
+            e.preventDefault();
+            e.stopPropagation();
+            
             const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
             if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
                 showNoticeDetail(window.noticesData[noticeId]);
