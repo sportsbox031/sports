@@ -191,12 +191,16 @@
 
 /* 공지사항 디자인 개선 */
 .notice-item {
-        transition: all 0.2s ease;
-    }
-    
-    .notice-item:hover {
-        background-color: rgba(240, 240, 250, 0.5);
-    }
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.notice-item:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  background-color: rgba(240, 240, 250, 0.7);
+}
     
     .notice-number {
         min-width: 60px;
@@ -1323,6 +1327,93 @@
 
 <!-- JavaScript 코드 시작 -->
 <script>
+// 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
+function setupIndependentNoticeSystem() {
+    // 1. 새 모달 HTML 추가
+    const newModalHTML = `
+        <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+            background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
+            <div style="background:white; max-width:800px; width:90%; border-radius:10px; padding:20px; position:relative; max-height:80vh; overflow-y:auto;">
+                <button id="independentModalClose" style="position:absolute; top:10px; right:10px; background:none; border:none; 
+                font-size:24px; cursor:pointer; width:30px; height:30px; line-height:30px; text-align:center;">×</button>
+                <h2 id="independentModalTitle" style="margin-bottom:15px; font-size:22px; font-weight:bold;"></h2>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:#666;">
+                    <span id="independentModalAuthor"></span>
+                    <span id="independentModalDate"></span>
+                </div>
+                <div style="border-top:1px solid #eee; padding-top:15px;">
+                    <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', newModalHTML);
+    
+    // 2. 모달 닫기 이벤트 설정
+    document.getElementById('independentModalClose').onclick = function() {
+        document.getElementById('independentNoticeModal').style.display = 'none';
+        document.body.style.overflow = '';
+    };
+    
+    // 3. 모달 외부 클릭 시 닫기
+    document.getElementById('independentNoticeModal').onclick = function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    };
+    
+    // 4. 공지사항 항목에 직접 이벤트 추가
+    function addDirectNoticeListeners() {
+        const noticeItems = document.querySelectorAll('.notice-item');
+        console.log('공지사항 항목 수:', noticeItems.length);
+        
+        noticeItems.forEach(item => {
+            // 기존 이벤트 제거 (이벤트 버블링 방지)
+            item.onclick = null;
+            
+            // 새 이벤트 추가
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const noticeId = parseInt(this.getAttribute('data-notice-id'));
+                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                    const notice = window.noticesData[noticeId];
+                    
+                    // 독립 모달에 내용 설정
+                    document.getElementById('independentModalTitle').textContent = notice.title;
+                    document.getElementById('independentModalContent').textContent = notice.content;
+                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+                    
+                    // 모달 표시
+                    const modal = document.getElementById('independentNoticeModal');
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    console.log('독립 모달 표시됨');
+                }
+            }, true); // 캡처 단계에서 이벤트 처리 (이벤트 버블링 방지)
+        });
+    }
+    
+    // 5. 페이지 로드 및 공지사항 로드 후 리스너 추가
+    setTimeout(addDirectNoticeListeners, 1000);
+    
+    // 6. loadHomeNotices 함수 이후에도 실행되도록 설정
+    const originalLoadHomeNotices = window.loadHomeNotices;
+    window.loadHomeNotices = async function() {
+        await originalLoadHomeNotices.apply(this, arguments);
+        setTimeout(addDirectNoticeListeners, 500);
+    };
+    
+    console.log('독립적인 공지사항 모달 시스템 설정 완료');
+}
+
+// 페이지 로드 후 실행
+window.addEventListener('DOMContentLoaded', setupIndependentNoticeSystem);
+
 // 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
