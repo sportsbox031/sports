@@ -2113,7 +2113,7 @@ function modifyNoticeFormWithGithubConverter() {
     console.log('첨부파일 섹션이 깃허브 링크 변환 기능으로 업데이트되었습니다.');
   }
   
-  // 폼 제출 처리 수정
+  // 폼 제출 처리 수정 - FormData 사용
   const form = document.getElementById('noticeWriteForm');
   if (form) {
     form.onsubmit = async function(e) {
@@ -2128,22 +2128,26 @@ function modifyNoticeFormWithGithubConverter() {
         // 링크가 일반 깃허브 링크인 경우 자동 변환
         const finalLink = fileLink ? convertToRawGithubUrl(fileLink) || fileLink : null;
         
-        const formData = {
-          title: document.getElementById('noticeTitle').value,
-          content: document.getElementById('noticeContent').value,
-          region: document.getElementById('noticeRegion').value,
-          is_important: document.getElementById('noticeImportant').checked,
-          attachment_url: finalLink,
-          attachment_name: fileName
-        };
+        // FormData 객체 생성
+        const formData = new FormData();
+        formData.append('title', document.getElementById('noticeTitle').value);
+        formData.append('content', document.getElementById('noticeContent').value);
+        formData.append('region', document.getElementById('noticeRegion').value);
+        formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
+        
+        // 첨부파일 URL과 이름 추가
+        if (finalLink) {
+          formData.append('attachment_url', finalLink);
+          formData.append('attachment_name', fileName);
+        }
         
         const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            // Content-Type은 FormData에서 자동으로 설정되므로 제거
           },
-          body: JSON.stringify(formData)
+          body: formData
         });
         
         if (!response.ok) {
