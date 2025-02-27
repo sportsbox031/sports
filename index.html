@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스포츠박스 - 경기도체육회</title>
     
+    <link rel="icon" href="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/110ce5261818cd69133e46ef8c6b097a.png" type="image/png">
+
     <!-- 스타일시트 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
@@ -90,6 +92,18 @@
 /* 공지사항 모달 특별 스타일 */
 #noticeDetailModal {
     z-index: 10000 !important;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#noticeDetailModal.show,
+#noticeDetailModal:not(.hidden) {
+    display: flex !important;
 }
 
     .modal-content {
@@ -1401,25 +1415,7 @@ async function loadHomeNotices() {
                 </div>
             `;
             
-            // 이벤트 위임 방식으로 클릭 이벤트 등록
-            noticesList.addEventListener('click', function(e) {
-                console.log('공지사항 항목 클릭됨'); // 디버깅용
-                
-                const noticeItem = e.target.closest('.notice-item');
-                if (noticeItem) {
-                    console.log('notice-item 찾음:', noticeItem); // 디버깅용
-                    const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
-                    console.log('공지사항 ID:', noticeId); // 디버깅용
-                    
-                    if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                        const notice = window.noticesData[noticeId];
-                        console.log('공지사항 데이터:', notice); // 디버깅용
-                        showNoticeDetail(notice);
-                    } else {
-                        console.error('공지사항 데이터를 찾을 수 없음');
-                    }
-                }
-            });
+            // 여기서 이벤트 리스너 등록 부분을 삭제합니다
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
@@ -1434,6 +1430,8 @@ async function loadHomeNotices() {
 
 // 공지사항 상세 보기 함수 수정
 function showNoticeDetail(notice) {
+    console.log("공지사항 상세보기 호출됨:", notice);
+    
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
     document.getElementById('noticeDetailContent').textContent = notice.content;
@@ -1453,20 +1451,16 @@ function showNoticeDetail(notice) {
         }
     }
     
-    // 모달 표시
+    // 모달 표시 - 여러 방법으로 시도
     const modal = document.getElementById('noticeDetailModal');
+    modal.style.display = 'flex';
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
     
     // 현재 공지사항 ID 저장
     currentNoticeId = notice.id;
-}
-
-function closeNoticeDetail() {
-    const modal = document.getElementById('noticeDetailModal');
-    modal.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-    currentNoticeId = null;
+    
+    console.log("모달 표시됨");
 }
 
 function showNoticeDetailFromElement(element) {
@@ -1595,9 +1589,33 @@ function checkAdminStatus() {
 }
 
 // 페이지 로드 시 실행
+// 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
+    
+    // 여기에 추가 - 공지사항 클릭 이벤트 리스너
+    const noticesList = document.getElementById('homeNoticesList');
+    if (noticesList) {
+        noticesList.addEventListener('click', function(e) {
+            console.log('공지사항 영역 클릭됨');
+            
+            const noticeItem = e.target.closest('.notice-item');
+            if (noticeItem) {
+                console.log('notice-item 찾음:', noticeItem);
+                const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+                console.log('공지사항 ID:', noticeId);
+                
+                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                    const notice = window.noticesData[noticeId];
+                    console.log('공지사항 데이터:', notice);
+                    showNoticeDetail(notice);
+                } else {
+                    console.error('공지사항 데이터를 찾을 수 없음');
+                }
+            }
+        });
+    }
     
     // 홈으로 돌아갈 때도 공지사항 새로고침
     document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
