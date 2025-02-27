@@ -66,7 +66,7 @@
     }
 
     /* 모달 스타일 */
-    .modal {
+.modal {
     display: none !important;
     position: fixed !important;
     top: 0 !important;
@@ -110,6 +110,13 @@
     z-index: 10000 !important; /* 모달 중에서 가장 높게 설정 */
     background-color: rgba(0, 0, 0, 0.7) !important; /* 더 진한 배경색 */
     padding: 0 !important;
+}
+
+/* 이 부분 추가: 공지사항 모달이 show 클래스를 가질 때 */
+#noticeDetailModal.show {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 #noticeDetailModal:not(.hidden) {
@@ -682,6 +689,33 @@
                     </button>
                 </div>
             </div>
+
+<!-- 공지사항 상세보기 모달 -->
+<div id="noticeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
+            <button onclick="closeNoticeDetail()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 id="noticeDetailTitle" class="text-2xl font-bold mb-4"></h2>
+            <div class="flex justify-between text-sm text-gray-500 mb-4">
+                <span id="noticeDetailAuthor"></span>
+                <span id="noticeDetailDate"></span>
+            </div>
+            <div class="border-t pt-4">
+                <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
+            </div>
+            <div id="noticeDetailActions" class="flex justify-end space-x-2 mt-6 pt-4 border-t hidden">
+                <button onclick="editNotice()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    수정
+                </button>
+                <button onclick="deleteNotice()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    삭제
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- 회원가입 모달 -->
 <div id="signupModal" class="modal">
@@ -1267,34 +1301,6 @@
     </div>
 </div>
 
-<!-- 공지사항 상세보기 모달 -->
-<div id="noticeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
-            <button onclick="closeNoticeDetail()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2 id="noticeDetailTitle" class="text-2xl font-bold mb-4"></h2>
-            <div class="flex justify-between text-sm text-gray-500 mb-4">
-                <span id="noticeDetailAuthor"></span>
-                <span id="noticeDetailDate"></span>
-            </div>
-            <div class="border-t pt-4">
-                <p id="noticeDetailContent" class="text-gray-700 whitespace-pre-line"></p>
-            </div>
-            <div id="noticeDetailActions" class="flex justify-end space-x-2 mt-6 pt-4 border-t hidden">
-                <button onclick="editNotice()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    수정
-                </button>
-                <button onclick="deleteNotice()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    삭제
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <!-- 연락처 모달 -->
 <div id="contactModal" class="modal">
     <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
@@ -1431,7 +1437,7 @@ async function loadHomeNotices() {
                 </div>
             `;
             
-            // 이벤트 리스너 재설정
+            // 중요: 이벤트 리스너 설정 - 내용 변경 후 반드시 호출
             setupNoticeClickListener();
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
@@ -1443,6 +1449,11 @@ async function loadHomeNotices() {
         document.getElementById('homeNoticesList').innerHTML = 
             '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
     }
+}
+
+function showNoticeDetail(notice) {
+    // 기존 함수를 호출하도록 리다이렉트
+    displayNoticeModal(notice);
 }
 
 // 공지사항 상세 보기 함수 수정
@@ -1486,17 +1497,20 @@ function displayNoticeModal(notice) {
     // 현재 공지사항 ID 저장
     currentNoticeId = notice.id;
     
-    // 모달 강제 표시 (여러 방법 시도)
-    // 1. 클래스 조작
+    // 중요: 모달 표시 방식 통일
+    // 1. hidden 클래스 제거
     modal.classList.remove('hidden');
     
-    // 2. 인라인 스타일로 강제 표시
+    // 2. show 클래스 추가 (CSS에 정의된 .modal.show 스타일 적용)
+    modal.classList.add('show');
+    
+    // 3. 인라인 스타일로 강제 표시 (추가 보장)
     modal.style.display = 'flex';
     modal.style.opacity = '1';
     modal.style.visibility = 'visible';
-    modal.style.zIndex = '10000';  // 최상위 레이어
+    modal.style.zIndex = '10000';
     
-    // 3. 배경 스크롤 방지
+    // 4. 배경 스크롤 방지
     document.body.style.overflow = 'hidden';
     
     console.log('모달 표시 완료 - 모달 상태:', {
@@ -1506,11 +1520,28 @@ function displayNoticeModal(notice) {
         zIndex: modal.style.zIndex,
         classList: [...modal.classList]
     });
+}
+
+// closeNoticeDetail 함수 수정
+function closeNoticeDetail() {
+    const modal = document.getElementById('noticeDetailModal');
+    if (!modal) return;
     
-    // 4. 강제 포커스
-    setTimeout(() => {
-        modal.focus();
-    }, 100);
+    // 중요: 모달 숨김 방식 통일
+    // 1. show 클래스 제거
+    modal.classList.remove('show');
+    
+    // 2. hidden 클래스 추가
+    modal.classList.add('hidden');
+    
+    // 3. 인라인 스타일로 강제 숨김
+    modal.style.display = 'none';
+    
+    // 4. 배경 스크롤 복원
+    document.body.style.overflow = '';
+    
+    currentNoticeId = null;
+    console.log('모달 닫힘');
 }
 
 function showNoticeDetailFromElement(element) {
@@ -1645,22 +1676,20 @@ function checkAdminStatus() {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
-        // 기존 이벤트 리스너 정리 및 새로 등록
-        setupNoticeClickListener();
+    // 공지사항 이벤트 리스너 설정
+    setupNoticeClickListener();
     
     // 공지사항 로드
     loadHomeNotices();
     checkAdminStatus();
     
-        // 홈으로 돌아갈 때 처리
-        document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
+    // 홈으로 돌아갈 때도 공지사항 새로고침
+    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
         const originalClick = button.onclick;
-        button.onclick = async function(e) {
-            e.stopPropagation(); // 이벤트 버블링 방지
+        button.onclick = async function() {
             originalClick.call(this);
             await loadHomeNotices();
             checkAdminStatus();
-            setupNoticeClickListener(); // 이벤트 리스너 재설정
         };
     });
 });
