@@ -1364,6 +1364,18 @@ function setupIndependentNoticeSystem() {
         }
     };
     
+    // 3.5. ESC 키로 모달 닫기 기능 추가 (여기만 추가)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('independentNoticeModal');
+            if (modal && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+                console.log('ESC 키로 모달 닫힘');
+            }
+        }
+    });
+    
     // 4. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
         const noticeItems = document.querySelectorAll('.notice-item');
