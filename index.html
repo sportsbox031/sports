@@ -91,17 +91,20 @@
 
 /* 공지사항 모달 특별 스타일 */
 #noticeDetailModal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
     z-index: 10000 !important;
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 1rem;
 }
 
-#noticeDetailModal.show,
 #noticeDetailModal:not(.hidden) {
     display: flex !important;
 }
@@ -1421,6 +1424,7 @@ async function loadHomeNotices() {
         }
         
         checkAdminStatus();
+        addNoticeClickListeners();
     } catch (error) {
         console.error('Home notices loading error:', error);
         document.getElementById('homeNoticesList').innerHTML = 
@@ -1432,13 +1436,20 @@ async function loadHomeNotices() {
 function showNoticeDetail(notice) {
     console.log("공지사항 상세보기 호출됨:", notice);
     
+    // 모달 요소 가져오기
+    const modal = document.getElementById('noticeDetailModal');
+    if (!modal) {
+        console.error('noticeDetailModal 요소를 찾을 수 없습니다');
+        return;
+    }
+    
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
     document.getElementById('noticeDetailContent').textContent = notice.content;
-    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author}`;
+    document.getElementById('noticeDetailAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
     document.getElementById('noticeDetailDate').textContent = new Date(notice.created_at).toLocaleDateString();
     
-    // 관리자 권한 확인
+    // 관리자 권한 확인 및 액션 버튼 표시/숨김
     const role = sessionStorage.getItem('role');
     const region = sessionStorage.getItem('region');
     const noticeActions = document.getElementById('noticeDetailActions');
@@ -1451,14 +1462,18 @@ function showNoticeDetail(notice) {
         }
     }
     
-    // 모달 표시 - 여러 방법으로 시도
-    const modal = document.getElementById('noticeDetailModal');
-    modal.style.display = 'flex';
-    modal.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-    
     // 현재 공지사항 ID 저장
     currentNoticeId = notice.id;
+    
+    // 모달 표시 - 다양한 방법 적용
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10000';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    
+    // 배경 스크롤 방지
+    document.body.style.overflow = 'hidden';
     
     console.log("모달 표시됨");
 }
@@ -1589,10 +1604,10 @@ function checkAdminStatus() {
 }
 
 // 페이지 로드 시 실행
-// 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
+    addNoticeClickListeners();
     
     // 여기에 추가 - 공지사항 클릭 이벤트 리스너
     const noticesList = document.getElementById('homeNoticesList');
@@ -1627,7 +1642,31 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 });
+
+// 공지사항 목록에 이벤트 리스너 추가 (한 번만 등록되도록)
+function addNoticeClickListeners() {
+    const noticesList = document.getElementById('homeNoticesList');
+    if (!noticesList || noticesList.hasAttribute('data-has-listeners')) return;
     
+    noticesList.setAttribute('data-has-listeners', 'true');
+    noticesList.addEventListener('click', function(e) {
+        console.log('공지사항 영역 클릭됨 (단일 리스너)');
+        
+        const noticeItem = e.target.closest('.notice-item');
+        if (noticeItem) {
+            e.stopPropagation(); // 이벤트 버블링 방지
+            
+            const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+            if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                const notice = window.noticesData[noticeId];
+                showNoticeDetail(notice);
+            }
+        }
+    });
+    
+    console.log('공지사항 클릭 리스너 등록 완료');
+}
+
     // 공지사항 작성 폼 제출
     document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -4533,16 +4572,6 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-
-    // 홈으로 돌아갈 때도 공지사항 새로고침
-    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
-        const originalClick = button.onclick;
-        button.onclick = async function() {
-            originalClick.call(this);
-            await loadHomeNotices();
-            checkAdminStatus();
-        };
-    });
 
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
