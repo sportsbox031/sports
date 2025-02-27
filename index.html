@@ -485,7 +485,7 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="noticeWriteForm" class="space-y-4">
+        <form id="noticeWriteForm" class="space-y-4" enctype="multipart/form-data">
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
                 <input type="text" id="noticeTitle" required
@@ -495,6 +495,21 @@
                 <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
                 <textarea id="noticeContent" required rows="6"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+            </div>
+            <!-- 첨부파일 필드 추가 -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
+                <div class="flex items-center space-x-2">
+                    <input type="file" id="noticeFile" 
+                        class="hidden" 
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.jpg,.jpeg,.png,.gif">
+                    <button type="button" onclick="document.getElementById('noticeFile').click()" 
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                        파일 선택
+                    </button>
+                    <span id="selectedFileName" class="text-sm text-gray-600">선택된 파일 없음</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">최대 파일 크기: 10MB (PDF, 워드, 엑셀, 파워포인트, 한글, 이미지 파일)</p>
             </div>
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
@@ -1330,7 +1345,7 @@
 <script>
 // 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
 function setupIndependentNoticeSystem() {
-    // 1. 새 모달 HTML 추가
+    // 1. 새 모달 HTML 추가 (첨부파일 섹션 포함)
     const newModalHTML = `
         <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
             background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
@@ -1344,6 +1359,19 @@ function setupIndependentNoticeSystem() {
                 </div>
                 <div style="border-top:1px solid #eee; padding-top:15px;">
                     <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
+                </div>
+                <!-- 첨부파일 섹션 추가 -->
+                <div id="independentModalAttachment" style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; display:none;">
+                    <h3 style="font-weight:bold; margin-bottom:10px; font-size:16px;">첨부파일</h3>
+                    <div id="independentModalFile" style="display:flex; align-items:center;">
+                        <a id="independentModalFileLink" href="#" style="display:inline-flex; align-items:center; padding:8px 12px; background:#f3f4f6; border-radius:4px; text-decoration:none; color:#374151; font-size:14px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="margin-right:8px;" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                            </svg>
+                            <span id="independentModalFileName">파일명</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1364,7 +1392,7 @@ function setupIndependentNoticeSystem() {
         }
     };
     
-    // 3.5. ESC 키로 모달 닫기 기능 추가 (여기만 추가)
+    // 4. ESC 키로 모달 닫기 기능 추가
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('independentNoticeModal');
@@ -1376,7 +1404,44 @@ function setupIndependentNoticeSystem() {
         }
     });
     
-    // 4. 공지사항 항목에 직접 이벤트 추가
+    // 공지사항 표시 함수 정의
+    function handleNoticeClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const noticeItem = e.currentTarget;
+        const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+        
+        if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+            const notice = window.noticesData[noticeId];
+            console.log('표시할 공지사항:', notice);
+            
+            // 모달 내용 설정
+            document.getElementById('independentModalTitle').textContent = notice.title;
+            document.getElementById('independentModalContent').textContent = notice.content;
+            document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+            document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+            
+            // 첨부파일 섹션 처리
+            const attachmentSection = document.getElementById('independentModalAttachment');
+            if (notice.attachment_url) {
+                document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+                document.getElementById('independentModalFileLink').href = notice.attachment_url;
+                attachmentSection.style.display = 'block';
+            } else {
+                attachmentSection.style.display = 'none';
+            }
+            
+            // 모달 표시
+            const modal = document.getElementById('independentNoticeModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            console.log('모달 표시됨');
+        }
+    }
+
+    // 5. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
         const noticeItems = document.querySelectorAll('.notice-item');
         console.log('공지사항 항목 수:', noticeItems.length);
@@ -1385,36 +1450,15 @@ function setupIndependentNoticeSystem() {
             // 기존 이벤트 제거 (이벤트 버블링 방지)
             item.onclick = null;
             
-            // 새 이벤트 추가
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const noticeId = parseInt(this.getAttribute('data-notice-id'));
-                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                    const notice = window.noticesData[noticeId];
-                    
-                    // 독립 모달에 내용 설정
-                    document.getElementById('independentModalTitle').textContent = notice.title;
-                    document.getElementById('independentModalContent').textContent = notice.content;
-                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
-                    
-                    // 모달 표시
-                    const modal = document.getElementById('independentNoticeModal');
-                    modal.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                    
-                    console.log('독립 모달 표시됨');
-                }
-            }, true); // 캡처 단계에서 이벤트 처리 (이벤트 버블링 방지)
+            // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
+            item.addEventListener('click', handleNoticeClick, true);
         });
     }
     
-    // 5. 페이지 로드 및 공지사항 로드 후 리스너 추가
+    // 6. 페이지 로드 및 공지사항 로드 후 리스너 추가
     setTimeout(addDirectNoticeListeners, 1000);
     
-    // 6. loadHomeNotices 함수 이후에도 실행되도록 설정
+    // 7. loadHomeNotices 함수 이후에도 실행되도록 설정
     const originalLoadHomeNotices = window.loadHomeNotices;
     window.loadHomeNotices = async function() {
         await originalLoadHomeNotices.apply(this, arguments);
@@ -1788,42 +1832,62 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// 파일 선택 시 파일명 표시
+document.getElementById('noticeFile')?.addEventListener('change', function() {
+    const fileName = this.files[0]?.name || '선택된 파일 없음';
+    document.getElementById('selectedFileName').textContent = fileName;
+});
+
     // 공지사항 작성 폼 제출
     document.getElementById('noticeWriteForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    e.preventDefault();
+    
+    try {
+        showLoading();
         
-        // 폼 제출 버튼 비활성화 (중복 제출 방지)
-        const submitButton = this.querySelector('button[type="submit"]');
-        if (submitButton) submitButton.disabled = true;
+        // FormData 객체 생성 (파일 업로드를 위해)
+        const formData = new FormData();
+        formData.append('title', document.getElementById('noticeTitle').value);
+        formData.append('content', document.getElementById('noticeContent').value);
+        formData.append('region', document.getElementById('noticeRegion').value);
+        formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
         
-        try {
-            const noticeData = {
-                title: document.getElementById('noticeTitle').value.trim(),
-                content: document.getElementById('noticeContent').value.trim(),
-                region: document.getElementById('noticeRegion').value,
-                is_important: document.getElementById('noticeImportant').checked ? 1 : 0
-            };
-
-            // 필수 필드 검증
-            if (!noticeData.title || !noticeData.content || !noticeData.region) {
-                showAlert('제목, 내용, 공개 범위를 모두 입력해주세요.', 'error');
-                return;
-            }
-
-            await createNotice(noticeData);
-            closeNoticeWriteModal();
-            
-            // 공지사항 목록 새로고침
-            await loadHomeNotices();
-        } catch (error) {
-            console.error('Notice submission error:', error);
-            showAlert('공지사항 등록 중 오류가 발생했습니다.', 'error');
-        } finally {
-            // 폼 제출 버튼 다시 활성화
-            if (submitButton) submitButton.disabled = false;
+        // 첨부파일이 있으면 추가
+        const fileInput = document.getElementById('noticeFile');
+        if (fileInput.files[0]) {
+            formData.append('attachment', fileInput.files[0]);
         }
-    });
-;
+        
+        // API 요청 (파일 업로드를 위해 Content-Type 헤더 제거)
+        const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('공지사항이 등록되었습니다.', 'success');
+            closeNoticeWriteModal();
+            loadHomeNotices(); // 공지사항 목록 새로고침
+        } else {
+            throw new Error(data.message || '공지사항 등록에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Notice submission error:', error);
+        showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
