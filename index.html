@@ -1471,6 +1471,83 @@ function setupIndependentNoticeSystem() {
 // 페이지 로드 후 실행
 window.addEventListener('DOMContentLoaded', setupIndependentNoticeSystem);
 
+// 공지사항 시스템 정리 함수
+function cleanupNoticeSystem() {
+  // 1. 기존 공지사항 관련 함수들 재정의
+  window.showNoticeDetail = function(notice) {
+    console.log('기존 showNoticeDetail 함수가 호출되었지만 무시됨');
+    // 대신 새 시스템으로 리다이렉트
+    const modal = document.getElementById('independentNoticeModal');
+    if (modal) {
+      document.getElementById('independentModalTitle').textContent = notice.title;
+      document.getElementById('independentModalContent').textContent = notice.content;
+      document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+      document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+      
+      // 첨부파일 섹션 처리
+      const attachmentSection = document.getElementById('independentModalAttachment');
+      if (notice.attachment_url) {
+        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+        document.getElementById('independentModalFileLink').href = notice.attachment_url;
+        attachmentSection.style.display = 'block';
+      } else {
+        attachmentSection.style.display = 'none';
+      }
+      
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  };
+  
+  window.closeNoticeDetail = function() {
+    const modal = document.getElementById('independentNoticeModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  };
+  
+  // 2. 기존 noticeDetailModal 비활성화
+  const oldModal = document.getElementById('noticeDetailModal');
+  if (oldModal) {
+    oldModal.style.display = 'none';
+    oldModal.classList.add('hidden');
+    // 이벤트 리스너 제거
+    oldModal.replaceWith(oldModal.cloneNode(true));
+  }
+  
+  console.log('공지사항 시스템 정리 완료');
+}
+
+// 기존 DOMContentLoaded 이벤트 핸들러 백업
+const originalDOMContentLoaded = window.addEventListener('DOMContentLoaded', function() {
+  // 독립 공지사항 시스템 설정
+  setupIndependentNoticeSystem();
+  
+  // 기존 시스템 정리
+  setTimeout(cleanupNoticeSystem, 1500);
+});
+
+// 로그인 화면 함수 패치
+const originalShowLoginScreen = window.showLoginScreen;
+window.showLoginScreen = function() {
+  // 모든 공지사항 모달 닫기
+  const independentModal = document.getElementById('independentNoticeModal');
+  if (independentModal) {
+    independentModal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  
+  const oldModal = document.getElementById('noticeDetailModal');
+  if (oldModal) {
+    oldModal.style.display = 'none';
+    oldModal.classList.add('hidden');
+  }
+  
+  // 원래 함수 호출
+  return originalShowLoginScreen.apply(this, arguments);
+};
+
 // 기본 설정
 const API_BASE_URL = 'https://sports-box-api.sportsbox031.workers.dev';
 const DEBUG = true;
