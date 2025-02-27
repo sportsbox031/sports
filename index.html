@@ -1328,6 +1328,7 @@
 <!-- JavaScript 코드 시작 -->
 <script>
 // 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
+// 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
 function setupIndependentNoticeSystem() {
     // 1. 새 모달 HTML 추가
     const newModalHTML = `
@@ -1363,7 +1364,22 @@ function setupIndependentNoticeSystem() {
         }
     };
     
-    // 4. 공지사항 항목에 직접 이벤트 추가
+    // 4. ESC 키로 모달 닫기 기능 추가
+    function closeModalOnEsc(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('independentNoticeModal');
+            if (modal && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+                console.log('ESC 키로 모달 닫힘');
+            }
+        }
+    }
+    
+    // 전역 이벤트 리스너 등록
+    document.addEventListener('keydown', closeModalOnEsc);
+    
+    // 5. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
         const noticeItems = document.querySelectorAll('.notice-item');
         console.log('공지사항 항목 수:', noticeItems.length);
@@ -1398,10 +1414,10 @@ function setupIndependentNoticeSystem() {
         });
     }
     
-    // 5. 페이지 로드 및 공지사항 로드 후 리스너 추가
+    // 6. 페이지 로드 및 공지사항 로드 후 리스너 추가
     setTimeout(addDirectNoticeListeners, 1000);
     
-    // 6. loadHomeNotices 함수 이후에도 실행되도록 설정
+    // 7. loadHomeNotices 함수 이후에도 실행되도록 설정
     const originalLoadHomeNotices = window.loadHomeNotices;
     window.loadHomeNotices = async function() {
         await originalLoadHomeNotices.apply(this, arguments);
