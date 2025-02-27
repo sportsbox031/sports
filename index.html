@@ -1371,27 +1371,13 @@ function openModal(modalId) {
         console.error(`Modal with ID ${modalId} not found`);
         return;
     }
-    
-    console.log(`Opening modal: ${modalId}`); // 디버깅용
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
-    
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
+    // inline 스타일 대신 클래스만 토글하여 CSS에서 처리되도록 합니다.
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
 }
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-    
-    console.log(`Closing modal: ${modalId}`); // 디버깅용
-    modal.classList.remove('show');
-    setTimeout(() => {
-        modal.style.display = 'none';
-        document.body.style.overflow = ''; // 배경 스크롤 복원
-    }, 300);
-}
+function closeModal(modalId) { const modal = document.getElementById(modalId); if (!modal) return; modal.classList.remove('show'); modal.classList.add('hidden'); document.body.style.overflow = ''; }
 
 // 홈화면 공지사항 로드
 async function loadHomeNotices() {
@@ -1481,92 +1467,40 @@ function showNoticeDetail(notice) {
 }
 
 // 공지사항 상세 보기 함수 수정
-function displayNoticeModal(notice) {
-    console.log('모달 직접 표시 함수 호출:', notice);
-    
-    // 모달 요소 가져오기
-    const modal = document.getElementById('noticeDetailModal');
-    if (!modal) {
-        console.error('모달 요소를 찾을 수 없음');
-        return;
-    }
+function displayNoticeModal(notice) { console.log('모달 직접 표시 함수 호출:', notice); const modal = document.getElementById('noticeDetailModal'); if (!modal) { console.error('모달 요소를 찾을 수 없음'); return; }
     
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
-    document.getElementById('noticeDetailContent').textContent = notice.content;
-    
-    const authorElement = document.getElementById('noticeDetailAuthor');
-    if (authorElement) {
-        authorElement.textContent = `작성자: ${notice.author || '관리자'}`;
-    }
-    
-    const dateElement = document.getElementById('noticeDetailDate');
-    if (dateElement) {
-        dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
-    }
-    
-    // 관리자 권한 확인
-    const role = sessionStorage.getItem('role');
-    const region = sessionStorage.getItem('region');
-    const noticeActions = document.getElementById('noticeDetailActions');
-    
-    if (noticeActions) {
-        if (role === 'admin' && (region === 'all' || region === notice.region)) {
-            noticeActions.classList.remove('hidden');
-        } else {
-            noticeActions.classList.add('hidden');
-        }
-    }
-    
-    // 현재 공지사항 ID 저장
-    currentNoticeId = notice.id;
-    
-    // 중요: 모달 표시 방식 통일
-    // 1. hidden 클래스 제거
-    modal.classList.remove('hidden');
-    
-    // 2. show 클래스 추가 (CSS에 정의된 .modal.show 스타일 적용)
-    modal.classList.add('show');
-    
-    // 3. 인라인 스타일로 강제 표시 (추가 보장)
-    modal.style.display = 'flex';
-    modal.style.opacity = '1';
-    modal.style.visibility = 'visible';
-    modal.style.zIndex = '10000';
-    
-    // 4. 배경 스크롤 방지
-    document.body.style.overflow = 'hidden';
-    
-    console.log('모달 표시 완료 - 모달 상태:', {
-        display: modal.style.display,
-        opacity: modal.style.opacity,
-        visibility: modal.style.visibility,
-        zIndex: modal.style.zIndex,
-        classList: [...modal.classList]
-    });
+document.getElementById('noticeDetailContent').textContent = notice.content;
+
+const authorElement = document.getElementById('noticeDetailAuthor');
+if (authorElement) {
+    authorElement.textContent = `작성자: ${notice.author || '관리자'}`;
 }
 
-// closeNoticeDetail 함수 수정
-function closeNoticeDetail() {
-    const modal = document.getElementById('noticeDetailModal');
-    if (!modal) return;
-    
-    // 중요: 모달 숨김 방식 통일
-    // 1. show 클래스 제거
-    modal.classList.remove('show');
-    
-    // 2. hidden 클래스 추가
-    modal.classList.add('hidden');
-    
-    // 3. 인라인 스타일로 강제 숨김
-    modal.style.display = 'none';
-    
-    // 4. 배경 스크롤 복원
-    document.body.style.overflow = '';
-    
-    currentNoticeId = null;
-    console.log('모달 닫힘');
+const dateElement = document.getElementById('noticeDetailDate');
+if (dateElement) {
+    dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
 }
+
+// 관리자 권한에 따른 수정/삭제 버튼 토글 (생략 가능)
+const noticeActions = document.getElementById('noticeDetailActions');
+if (noticeActions) {
+    const role = sessionStorage.getItem('role');
+    const region = sessionStorage.getItem('region');
+    if (role === 'admin' && (region === 'all' || region === notice.region)) {
+        noticeActions.classList.remove('hidden');
+    } else {
+        noticeActions.classList.add('hidden');
+    }
+}
+
+currentNoticeId = notice.id;
+
+// 기존 openModal 함수를 사용하여 모달 표시
+openModal('noticeDetailModal');
+
+console.log('모달 표시 완료 - 현재 모달 클래스:', modal.classList);
 
 function showNoticeDetailFromElement(element) {
     try {
@@ -1839,31 +1773,10 @@ function cleanupEventListeners() {
 }
 
 // 공지사항 클릭 이벤트 리스너 등록 (단일)
-function setupNoticeClickListener() {
-    cleanupEventListeners(); // 기존 이벤트 리스너 정리
-    
-    const noticesList = document.getElementById('homeNoticesList');
-    if (!noticesList) return;
-    
-    noticesList.addEventListener('click', function(e) {
-        console.log('공지사항 클릭 (새 리스너)');
-        
-        const noticeItem = e.target.closest('.notice-item');
-        if (noticeItem) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
-            if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                const notice = window.noticesData[noticeId];
-                // 기존 함수 대신 직접 처리
-                displayNoticeModal(notice);
-            }
-        }
-    });
-    
-    console.log('새 공지사항 클릭 리스너 등록됨');
-}
+function noticeItemClickHandler(e) { const noticeItem = e.target.closest('.notice-item'); if (noticeItem) { e.preventDefault(); const noticeId = parseInt(noticeItem.getAttribute('data-notice-id')); if (window.noticesData && !isNaN(noticeId) && noticeId < window.noticesData.length) { const notice = window.noticesData[noticeId]; displayNoticeModal(notice); } } }
+
+function setupNoticeClickListener() { const noticesList = document.getElementById('homeNoticesList'); if (!noticesList) return; 
+ noticesList.removeEventListener('click', noticeItemClickHandler); noticesList.addEventListener('click', noticeItemClickHandler); console.log('공지사항 클릭 이벤트 리스너 재등록 완료'); }
 
 // 남은 예약 횟수 표시 업데이트 함수
 function updateRemainingBookingsDisplay(remainingBookings) {
@@ -2864,29 +2777,6 @@ async function loadAdminBookings() {
         console.error('Error loading admin bookings:', error);
         showAlert(error.message || '예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
     }
-}
-
-// 상태 클래스 및 텍스트 헬퍼 함수들
-function getStatusClass(status) {
-    const statusClasses = {
-        approved: 'bg-green-100 text-green-800',
-        pending: 'bg-yellow-100 text-yellow-800',
-        rejected: 'bg-red-100 text-red-800',
-        cancelled: 'bg-gray-100 text-gray-800',
-        cancel_pending: 'bg-orange-100 text-orange-800'
-    };
-    return statusClasses[status] || 'bg-gray-100 text-gray-800';
-}
-
-function getStatusText(status) {
-    const statusTexts = {
-        approved: '승인완료',
-        pending: '승인대기',
-        rejected: '거부됨',
-        cancelled: '취소완료',
-        cancel_pending: '취소대기'
-    };
-    return statusTexts[status] || '알 수 없음';
 }
 
 // 날짜 포맷 함수
