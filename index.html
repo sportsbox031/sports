@@ -1889,41 +1889,31 @@ function checkAdminStatus() {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
-    // 기존 초기화 코드
-    initializeNoticeListeners();
-    
-    // 공지사항 로드
-    loadHomeNotices();
-    checkAdminStatus();
-    
-    // 디버깅 함수 전역으로 노출
-    window.diagnoseModalIssue = diagnoseModalIssue;
-    
-    // 홈으로 돌아갈 때도 공지사항 새로고침
-    document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
-        const originalClick = button.onclick;
-        button.onclick = async function() {
-            originalClick.call(this);
-            await loadHomeNotices();
-            checkAdminStatus();
-        };
-    });
-    
-    // 파일 선택 이벤트 리스너 추가
-    const fileInput = document.getElementById('noticeFile');
-    if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            const fileName = this.files[0]?.name || '선택된 파일 없음';
-            const fileNameElement = document.getElementById('selectedFileName');
-            if (fileNameElement) {
-                fileNameElement.textContent = fileName;
-            }
-        });
-    }
-    
-    // 새로 추가된 초기화 코드
-    setTimeout(modifyNoticeFormWithGithubConverter, 2000);
-    setTimeout(enhanceNoticeDetailModal, 2500);
+  // 기존 초기화 코드
+  initializeNoticeListeners();
+  
+  // 공지사항 로드
+  loadHomeNotices();
+  checkAdminStatus();
+  
+  // 디버깅 함수 전역으로 노출
+  window.diagnoseModalIssue = diagnoseModalIssue;
+  
+  // 홈으로 돌아갈 때도 공지사항 새로고침
+  document.querySelectorAll('button[onclick="showHomeScreen()"]').forEach(button => {
+    const originalClick = button.onclick;
+    button.onclick = async function() {
+      originalClick.call(this);
+      await loadHomeNotices();
+      checkAdminStatus();
+    };
+  });
+  
+  // 공지사항 모달 초기화 및 개선
+  initializeNoticeModal();
+  
+  // 공지사항 폼 수정
+  setTimeout(modifyNoticeFormWithGithubConverter, 2000);
 });
 
     // 공지사항 작성 폼 제출
@@ -1968,14 +1958,109 @@ function extractFileNameFromGithubUrl(url) {
 }
 
 // 공지사항 상세 모달 개선 함수
+function convertToRawGithubUrl(url) {
+  try {
+    // 일반 깃허브 링크 패턴 확인
+    const githubPattern = /https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/;
+    const match = url.match(githubPattern);
+    
+    if (match) {
+      const [_, username, repo, branch, path] = match;
+      return `https://raw.githubusercontent.com/${username}/${repo}/${branch}/${path}`;
+    }
+    
+    // 이미 Raw 링크인 경우 그대로 반환
+    if (url.includes('raw.githubusercontent.com')) {
+      return url;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('URL 변환 오류:', error);
+    return null;
+  }
+}
+
+// 깃허브 URL에서 파일명 추출
+function extractFileNameFromGithubUrl(url) {
+  try {
+    if (!url) return null;
+    
+    // URL에서 마지막 부분 추출
+    const parts = url.split('/');
+    const lastPart = parts[parts.length - 1];
+    
+    // 쿼리 파라미터 제거
+    return lastPart.split('?')[0];
+  } catch (error) {
+    console.error('파일명 추출 오류:', error);
+    return null;
+  }
+}
+
+// 공지사항 모달 초기화 함수 - 페이지 로드 시 즉시 실행
+function initializeNoticeModal() {
+  console.log('공지사항 모달 초기화 시작');
+  
+  // 독립 공지사항 모달이 없으면 생성
+  if (!document.getElementById('independentNoticeModal')) {
+    console.log('독립 공지사항 모달 생성');
+    const modalHTML = `
+      <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+          background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
+          <div style="background:white; max-width:800px; width:90%; border-radius:10px; padding:20px; position:relative; max-height:80vh; overflow-y:auto;">
+              <button id="independentModalClose" style="position:absolute; top:10px; right:10px; background:none; border:none; 
+              font-size:24px; cursor:pointer; width:30px; height:30px; line-height:30px; text-align:center;">×</button>
+              <h2 id="independentModalTitle" style="margin-bottom:15px; font-size:22px; font-weight:bold;"></h2>
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:#666;">
+                  <span id="independentModalAuthor"></span>
+                  <span id="independentModalDate"></span>
+              </div>
+              <div style="border-top:1px solid #eee; padding-top:15px;">
+                  <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
+              </div>
+          </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // 모달 닫기 버튼 이벤트
+    document.getElementById('independentModalClose').onclick = function() {
+      document.getElementById('independentNoticeModal').style.display = 'none';
+      document.body.style.overflow = '';
+    };
+    
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('independentNoticeModal').onclick = function(e) {
+      if (e.target === this) {
+        this.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    };
+  }
+  
+  // 첨부파일 섹션 추가
+  enhanceNoticeDetailModal();
+}
+
+// 공지사항 상세 모달 개선 함수
 function enhanceNoticeDetailModal() {
+  console.log('공지사항 상세 모달 개선 시작');
+  
   // 독립 모달에 첨부파일 섹션 추가
   const modal = document.getElementById('independentNoticeModal');
-  if (!modal) return;
+  if (!modal) {
+    console.error('independentNoticeModal을 찾을 수 없습니다');
+    return;
+  }
   
   // 첨부파일 섹션이 이미 있는지 확인
   if (!document.getElementById('independentModalAttachment')) {
     const modalContent = modal.querySelector('div:first-child');
+    if (!modalContent) {
+      console.error('모달 컨텐츠 요소를 찾을 수 없습니다');
+      return;
+    }
     
     const attachmentSection = document.createElement('div');
     attachmentSection.id = 'independentModalAttachment';
@@ -1999,12 +2084,15 @@ function enhanceNoticeDetailModal() {
     `;
     
     modalContent.appendChild(attachmentSection);
+    console.log('첨부파일 섹션이 모달에 추가되었습니다');
   }
   
   // 공지사항 처리 함수 수정
   window.handleNoticeClick = function(e) {
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log('공지사항 클릭 이벤트 발생');
     
     const noticeItem = e.currentTarget;
     const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
@@ -2021,14 +2109,21 @@ function enhanceNoticeDetailModal() {
       
       // 첨부파일 섹션 처리
       const attachmentSection = document.getElementById('independentModalAttachment');
+      console.log('첨부파일 정보:', {
+        url: notice.attachment_url,
+        name: notice.attachment_name
+      });
+      
       if (attachmentSection) {
         if (notice.attachment_url) {
           document.getElementById('independentModalFileName').textContent = 
             notice.attachment_name || '첨부파일 다운로드';
           document.getElementById('independentModalFileLink').href = notice.attachment_url;
           attachmentSection.style.display = 'block';
+          console.log('첨부파일 섹션 표시됨');
         } else {
           attachmentSection.style.display = 'none';
+          console.log('첨부파일이 없어 섹션이 숨겨짐');
         }
       }
       
@@ -2040,6 +2135,48 @@ function enhanceNoticeDetailModal() {
       console.log('모달 표시됨');
     }
   };
+  
+  // 공지사항 목록 로드 후 이벤트 리스너 재설정
+  const originalLoadHomeNotices = window.loadHomeNotices;
+  if (originalLoadHomeNotices) {
+    window.loadHomeNotices = async function() {
+      await originalLoadHomeNotices.apply(this, arguments);
+      
+      // 공지사항 항목에 이벤트 리스너 다시 추가
+      setTimeout(() => {
+        const noticeItems = document.querySelectorAll('.notice-item');
+        console.log('공지사항 항목 수:', noticeItems.length);
+        
+        noticeItems.forEach(item => {
+          // 기존 이벤트 제거
+          const clone = item.cloneNode(true);
+          item.parentNode.replaceChild(clone, item);
+          
+          // 새 이벤트 추가
+          clone.addEventListener('click', window.handleNoticeClick);
+        });
+        
+        console.log('공지사항 이벤트 리스너 재설정 완료');
+      }, 500);
+    };
+  }
+  
+  // 현재 표시된 공지사항에 이벤트 리스너 즉시 추가
+  setTimeout(() => {
+    const noticeItems = document.querySelectorAll('.notice-item');
+    console.log('현재 공지사항 항목 수:', noticeItems.length);
+    
+    noticeItems.forEach(item => {
+      // 기존 이벤트 제거
+      const clone = item.cloneNode(true);
+      item.parentNode.replaceChild(clone, item);
+      
+      // 새 이벤트 추가
+      clone.addEventListener('click', window.handleNoticeClick);
+    });
+    
+    console.log('현재 공지사항 이벤트 리스너 설정 완료');
+  }, 500);
 }
 
 // 공지사항 작성 폼 수정 - 깃허브 링크 자동 변환 기능 추가
