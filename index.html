@@ -2123,6 +2123,12 @@ function returnToDashboard() {
 }
 
 function showLoginScreen() {
+    // 공지사항 모달이 열려있다면 닫기
+    const noticeModal = document.getElementById('noticeDetailModal');
+    if (noticeModal && (noticeModal.classList.contains('show') || noticeModal.style.display === 'flex')) {
+        closeNoticeDetail();
+    }
+    
     // 현재 로그인 상태 확인
     const token = sessionStorage.getItem('token');
     const role = sessionStorage.getItem('role');
