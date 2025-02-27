@@ -4573,6 +4573,15 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+    // 로그인 버튼과 예약 버튼에 명시적인 이벤트 중지 추가
+    document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button => {
+        const originalOnclick = button.onclick;
+        button.onclick = function(e) {
+            e.stopPropagation(); // 이벤트 전파 중지
+            if (originalOnclick) originalOnclick.call(this, e);
+        };
+    });
+
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
     try {
