@@ -1712,27 +1712,39 @@ function showNoticeDetail(notice) {
         dateElement.textContent = new Date(notice.created_at).toLocaleDateString();
     }
     
-    // 비동기적으로 모달 표시 (0ms 타임아웃으로 다음 이벤트 루프에서 실행)
-    setTimeout(() => {
-        const modal = document.getElementById('noticeDetailModal');
-        if (!modal) {
-            console.error('모달 요소를 찾을 수 없음');
-            return;
+    // 관리자 권한 확인 및 버튼 표시
+    const noticeDetailActions = document.getElementById('noticeDetailActions');
+    if (noticeDetailActions) {
+        const isAdmin = sessionStorage.getItem('role') === 'admin';
+        // 관리자인 경우 버튼 표시
+        if (isAdmin) {
+            noticeDetailActions.classList.remove('hidden');
+            // 현재 공지사항 ID 저장 (수정/삭제 시 사용)
+            currentNoticeId = notice.id;
+        } else {
+            noticeDetailActions.classList.add('hidden');
         }
-        
-        // 모달 표시
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
-        modal.style.display = 'flex';
-        modal.style.opacity = '1';
-        modal.style.visibility = 'visible';
-        modal.style.zIndex = '99999'; // 매우 높은 z-index 설정
-        
-        // 배경 스크롤 방지
-        document.body.style.overflow = 'hidden';
-        
-        console.log('모달 표시 완료 - 타임아웃 내부');
-    }, 0);
+    }
+    
+    // 모달 표시
+    const modal = document.getElementById('noticeDetailModal');
+    if (!modal) {
+        console.error('모달 요소를 찾을 수 없음');
+        return;
+    }
+    
+    // 모달 표시
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    modal.style.zIndex = '99999'; // 매우 높은 z-index 설정
+    
+    // 배경 스크롤 방지
+    document.body.style.overflow = 'hidden';
+    
+    console.log('모달 표시 완료');
 }
 
 function showNoticeDetailFromElement(element) {
