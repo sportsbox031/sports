@@ -1873,22 +1873,37 @@ const REGION_MAPPING = {
 
 // 공통 정렬 함수 (utils.js 또는 전역 스코프에 정의)
 function sortNoticesByImportanceAndDate(notices) {
-    return [...notices].sort((a, b) => {
-        // is_important가 다양한 형태(1, true, "1" 등)로 저장될 수 있으므로 
-        // 명시적으로 Boolean으로 변환하여 비교
-        const aImportant = Boolean(a.is_important);
-        const bImportant = Boolean(b.is_important);
-        
-        // 디버깅 로그 추가
-        console.log(`정렬 비교: ${a.title} (중요: ${aImportant}) vs ${b.title} (중요: ${bImportant})`);
+    if (!notices || !Array.isArray(notices)) {
+        console.error('Invalid notices data:', notices);
+        return [];
+    }
+    
+    console.log('정렬 전 공지사항:', notices.map(n => ({
+        id: n.id,
+        title: n.title,
+        is_important: n.is_important
+    })));
+    
+    const sorted = [...notices].sort((a, b) => {
+        // 명시적으로 숫자로 변환하여 비교
+        const aImportant = Number(a.is_important);
+        const bImportant = Number(b.is_important);
         
         // 중요 공지 우선 정렬
-        if (aImportant && !bImportant) return -1;
-        if (!aImportant && bImportant) return 1;
+        if (aImportant > bImportant) return -1;
+        if (aImportant < bImportant) return 1;
         
         // 중요도가 같으면 날짜순으로 정렬 (최신순)
         return new Date(b.created_at) - new Date(a.created_at);
     });
+    
+    console.log('정렬 후 공지사항:', sorted.map(n => ({
+        id: n.id,
+        title: n.title,
+        is_important: n.is_important
+    })));
+    
+    return sorted;
 }
 
 function logSortedNotices(notices) {
@@ -2573,19 +2588,36 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
             showAlert('공지사항이 수정되었습니다.', 'success');
             closeNoticeEditModal();
             
-            // 공지사항 목록 새로고침 - 명시적으로 정렬 적용
-            await loadHomeNotices();
-            
-            // 대시보드에 있는 경우 해당 목록도 새로고침
-            if (document.getElementById('noticesListSection')) {
-                await loadNotices();
+            // 공지사항 데이터 직접 새로 가져오기
+            try {
+                // API에서 최신 데이터 가져오기
+                const noticesResponse = await apiRequest('/api/notices');
+                if (noticesResponse.success && noticesResponse.data) {
+                    // 새로 가져온 데이터 정렬 및 저장
+                    window.noticesData = sortNoticesByImportanceAndDate(noticesResponse.data);
+                    console.log('공지사항 데이터 새로 가져와서 정렬 완료');
+                    
+                    // 홈화면 공지사항 목록 다시 렌더링
+                    if (document.getElementById('homeNoticesList')) {
+                        renderNoticesList(window.noticesData, 'homeNoticesList');
+                    }
+                    
+                    // 대시보드 공지사항 목록 다시 렌더링
+                    if (document.getElementById('noticesListSection')) {
+                        renderUserNoticesList(window.noticesData, document.getElementById('noticesListSection'));
+                    }
+                }
+            } catch (fetchError) {
+                console.error('공지사항 데이터 새로고침 오류:', fetchError);
+                // 기존 방식으로 폴백
+                await loadHomeNotices();
+                if (document.getElementById('noticesListSection')) {
+                    await loadNotices();
+                }
             }
             
-            // 중요: 추가 - 공지사항 데이터 다시 정렬
-            if (window.noticesData) {
-                window.noticesData = sortNoticesByImportanceAndDate(window.noticesData);
-                console.log('공지사항 데이터 재정렬 완료');
-            }
+            // 중요: 이벤트 리스너 다시 추가
+            setTimeout(addDirectNoticeListeners, 300);
         } else {
             throw new Error(data.message || '공지사항 수정에 실패했습니다.');
         }
