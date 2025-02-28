@@ -1778,84 +1778,6 @@ function setupIndependentNoticeSystem() {
             }
         }
     };
-    
-    // 11. 사용자 대시보드 공지사항 렌더링 함수
-    function renderUserNoticesList(notices, container) {
-    try {
-        if (!container) {
-            console.error('공지사항 컨테이너 요소가 없습니다');
-            return;
-        }
-        
-        // 공통 정렬 함수 사용
-        const sortedNotices = sortNoticesByImportanceAndDate(notices);
-        
-        // 공지사항이 없는 경우
-        if (!sortedNotices || sortedNotices.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
-            return;
-        }
-        
-        console.log(`사용자 대시보드에 ${sortedNotices.length}개 공지사항 렌더링 시작`);
-        
-        // 전역 변수에 공지사항 데이터 저장
-        window.noticesData = sortedNotices;
-        
-        // HTML 생성
-        container.innerHTML = `
-            <div class="overflow-y-auto max-h-[500px] pr-2">
-                ${sortedNotices.map((notice, index) => {
-                    const date = new Date(notice.created_at);
-                    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    const isImportant = Number(notice.is_important) === 1;
-                    
-                    return `
-                        <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
-                             data-notice-id="${index}" data-notice-real-id="${notice.id}">
-                            <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-lg font-semibold">
-                                    ${isImportant ? 
-                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                        ''}
-                                    ${notice.title}
-                                </h3>
-                                <span class="text-sm text-gray-500">${formattedDate}</span>
-                            </div>
-                            <p class="text-gray-600 text-sm line-clamp-2">${notice.content}</p>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-        
-        console.log('사용자 대시보드 공지사항 렌더링 완료');
-        
-        // 이벤트 리스너 추가
-        setTimeout(() => {
-            const noticeItems = container.querySelectorAll('.notice-item');
-            console.log(`사용자 대시보드 공지사항 항목 수: ${noticeItems.length}`);
-            
-            noticeItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    const noticeId = parseInt(this.getAttribute('data-notice-id'));
-                    const realNoticeId = parseInt(this.getAttribute('data-notice-real-id'));
-                    
-                    console.log(`사용자 대시보드 공지사항 클릭: ID=${noticeId}, 실제ID=${realNoticeId}`);
-                    
-                    if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                        const notice = window.noticesData[noticeId];
-                        showNoticeDetail(notice);
-                    }
-                });
-            });
-        }, 100);
-    } catch (error) {
-        console.error('사용자 대시보드 공지사항 렌더링 오류:', error);
-        if (container) {
-            container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
-        }
-    }
-}
 
 // 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가 (함수 외부로 이동)
 const originalInitUserDashboard = window.initializeUserDashboard;
@@ -1973,6 +1895,71 @@ const REGION_MAPPING = {
         '파주시', '포천시', '가평군', '연천군'
     ]
 };
+
+// 11. 사용자 대시보드 공지사항 렌더링 함수
+function renderUserNoticesList(notices, container) {
+    try {
+        if (!container) {
+            console.error('공지사항 컨테이너 요소가 없습니다');
+            return;
+        }
+        
+        // 공통 정렬 함수 사용
+        const sortedNotices = sortNoticesByImportanceAndDate(notices);
+        
+        // 디버깅 로그
+        if (DEBUG && typeof logSortedNotices === 'function') {
+            logSortedNotices(sortedNotices);
+        }
+        
+        // 공지사항이 없는 경우
+        if (!sortedNotices || sortedNotices.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
+            return;
+        }
+        
+        console.log(`사용자 대시보드에 ${sortedNotices.length}개 공지사항 렌더링 시작`);
+        
+        // 전역 변수에 공지사항 데이터 저장
+        window.noticesData = sortedNotices;
+        
+        // HTML 생성
+        container.innerHTML = `
+            <div class="overflow-y-auto max-h-[500px] pr-2">
+                ${sortedNotices.map((notice, index) => {
+                    const date = new Date(notice.created_at);
+                    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    
+                    // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
+                    const isImportant = Number(notice.is_important) === 1;
+                    
+                    return `
+                        <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
+                             data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-lg font-semibold">
+                                    ${isImportant ? 
+                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                        ''}
+                                    ${notice.title}
+                                </h3>
+                                <span class="text-sm text-gray-500">${formattedDate}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm line-clamp-2">${notice.content}</p>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        console.log('사용자 대시보드 공지사항 렌더링 완료');
+    } catch (error) {
+        console.error('사용자 대시보드 공지사항 렌더링 오류:', error);
+        if (container) {
+            container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
+        }
+    }
+}
 
 // 공통 정렬 함수 (utils.js 또는 전역 스코프에 정의)
 function sortNoticesByImportanceAndDate(notices) {
