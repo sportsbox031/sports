@@ -201,26 +201,36 @@
   transform: translateY(-2px);
   background-color: rgba(240, 240, 250, 0.7);
 }
-    
-    .notice-number {
-        min-width: 60px;
-    }
-    
-    .line-clamp-1 {
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    .notice-tabs h3 {
-        position: relative;
-        transition: all 0.3s ease;
-    }
-    
-    .notice-tabs h3:hover {
-        color: #3B82F6;
-    }
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notice-tabs h3 {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.notice-tabs h3:hover {
+  color: #3B82F6;
+}
+
+.notice-item h4 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
 
     /* 로딩 인디케이터 */
     .loading {
