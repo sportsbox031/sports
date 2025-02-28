@@ -649,7 +649,7 @@
                             <div>
                                 <h3 class="text-lg font-bold mb-4">연락처</h3>
                                 <p class="text-gray-400">전화: 031-250-0474~7</p>
-                                <p class="text-gray-400">이메일: hoseok0119@ggsc.or.kr</p>
+                                <p class="text-gray-400">이메일: <a href="mailto:hoseok0119@ggsc.or.kr" class="hover:text-white">hoseok0119@ggsc.or.kr</a></p>
                             </div>
                             <div>
                                 <h3 class="text-lg font-bold mb-4">운영시간</h3>
@@ -1711,7 +1711,7 @@ function setupIndependentNoticeSystem() {
     };
     
     // 11. 사용자 대시보드 공지사항 렌더링 함수
-function renderUserNoticesList(notices, container) {
+    function renderUserNoticesList(notices, container) {
     // 공통 정렬 함수 사용
     const sortedNotices = sortNoticesByImportanceAndDate(notices);
     
@@ -1734,12 +1734,15 @@ function renderUserNoticesList(notices, container) {
                 const date = new Date(notice.created_at);
                 const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                 
+                // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
+                const isImportant = Number(notice.is_important) === 1;
+                
                 return `
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
                          data-notice-id="${index}" data-notice-real-id="${notice.id}">
                         <div class="flex justify-between items-center mb-2">
                             <h3 class="text-lg font-semibold">
-                                ${notice.is_important ? 
+                                ${isImportant ? 
                                     '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
                                     ''}
                                 ${notice.title}
@@ -1752,6 +1755,9 @@ function renderUserNoticesList(notices, container) {
             }).join('')}
         </div>
     `;
+    
+    // 중요: 전역 변수에 공지사항 데이터 저장 (이벤트 리스너가 이 데이터에 의존함)
+    window.noticesData = sortedNotices;
 } 
 
 // 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가 (함수 외부로 이동)
@@ -1885,13 +1891,13 @@ function sortNoticesByImportanceAndDate(notices) {
     })));
     
     const sorted = [...notices].sort((a, b) => {
-        // 명시적으로 boolean으로 변환하여 비교
-        const aImportant = Boolean(Number(a.is_important));
-        const bImportant = Boolean(Number(b.is_important));
+        // 명시적으로 숫자로 변환하여 비교
+        const aImportant = Number(a.is_important);
+        const bImportant = Number(b.is_important);
         
         // 중요 공지 우선 정렬
-        if (aImportant && !bImportant) return -1;
-        if (!aImportant && bImportant) return 1;
+        if (aImportant > bImportant) return -1;
+        if (aImportant < bImportant) return 1;
         
         // 중요도가 같으면 날짜순으로 정렬 (최신순)
         return new Date(b.created_at) - new Date(a.created_at);
@@ -2555,29 +2561,36 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
             try {
                 // API에서 최신 데이터 가져오기
                 const noticesResponse = await apiRequest('/api/notices');
-                if (noticesResponse.success && noticesResponse.data) {
-                    // 새로 가져온 데이터 정렬 및 저장
-                    window.noticesData = sortNoticesByImportanceAndDate(noticesResponse.data);
-                    console.log('공지사항 데이터 새로 가져와서 정렬 완료');
-                    
-                    // 홈화면 공지사항 목록 다시 렌더링
-                    if (document.getElementById('homeNoticesList')) {
-                        renderNoticesList(window.noticesData, 'homeNoticesList');
-                    }
-                    
-                    // 대시보드 공지사항 목록 다시 렌더링
-                    if (document.getElementById('noticesListSection')) {
-                        renderUserNoticesList(window.noticesData, document.getElementById('noticesListSection'));
-                    }
-                }
-            } catch (fetchError) {
-                console.error('공지사항 데이터 새로고침 오류:', fetchError);
-                // 기존 방식으로 폴백
-                await loadHomeNotices();
-                if (document.getElementById('noticesListSection')) {
-                    await loadNotices();
-                }
+    if (noticesResponse.success && noticesResponse.data) {
+        // 새로 가져온 데이터 정렬 및 저장
+        window.noticesData = sortNoticesByImportanceAndDate(noticesResponse.data);
+        console.log('공지사항 데이터 새로 가져와서 정렬 완료');
+        
+        // 홈화면 공지사항 목록 다시 렌더링
+        if (document.getElementById('homeNoticesList')) {
+            renderNoticesList(window.noticesData, 'homeNoticesList');
+        }
+        
+        // 대시보드 공지사항 목록 다시 렌더링
+        if (document.getElementById('noticesListSection')) {
+            // 함수가 정의되어 있는지 확인 후 호출
+            if (typeof renderUserNoticesList === 'function') {
+                renderUserNoticesList(window.noticesData, document.getElementById('noticesListSection'));
+            } else {
+                console.warn('renderUserNoticesList 함수가 정의되지 않았습니다');
+                // 대체 방법으로 일반 renderNoticesList 함수 사용
+                renderNoticesList(window.noticesData, 'noticesListSection');
             }
+        }
+    }
+} catch (fetchError) {
+    console.error('공지사항 데이터 새로고침 오류:', fetchError);
+    // 기존 방식으로 폴백
+    await loadHomeNotices();
+    if (document.getElementById('noticesListSection')) {
+        await loadNotices();
+    }
+}
             
             // 중요: 이벤트 리스너 다시 추가
             setTimeout(addDirectNoticeListeners, 300);
