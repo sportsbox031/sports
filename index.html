@@ -1776,12 +1776,25 @@ function renderNoticesList(notices, containerId) {
         
         // 중요 공지를 상단으로 정렬
         const sortedNotices = [...notices].sort((a, b) => {
-            // 먼저 중요 공지 여부로 정렬
-            if (a.is_important && !b.is_important) return -1;
-            if (!a.is_important && b.is_important) return 1;
-            // 중요도가 같으면 날짜순으로 정렬
-            return new Date(b.created_at) - new Date(a.created_at);
-        });
+    // is_important가 다양한 형태(1, true, "1" 등)로 저장될 수 있으므로 
+    // Boolean으로 변환하여 비교
+    const aImportant = Boolean(a.is_important);
+    const bImportant = Boolean(b.is_important);
+    
+    // 중요 공지 우선 정렬
+    if (aImportant && !bImportant) return -1;
+    if (!aImportant && bImportant) return 1;
+    
+    // 중요도가 같으면 날짜순으로 정렬
+    return new Date(b.created_at) - new Date(a.created_at);
+});
+
+console.log('정렬된 공지사항:', sortedNotices.map(n => ({
+    id: n.id,
+    title: n.title,
+    important: Boolean(n.is_important),
+    date: new Date(n.created_at).toLocaleDateString()
+})));
 
         // HTML 생성 - data-notice-id와 data-notice-real-id 속성 추가
         container.innerHTML = sortedNotices.map((notice, index) => `
