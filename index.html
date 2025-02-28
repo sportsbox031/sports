@@ -1643,6 +1643,17 @@ function sortNoticesByImportanceAndDate(notices) {
     });
 }
 
+function logSortedNotices(notices) {
+    if (DEBUG) {
+        console.log('정렬된 공지사항:', notices.map(n => ({
+            id: n.id,
+            title: n.title,
+            is_important: n.is_important,
+            created_at: n.created_at
+        })));
+    }
+}
+
 // 모달 상태 진단 함수
 function diagnoseModalIssue() {
     const modal = document.getElementById('noticeDetailModal');
