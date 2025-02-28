@@ -1353,6 +1353,76 @@
 
 <!-- JavaScript 코드 시작 -->
 <script>
+// 전역 스코프에 함수 정의 및 window 객체에 명시적 할당
+window.addDirectNoticeListeners = function() {
+    // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
+    const noticeItems = document.querySelectorAll('.notice-item, [data-notice-id]');
+    console.log('공지사항 항목 수:', noticeItems.length);
+    
+    if (noticeItems.length === 0) {
+        console.log('공지사항 항목이 없습니다. 이벤트 리스너를 추가할 수 없습니다.');
+        return;
+    }
+    
+    noticeItems.forEach(item => {
+        // 기존 이벤트 제거 (이벤트 버블링 방지)
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+        
+        // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
+        newItem.addEventListener('click', window.handleNoticeClick || function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const noticeId = parseInt(this.getAttribute('data-notice-id'));
+            const realNoticeId = parseInt(this.getAttribute('data-notice-real-id'));
+            
+            console.log('공지사항 클릭:', noticeId, realNoticeId);
+            
+            if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                const notice = window.noticesData[noticeId];
+                
+                // ID 저장
+                window.currentNoticeId = realNoticeId || notice.id;
+                
+                // 모달 내용 설정
+                const modal = document.getElementById('independentNoticeModal');
+                if (modal) {
+                    document.getElementById('independentModalTitle').textContent = notice.title;
+                    document.getElementById('independentModalContent').textContent = notice.content;
+                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+                    
+                    // 첨부파일 섹션 처리
+                    const attachmentSection = document.getElementById('independentModalAttachment');
+                    if (attachmentSection) {
+                        if (notice.attachment_url) {
+                            document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+                            document.getElementById('independentModalFileLink').href = notice.attachment_url;
+                            attachmentSection.style.display = 'block';
+                        } else {
+                            attachmentSection.style.display = 'none';
+                        }
+                    }
+                    
+                    // 관리자 권한 확인 및 버튼 표시
+                    const adminActions = document.getElementById('independentModalActions');
+                    if (adminActions) {
+                        const isAdmin = sessionStorage.getItem('role') === 'admin';
+                        adminActions.style.display = isAdmin ? 'flex' : 'none';
+                    }
+                    
+                    // 모달 표시
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        });
+    });
+    
+    console.log('공지사항 이벤트 리스너 설정 완료');
+};
+
 // 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
 function setupIndependentNoticeSystem() {
     console.log('독립적인 공지사항 모달 시스템 설정 시작');
@@ -1583,7 +1653,14 @@ function setupIndependentNoticeSystem() {
 }
     
     // 9. 페이지 로드 및 공지사항 로드 후 리스너 추가
-    setTimeout(addDirectNoticeListeners, 1000);
+    const originalLoadHomeNotices = window.loadHomeNotices;
+    if (originalLoadHomeNotices && !window.noticeSystemPatched) {
+        window.noticeSystemPatched = true;
+        window.loadHomeNotices = async function() {
+            await originalLoadHomeNotices.apply(this, arguments);
+            setTimeout(addDirectNoticeListeners, 500);
+        };
+    }
     
     // 10. 사용자 대시보드 공지사항 로드 함수 추가 (중요!)
     window.loadUserNotices = async function() {
