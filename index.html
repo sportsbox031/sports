@@ -1514,21 +1514,73 @@ function setupIndependentNoticeSystem() {
     
     // 8. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
-        // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
-        const noticeItems = document.querySelectorAll('.notice-item, [data-notice-id]');
-        console.log('공지사항 항목 수:', noticeItems.length);
-        
-        noticeItems.forEach(item => {
-            // 기존 이벤트 제거 (이벤트 버블링 방지)
-            const newItem = item.cloneNode(true);
-            item.parentNode.replaceChild(newItem, item);
-            
-            // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
-            newItem.addEventListener('click', window.handleNoticeClick);
-        });
-        
-        console.log('공지사항 이벤트 리스너 설정 완료');
+    // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
+    const noticeItems = document.querySelectorAll('.notice-item, [data-notice-id]');
+    console.log('공지사항 항목 수:', noticeItems.length);
+    
+    if (noticeItems.length === 0) {
+        console.log('공지사항 항목이 없습니다. 이벤트 리스너를 추가할 수 없습니다.');
+        return;
     }
+    
+    noticeItems.forEach(item => {
+        // 기존 이벤트 제거 (이벤트 버블링 방지)
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+        
+        // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
+        newItem.addEventListener('click', window.handleNoticeClick || function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const noticeId = parseInt(this.getAttribute('data-notice-id'));
+            const realNoticeId = parseInt(this.getAttribute('data-notice-real-id'));
+            
+            console.log('공지사항 클릭:', noticeId, realNoticeId);
+            
+            if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                const notice = window.noticesData[noticeId];
+                
+                // ID 저장
+                window.currentNoticeId = realNoticeId || notice.id;
+                
+                // 모달 내용 설정
+                const modal = document.getElementById('independentNoticeModal');
+                if (modal) {
+                    document.getElementById('independentModalTitle').textContent = notice.title;
+                    document.getElementById('independentModalContent').textContent = notice.content;
+                    document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+                    document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+                    
+                    // 첨부파일 섹션 처리
+                    const attachmentSection = document.getElementById('independentModalAttachment');
+                    if (attachmentSection) {
+                        if (notice.attachment_url) {
+                            document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+                            document.getElementById('independentModalFileLink').href = notice.attachment_url;
+                            attachmentSection.style.display = 'block';
+                        } else {
+                            attachmentSection.style.display = 'none';
+                        }
+                    }
+                    
+                    // 관리자 권한 확인 및 버튼 표시
+                    const adminActions = document.getElementById('independentModalActions');
+                    if (adminActions) {
+                        const isAdmin = sessionStorage.getItem('role') === 'admin';
+                        adminActions.style.display = isAdmin ? 'flex' : 'none';
+                    }
+                    
+                    // 모달 표시
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        });
+    });
+    
+    console.log('공지사항 이벤트 리스너 설정 완료');
+}
     
     // 9. 페이지 로드 및 공지사항 로드 후 리스너 추가
     setTimeout(addDirectNoticeListeners, 1000);
@@ -1823,6 +1875,9 @@ function closeModal(modalId) {
 // 홈화면 공지사항 로드
 async function loadHomeNotices() {
     try {
+        console.log('홈화면 공지사항 로드 시작');
+        
+        // 공개 API 경로 사용
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
         
         if (!response.ok) {
@@ -1839,8 +1894,10 @@ async function loadHomeNotices() {
             // 공통 정렬 함수 사용
             const sortedNotices = sortNoticesByImportanceAndDate(data.data);
             
-            // 디버깅 로그 (선택사항)
-            if (DEBUG) logSortedNotices(sortedNotices);
+            // 디버깅 로그
+            if (DEBUG && typeof logSortedNotices === 'function') {
+                logSortedNotices(sortedNotices);
+            }
 
             // 공지사항 데이터를 전역 객체에 저장
             window.noticesData = sortedNotices;
@@ -1848,57 +1905,52 @@ async function loadHomeNotices() {
             // HTML 생성 - 새로운 디자인 적용
             noticesList.innerHTML = `
                 <div class="notice-tabs mb-4 border-b">
-        <div class="flex">
-            <h3 class="text-2xl font-bold mr-4 pb-2 border-b-2 border-blue-500 text-blue-500">소식</h3>
-        </div>
-    </div>
-    <div class="notice-list space-y-6">
-        ${sortedNotices.map((notice, index) => {
-            // 날짜 형식 변환 - 년-월-일 형식으로 변경
-            const date = new Date(notice.created_at);
-            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            
-            // 내용 요약 (100자 제한)
-            const contentSummary = notice.content.length > 100 
-                ? notice.content.substring(0, 100) + '...' 
-                : notice.content;
-            
-            return `
-                <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
-                    <div class="flex items-start justify-between">
-                        <div class="notice-content flex-1 pr-4">
-                            <h4 class="text-xl font-bold mb-2 text-gray-800 flex items-center justify-between">
-                                <span class="flex items-center">
-                                    ${notice.is_important ? 
-                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                        ''}
-                                    ${notice.title}
-                                </span>
-                                <span class="text-sm text-gray-500 font-normal">${formattedDate}</span>
-                            </h4>
-                            <p class="text-gray-600 text-sm line-clamp-1">${contentSummary.replace(/\n/g, ' ')}</p>
-                        </div>
+                    <div class="flex">
+                        <h3 class="text-2xl font-bold mr-4 pb-2 border-b-2 border-blue-500 text-blue-500">소식</h3>
                     </div>
                 </div>
+                <div class="notice-list space-y-6 overflow-y-auto max-h-[500px] pr-2">
+                    ${sortedNotices.map((notice, index) => {
+                        // 날짜 형식 변환
+                        const date = new Date(notice.created_at);
+                        const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                        
+                        // 내용 요약 (100자 제한)
+                        const contentSummary = notice.content.length > 100 
+                            ? notice.content.substring(0, 100) + '...' 
+                            : notice.content;
+                        
+                        return `
+                            <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                                <div class="flex items-start justify-between">
+                                    <div class="notice-content flex-1 pr-4">
+                                        <h4 class="text-xl font-bold mb-2 text-gray-800 flex items-center justify-between">
+                                            <span class="flex items-center">
+                                                ${notice.is_important ? 
+                                                    '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                                    ''}
+                                                ${notice.title}
+                                            </span>
+                                            <span class="text-sm text-gray-500 font-normal">${formattedDate}</span>
+                                        </h4>
+                                        <p class="text-gray-600 text-sm line-clamp-1">${contentSummary.replace(/\n/g, ' ')}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
             `;
-        }).join('')}
-    </div>
-`;
             
-            // 공지사항 클릭 이벤트 추가
-            document.querySelectorAll('.notice-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const index = parseInt(this.getAttribute('data-notice-id'));
-                    const notice = window.noticesData[index];
-                    notice.id = parseInt(this.getAttribute('data-notice-real-id')); // 실제 ID 저장
-                    showNoticeDetail(notice);
-                });
-            });
+            // 이벤트 리스너 추가는 독립 시스템에 위임
+            setTimeout(addDirectNoticeListeners, 100);
+            
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
         
         checkAdminStatus();
+        console.log('홈화면 공지사항 로드 완료');
     } catch (error) {
         console.error('Home notices loading error:', error);
         document.getElementById('homeNoticesList').innerHTML = 
@@ -1966,61 +2018,8 @@ function renderNoticesList(notices, containerId) {
         // 전역 변수에 공지사항 데이터 저장 (이벤트 리스너 추가 전에 설정)
         window.noticesData = sortedNotices;
         
-        // 이벤트 리스너 추가
-        const noticeItems = container.querySelectorAll('[data-notice-id]');
-        console.log(`${noticeItems.length}개 공지사항 항목에 이벤트 리스너 추가`);
-        
-        noticeItems.forEach(item => {
-            // 기존 이벤트 리스너 제거 (중복 방지)
-            const clone = item.cloneNode(true);
-            item.parentNode.replaceChild(clone, item);
-            
-            // 새 이벤트 리스너 추가 - 직접 handleNoticeClick 함수 사용
-            clone.addEventListener('click', window.handleNoticeClick || function(e) {
-                const noticeId = parseInt(this.getAttribute('data-notice-id'));
-                const realNoticeId = parseInt(this.getAttribute('data-notice-real-id'));
-                
-                console.log('공지사항 클릭:', noticeId, realNoticeId);
-                
-                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-                    const notice = window.noticesData[noticeId];
-                    
-                    // 현재 공지사항 ID 저장
-                    window.currentNoticeId = realNoticeId || notice.id;
-                    
-                    // 독립 모달 시스템 사용
-                    const modal = document.getElementById('independentNoticeModal');
-                    if (modal) {
-                        document.getElementById('independentModalTitle').textContent = notice.title;
-                        document.getElementById('independentModalContent').textContent = notice.content;
-                        document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-                        document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
-                        
-                        // 첨부파일 처리 (있는 경우)
-                        const attachmentSection = document.getElementById('independentModalAttachment');
-                        if (attachmentSection) {
-                            if (notice.attachment_url) {
-                                document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                                document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                                attachmentSection.style.display = 'block';
-                            } else {
-                                attachmentSection.style.display = 'none';
-                            }
-                        }
-                        
-                        // 관리자 액션 버튼 표시 여부
-                        const adminActions = document.getElementById('independentModalActions');
-                        if (adminActions) {
-                            const isAdmin = sessionStorage.getItem('role') === 'admin';
-                            adminActions.style.display = isAdmin ? 'flex' : 'none';
-                        }
-                        
-                        modal.style.display = 'flex';
-                        document.body.style.overflow = 'hidden';
-                    }
-                }
-            });
-        });
+        // 이벤트 리스너 추가는 addDirectNoticeListeners 함수에서 처리
+        setTimeout(addDirectNoticeListeners, 100);
         
         console.log('공지사항 목록 렌더링 완료:', sortedNotices.length, '개 항목');
         
