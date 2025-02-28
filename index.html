@@ -926,12 +926,13 @@
                         </div>
 
                        <!-- 여기에 공지사항 섹션 추가 -->
-        <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-            <div id="noticesListSection" class="grid gap-6">
-                <!-- 공지사항이 여기에 동적으로 추가됨 -->
-            </div>
-        </div>
+                       <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+                        <div id="noticesListSection" class="grid gap-6">
+                            <!-- 공지사항이 여기에 동적으로 추가됨 -->
+                            <p class="text-center text-gray-500">공지사항을 불러오는 중...</p>
+                        </div>
+                    </div>
 
                         <!-- 내 예약 목록 -->
                         <div class="mt-8 bg-white rounded-lg shadow-lg p-6 col-span-2">
@@ -1363,7 +1364,7 @@ function setupIndependentNoticeSystem() {
         existingModal.remove();
     }
     
-    // 2. 새 모달 HTML 추가 (관리자 버튼 포함)
+    // 2. 새 모달 HTML 추가
     const newModalHTML = `
         <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
             background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
@@ -1453,90 +1454,192 @@ function setupIndependentNoticeSystem() {
     
     // 7. 공지사항 표시 함수 정의 (ID 저장 포함)
     window.handleNoticeClick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const noticeItem = e.currentTarget;
-    const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
-    
-    // 명시적으로 실제 ID 가져오기
-    const realNoticeId = parseInt(noticeItem.getAttribute('data-notice-real-id'));
-    
-    console.log('클릭한 공지사항 - 인덱스:', noticeId, '실제 ID:', realNoticeId);
-    
-    if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
-        const notice = window.noticesData[noticeId];
+        e.preventDefault();
+        e.stopPropagation();
         
-        // 중요: ID 저장 방식 개선
-        if (realNoticeId) {
-            window.currentNoticeId = realNoticeId;
-        } else if (notice.id) {
-            window.currentNoticeId = notice.id;
-        } else {
-            console.error('공지사항 ID를 찾을 수 없음:', notice);
-            window.currentNoticeId = null;
-        }
+        const noticeItem = e.currentTarget;
+        const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
         
-        console.log('저장된 currentNoticeId:', window.currentNoticeId);
+        // 명시적으로 실제 ID 가져오기
+        const realNoticeId = parseInt(noticeItem.getAttribute('data-notice-real-id'));
         
-        // 모달 내용 설정
-        document.getElementById('independentModalTitle').textContent = notice.title;
-        document.getElementById('independentModalContent').textContent = notice.content;
-        document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-        document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+        console.log('클릭한 공지사항 - 인덱스:', noticeId, '실제 ID:', realNoticeId);
         
-        // 첨부파일 섹션 처리
-        const attachmentSection = document.getElementById('independentModalAttachment');
-        if (attachmentSection) {
-            if (notice.attachment_url) {
-                document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                attachmentSection.style.display = 'block';
+        if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+            const notice = window.noticesData[noticeId];
+            
+            // 중요: ID 저장 방식 개선
+            if (realNoticeId) {
+                window.currentNoticeId = realNoticeId;
+            } else if (notice.id) {
+                window.currentNoticeId = notice.id;
             } else {
-                attachmentSection.style.display = 'none';
+                console.error('공지사항 ID를 찾을 수 없음:', notice);
+                window.currentNoticeId = null;
             }
+            
+            console.log('저장된 currentNoticeId:', window.currentNoticeId);
+            
+            // 모달 내용 설정
+            document.getElementById('independentModalTitle').textContent = notice.title;
+            document.getElementById('independentModalContent').textContent = notice.content;
+            document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+            document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+            
+            // 첨부파일 섹션 처리
+            const attachmentSection = document.getElementById('independentModalAttachment');
+            if (attachmentSection) {
+                if (notice.attachment_url) {
+                    document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+                    document.getElementById('independentModalFileLink').href = notice.attachment_url;
+                    attachmentSection.style.display = 'block';
+                } else {
+                    attachmentSection.style.display = 'none';
+                }
+            }
+            
+            // 관리자 권한 확인 및 버튼 표시
+            const adminActions = document.getElementById('independentModalActions');
+            if (adminActions) {
+                const isAdmin = sessionStorage.getItem('role') === 'admin';
+                adminActions.style.display = isAdmin ? 'flex' : 'none';
+                console.log('관리자 권한 확인:', isAdmin ? '관리자 맞음' : '관리자 아님');
+            }
+            
+            // 모달 표시
+            const modal = document.getElementById('independentNoticeModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
-        
-        // 관리자 권한 확인 및 버튼 표시
-        const adminActions = document.getElementById('independentModalActions');
-        if (adminActions) {
-            const isAdmin = sessionStorage.getItem('role') === 'admin';
-            adminActions.style.display = isAdmin ? 'flex' : 'none';
-            console.log('관리자 권한 확인:', isAdmin ? '관리자 맞음' : '관리자 아님');
-        }
-        
-        // 모달 표시
-        const modal = document.getElementById('independentNoticeModal');
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-};
+    };
     
     // 8. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
-        const noticeItems = document.querySelectorAll('.notice-item');
+        // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
+        const noticeItems = document.querySelectorAll('.notice-item, [data-notice-id]');
         console.log('공지사항 항목 수:', noticeItems.length);
         
         noticeItems.forEach(item => {
             // 기존 이벤트 제거 (이벤트 버블링 방지)
-            item.onclick = null;
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
             
             // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
-            item.addEventListener('click', window.handleNoticeClick, true);
+            newItem.addEventListener('click', window.handleNoticeClick);
         });
+        
+        console.log('공지사항 이벤트 리스너 설정 완료');
     }
     
     // 9. 페이지 로드 및 공지사항 로드 후 리스너 추가
     setTimeout(addDirectNoticeListeners, 1000);
     
-    // 10. loadHomeNotices 함수 이후에도 실행되도록 설정
-    const originalLoadHomeNotices = window.loadHomeNotices;
-    window.loadHomeNotices = async function() {
-        await originalLoadHomeNotices.apply(this, arguments);
-        setTimeout(addDirectNoticeListeners, 500);
+    // 10. 사용자 대시보드 공지사항 로드 함수 추가 (중요!)
+    window.loadUserNotices = async function() {
+        try {
+            console.log('사용자 대시보드 공지사항 로드 시작');
+            
+            // 사용자 지역 정보 가져오기
+            const userRegion = sessionStorage.getItem('region');
+            console.log('사용자 지역:', userRegion);
+            
+            // 공지사항 API 호출
+            const response = await apiRequest('/api/notices');
+            console.log('공지사항 응답:', response);
+            
+            if (response.success && response.data) {
+                // 사용자 지역에 맞는 공지사항 필터링 (전체 공지 + 해당 지역 공지)
+                const filteredNotices = response.data.filter(notice => 
+                    notice.region === 'all' || notice.region === userRegion
+                );
+                
+                console.log('필터링된 공지사항:', filteredNotices.length);
+                
+                // 전역 데이터 저장
+                window.noticesData = filteredNotices;
+                
+                // 공지사항 컨테이너 찾기
+                const container = document.getElementById('noticesListSection');
+                if (!container) {
+                    console.error('공지사항 컨테이너를 찾을 수 없습니다: noticesListSection');
+                    return;
+                }
+                
+                // 공지사항 렌더링
+                renderUserNoticesList(filteredNotices, container);
+                
+                // 이벤트 리스너 추가
+                setTimeout(addDirectNoticeListeners, 200);
+            } else {
+                throw new Error('공지사항 데이터를 가져오는데 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('사용자 공지사항 로드 오류:', error);
+            const container = document.getElementById('noticesListSection');
+            if (container) {
+                container.innerHTML = '<p class="text-center text-gray-500">공지사항을 불러오는데 실패했습니다.</p>';
+            }
+        }
     };
     
+    // 11. 사용자 대시보드 공지사항 렌더링 함수
+    function renderUserNoticesList(notices, container) {
+        // 공통 정렬 함수 사용
+        const sortedNotices = sortNoticesByImportanceAndDate(notices);
+        
+        // 디버깅 로그
+        if (DEBUG && typeof logSortedNotices === 'function') {
+            logSortedNotices(sortedNotices);
+        }
+        
+        // 공지사항이 없는 경우
+        if (sortedNotices.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
+            return;
+        }
+        
+        // HTML 생성 - 간결한 디자인으로 변경
+        container.innerHTML = sortedNotices.map((notice, index) => {
+            // 날짜 형식 변환
+            const date = new Date(notice.created_at);
+            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            
+            return `
+                <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
+                     data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-semibold">
+                            ${notice.is_important ? 
+                                '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                ''}
+                            ${notice.title}
+                        </h3>
+                        <span class="text-sm text-gray-500">${formattedDate}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm line-clamp-2">${notice.content}</p>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가
+    const originalInitUserDashboard = window.initializeUserDashboard;
+    if (originalInitUserDashboard && !window.userDashboardPatched) {
+        window.userDashboardPatched = true;
+        window.initializeUserDashboard = async function() {
+            // 원래 함수 호출
+            await originalInitUserDashboard.apply(this, arguments);
+            
+            // 공지사항 로드 추가
+            if (typeof window.loadUserNotices === 'function') {
+                console.log('사용자 대시보드 초기화 후 공지사항 로드 호출');
+                await window.loadUserNotices();
+            }
+        };
+    }
+    
     console.log('독립적인 공지사항 모달 시스템 설정 완료');
+    return true;
 }
 
 // 페이지 로드 후 실행
@@ -2240,7 +2343,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // 공지사항 모달 초기화 및 개선
     initializeNoticeModal();
     
-    // 여기에 파일 선택 이벤트 리스너 추가 (기존 setTimeout 대체)
+    // 디버깅 함수 추가 - 전역 스코프에 정의
+    window.debugNotices = function() {
+        console.log('===== 공지사항 디버깅 =====');
+        console.log('독립 모달 존재:', !!document.getElementById('independentNoticeModal'));
+        console.log('공지사항 데이터:', window.noticesData);
+        console.log('공지사항 컨테이너:', document.getElementById('noticesListSection'));
+        console.log('loadUserNotices 함수:', typeof window.loadUserNotices);
+        console.log('handleNoticeClick 함수:', typeof window.handleNoticeClick);
+        console.log('===========================');
+        
+        // 공지사항 컨테이너가 있으면 강제로 다시 로드
+        if (document.getElementById('noticesListSection') && typeof window.loadUserNotices === 'function') {
+            console.log('공지사항 강제 로드 시도');
+            window.loadUserNotices();
+        }
+    };
+    
+    // 3초 후 디버깅 실행 (페이지 로드 후)
+    setTimeout(window.debugNotices, 3000);
+    
+    // 파일 선택 이벤트 리스너 추가
     setTimeout(() => {
         const fileInput = document.getElementById('noticeFile');
         if (fileInput) {
@@ -2878,7 +3001,12 @@ async function initializeUserDashboard(region, username) {
         await loadBookings();
         
         // 공지사항 로드 추가
-        await loadNotices();
+        if (typeof window.loadUserNotices === 'function') {
+            console.log('사용자 대시보드 초기화 중 공지사항 로드 호출');
+            await window.loadUserNotices();
+        } else {
+            console.error('loadUserNotices 함수를 찾을 수 없습니다');
+        }
 
         // 남은 예약 횟수 표시 업데이트
         updateRemainingBookingsDisplay();
