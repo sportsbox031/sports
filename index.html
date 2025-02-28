@@ -1345,7 +1345,15 @@
 <script>
 // 기존 코드를 수정하지 않고 새로운 모달 시스템 추가
 function setupIndependentNoticeSystem() {
-    // 1. 새 모달 HTML 추가 (첨부파일 섹션 포함)
+    console.log('독립적인 공지사항 모달 시스템 설정 시작');
+    
+    // 1. 기존 모달 제거 (이미 있다면)
+    const existingModal = document.getElementById('independentNoticeModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // 2. 새 모달 HTML 추가 (관리자 버튼 포함)
     const newModalHTML = `
         <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
             background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
@@ -1360,11 +1368,12 @@ function setupIndependentNoticeSystem() {
                 <div style="border-top:1px solid #eee; padding-top:15px;">
                     <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
                 </div>
-                <!-- 첨부파일 섹션 추가 -->
+                <!-- 첨부파일 섹션 -->
                 <div id="independentModalAttachment" style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; display:none;">
                     <h3 style="font-weight:bold; margin-bottom:10px; font-size:16px;">첨부파일</h3>
                     <div id="independentModalFile" style="display:flex; align-items:center;">
-                        <a id="independentModalFileLink" href="#" style="display:inline-flex; align-items:center; padding:8px 12px; background:#f3f4f6; border-radius:4px; text-decoration:none; color:#374151; font-size:14px;">
+                        <a id="independentModalFileLink" href="#" target="_blank" download
+                           style="display:inline-flex; align-items:center; padding:8px 12px; background:#f3f4f6; border-radius:4px; text-decoration:none; color:#374151; font-size:14px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="margin-right:8px;" viewBox="0 0 16 16">
                                 <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                                 <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
@@ -1373,18 +1382,23 @@ function setupIndependentNoticeSystem() {
                         </a>
                     </div>
                 </div>
+                <!-- 관리자 액션 버튼 섹션 -->
+                <div id="independentModalActions" style="display:none; margin-top:20px; padding-top:15px; border-top:1px solid #eee; justify-content:flex-end;">
+                    <button id="editNoticeBtn" style="background:#3B82F6; color:white; padding:8px 16px; border-radius:4px; margin-right:8px; cursor:pointer; border:none;">수정</button>
+                    <button id="deleteNoticeBtn" style="background:#EF4444; color:white; padding:8px 16px; border-radius:4px; cursor:pointer; border:none;">삭제</button>
+                </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', newModalHTML);
     
-    // 2. 모달 닫기 이벤트 설정
+    // 3. 모달 닫기 이벤트 설정
     document.getElementById('independentModalClose').onclick = function() {
         document.getElementById('independentNoticeModal').style.display = 'none';
         document.body.style.overflow = '';
     };
     
-    // 3. 모달 외부 클릭 시 닫기
+    // 4. 모달 외부 클릭 시 닫기
     document.getElementById('independentNoticeModal').onclick = function(e) {
         if (e.target === this) {
             this.style.display = 'none';
@@ -1392,7 +1406,7 @@ function setupIndependentNoticeSystem() {
         }
     };
     
-    // 4. ESC 키로 모달 닫기 기능 추가
+    // 5. ESC 키로 모달 닫기 기능 추가
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('independentNoticeModal');
@@ -1404,17 +1418,45 @@ function setupIndependentNoticeSystem() {
         }
     });
     
-    // 공지사항 표시 함수 정의
-    function handleNoticeClick(e) {
+    // 6. 관리자 액션 버튼 이벤트 설정
+    document.getElementById('editNoticeBtn').addEventListener('click', function() {
+        const modal = document.getElementById('independentNoticeModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        
+        // 기존 수정 함수 호출
+        if (typeof editNotice === 'function') {
+            editNotice();
+        } else {
+            console.error('editNotice 함수를 찾을 수 없습니다');
+        }
+    });
+    
+    document.getElementById('deleteNoticeBtn').addEventListener('click', function() {
+        // 기존 삭제 함수 호출
+        if (typeof deleteNotice === 'function') {
+            deleteNotice();
+        } else {
+            console.error('deleteNotice 함수를 찾을 수 없습니다');
+        }
+    });
+    
+    // 7. 공지사항 표시 함수 정의 (ID 저장 포함)
+    window.handleNoticeClick = function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         const noticeItem = e.currentTarget;
         const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+        const realNoticeId = parseInt(noticeItem.getAttribute('data-notice-real-id'));
         
         if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
             const notice = window.noticesData[noticeId];
             console.log('표시할 공지사항:', notice);
+            
+            // 중요: 실제 ID 저장 (전역 변수에 저장)
+            window.currentNoticeId = realNoticeId || notice.id;
+            console.log('저장된 공지사항 ID:', window.currentNoticeId);
             
             // 모달 내용 설정
             document.getElementById('independentModalTitle').textContent = notice.title;
@@ -1432,6 +1474,12 @@ function setupIndependentNoticeSystem() {
                 attachmentSection.style.display = 'none';
             }
             
+            // 관리자 권한 확인 및 버튼 표시
+            const adminActions = document.getElementById('independentModalActions');
+            const isAdmin = sessionStorage.getItem('role') === 'admin';
+            console.log('관리자 권한 확인:', isAdmin ? '관리자 맞음' : '관리자 아님');
+            adminActions.style.display = isAdmin ? 'flex' : 'none';
+            
             // 모달 표시
             const modal = document.getElementById('independentNoticeModal');
             modal.style.display = 'flex';
@@ -1439,9 +1487,9 @@ function setupIndependentNoticeSystem() {
             
             console.log('모달 표시됨');
         }
-    }
-
-    // 5. 공지사항 항목에 직접 이벤트 추가
+    };
+    
+    // 8. 공지사항 항목에 직접 이벤트 추가
     function addDirectNoticeListeners() {
         const noticeItems = document.querySelectorAll('.notice-item');
         console.log('공지사항 항목 수:', noticeItems.length);
@@ -1451,14 +1499,14 @@ function setupIndependentNoticeSystem() {
             item.onclick = null;
             
             // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
-            item.addEventListener('click', handleNoticeClick, true);
+            item.addEventListener('click', window.handleNoticeClick, true);
         });
     }
     
-    // 6. 페이지 로드 및 공지사항 로드 후 리스너 추가
+    // 9. 페이지 로드 및 공지사항 로드 후 리스너 추가
     setTimeout(addDirectNoticeListeners, 1000);
     
-    // 7. loadHomeNotices 함수 이후에도 실행되도록 설정
+    // 10. loadHomeNotices 함수 이후에도 실행되도록 설정
     const originalLoadHomeNotices = window.loadHomeNotices;
     window.loadHomeNotices = async function() {
         await originalLoadHomeNotices.apply(this, arguments);
