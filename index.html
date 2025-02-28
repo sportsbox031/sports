@@ -1931,7 +1931,7 @@ function renderUserNoticesList(notices, container) {
                     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                     
                     // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
-                    const isImportant = Number(notice.is_important) === 1;
+                    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     
                     return `
                         <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
@@ -1968,29 +1968,38 @@ function sortNoticesByImportanceAndDate(notices) {
         return [];
     }
     
-    console.log('정렬 전 공지사항:', notices.map(n => ({
+    // 디버깅: 정렬 전 데이터 출력
+    console.log('정렬 전 데이터 상세:', notices.map(n => ({
         id: n.id,
         title: n.title,
-        is_important: n.is_important
+        is_important: n.is_important,
+        type: typeof n.is_important,
+        value: Number(n.is_important)
     })));
     
     const sorted = [...notices].sort((a, b) => {
-        // 명시적으로 숫자로 변환하여 비교
-        const aImportant = Number(a.is_important);
-        const bImportant = Number(b.is_important);
+        // 중요 공지 여부를 명시적으로 숫자로 변환
+        const aImportant = a.is_important === 1 || a.is_important === '1' || a.is_important === true;
+const bImportant = b.is_important === 1 || b.is_important === '1' || b.is_important === true;
         
-        // 중요 공지 우선 정렬
-        if (aImportant > bImportant) return -1;
-        if (aImportant < bImportant) return 1;
+        // 디버깅 로그
+        console.log(`비교: "${a.title}" (중요: ${aImportant}) vs "${b.title}" (중요: ${bImportant})`);
+        
+        // 중요 공지 우선 정렬 (boolean 비교)
+        if (aImportant && !bImportant) return -1;
+if (!aImportant && bImportant) return 1;
         
         // 중요도가 같으면 날짜순으로 정렬 (최신순)
         return new Date(b.created_at) - new Date(a.created_at);
     });
     
-    console.log('정렬 후 공지사항:', sorted.map(n => ({
+    // 디버깅: 정렬 후 데이터 출력
+    console.log('정렬 후 데이터 상세:', sorted.map(n => ({
         id: n.id,
         title: n.title,
-        is_important: n.is_important
+        is_important: n.is_important,
+        type: typeof n.is_important,
+        value: Number(n.is_important)
     })));
     
     return sorted;
@@ -2178,7 +2187,7 @@ function renderNoticesList(notices, containerId) {
                     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                     
                     // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
-                    const isImportant = Number(notice.is_important) === 1;
+                    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     
                     return `
                         <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
