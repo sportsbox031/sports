@@ -1634,7 +1634,7 @@ function setupIndependentNoticeSystem() {
     };
     
     // 11. 사용자 대시보드 공지사항 렌더링 함수
-    function renderUserNoticesList(notices, container) {
+function renderUserNoticesList(notices, container) {
     // 공통 정렬 함수 사용
     const sortedNotices = sortNoticesByImportanceAndDate(notices);
     
@@ -1675,22 +1675,23 @@ function setupIndependentNoticeSystem() {
             }).join('')}
         </div>
     `;
-    
-    // 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가
-    const originalInitUserDashboard = window.initializeUserDashboard;
-    if (originalInitUserDashboard && !window.userDashboardPatched) {
-        window.userDashboardPatched = true;
-        window.initializeUserDashboard = async function() {
-            // 원래 함수 호출
-            await originalInitUserDashboard.apply(this, arguments);
-            
-            // 공지사항 로드 추가
-            if (typeof window.loadUserNotices === 'function') {
-                console.log('사용자 대시보드 초기화 후 공지사항 로드 호출');
-                await window.loadUserNotices();
-            }
-        };
-    }
+} 
+
+// 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가 (함수 외부로 이동)
+const originalInitUserDashboard = window.initializeUserDashboard;
+if (originalInitUserDashboard && !window.userDashboardPatched) {
+    window.userDashboardPatched = true;
+    window.initializeUserDashboard = async function() {
+        // 원래 함수 호출
+        await originalInitUserDashboard.apply(this, arguments);
+        
+        // 공지사항 로드 추가
+        if (typeof window.loadUserNotices === 'function') {
+            console.log('사용자 대시보드 초기화 후 공지사항 로드 호출');
+            await window.loadUserNotices();
+        }
+    };
+}
     
     console.log('독립적인 공지사항 모달 시스템 설정 완료');
     return true;
