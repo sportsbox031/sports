@@ -1626,6 +1626,23 @@ const REGION_MAPPING = {
     ]
 };
 
+// 공통 정렬 함수 (utils.js 또는 전역 스코프에 정의)
+function sortNoticesByImportanceAndDate(notices) {
+    return [...notices].sort((a, b) => {
+        // is_important가 다양한 형태(1, true, "1" 등)로 저장될 수 있으므로 
+        // Boolean으로 변환하여 비교
+        const aImportant = Boolean(a.is_important);
+        const bImportant = Boolean(b.is_important);
+        
+        // 중요 공지 우선 정렬
+        if (aImportant && !bImportant) return -1;
+        if (!aImportant && bImportant) return 1;
+        
+        // 중요도가 같으면 날짜순으로 정렬
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+}
+
 // 모달 상태 진단 함수
 function diagnoseModalIssue() {
     const modal = document.getElementById('noticeDetailModal');
@@ -1693,14 +1710,11 @@ async function loadHomeNotices() {
         const noticesList = document.getElementById('homeNoticesList');
 
         if (data.success && data.data && data.data.length > 0) {
-            // 중요 공지를 상단으로 정렬 (명시적으로 정렬 로직 강화)
-            const sortedNotices = [...data.data].sort((a, b) => {
-                // 먼저 중요 공지 여부로 정렬
-                if (a.is_important && !b.is_important) return -1;
-                if (!a.is_important && b.is_important) return 1;
-                // 중요도가 같으면 날짜순으로 정렬
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
+            // 공통 정렬 함수 사용
+            const sortedNotices = sortNoticesByImportanceAndDate(data.data);
+            
+            // 디버깅 로그 (선택사항)
+            if (DEBUG) logSortedNotices(sortedNotices);
 
             // 공지사항 데이터를 전역 객체에 저장
             window.noticesData = sortedNotices;
@@ -1774,27 +1788,11 @@ function renderNoticesList(notices, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
         
-        // 중요 공지를 상단으로 정렬
-        const sortedNotices = [...notices].sort((a, b) => {
-    // is_important가 다양한 형태(1, true, "1" 등)로 저장될 수 있으므로 
-    // Boolean으로 변환하여 비교
-    const aImportant = Boolean(a.is_important);
-    const bImportant = Boolean(b.is_important);
-    
-    // 중요 공지 우선 정렬
-    if (aImportant && !bImportant) return -1;
-    if (!aImportant && bImportant) return 1;
-    
-    // 중요도가 같으면 날짜순으로 정렬
-    return new Date(b.created_at) - new Date(a.created_at);
-});
-
-console.log('정렬된 공지사항:', sortedNotices.map(n => ({
-    id: n.id,
-    title: n.title,
-    important: Boolean(n.is_important),
-    date: new Date(n.created_at).toLocaleDateString()
-})));
+        // 공통 정렬 함수 사용
+        const sortedNotices = sortNoticesByImportanceAndDate(notices);
+        
+        // 디버깅 로그 (선택사항)
+        if (DEBUG) logSortedNotices(sortedNotices);
 
         // HTML 생성 - data-notice-id와 data-notice-real-id 속성 추가
         container.innerHTML = sortedNotices.map((notice, index) => `
