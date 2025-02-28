@@ -1632,10 +1632,12 @@ async function loadHomeNotices() {
         const noticesList = document.getElementById('homeNoticesList');
 
         if (data.success && data.data && data.data.length > 0) {
-            // 중요 공지를 상단으로 정렬
+            // 중요 공지를 상단으로 정렬 (명시적으로 정렬 로직 강화)
             const sortedNotices = [...data.data].sort((a, b) => {
+                // 먼저 중요 공지 여부로 정렬
                 if (a.is_important && !b.is_important) return -1;
                 if (!a.is_important && b.is_important) return 1;
+                // 중요도가 같으면 날짜순으로 정렬
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
@@ -1662,7 +1664,7 @@ async function loadHomeNotices() {
                             : notice.content;
                         
                         return `
-                            <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}">
+                            <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
                                 <div class="flex items-start">
                                     <div class="notice-number text-center mr-6">
                                         <span class="block text-4xl font-bold text-gray-800">${sortedNotices.length - index}</span>
@@ -1683,6 +1685,16 @@ async function loadHomeNotices() {
                     }).join('')}
                 </div>
             `;
+            
+            // 공지사항 클릭 이벤트 추가
+            document.querySelectorAll('.notice-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-notice-id'));
+                    const notice = window.noticesData[index];
+                    notice.id = parseInt(this.getAttribute('data-notice-real-id')); // 실제 ID 저장
+                    showNoticeDetail(notice);
+                });
+            });
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
@@ -1695,6 +1707,74 @@ async function loadHomeNotices() {
     }
 }
 
+// 공지사항 목록 렌더링 함수 수정 (대시보드용)
+function renderNoticesList(notices, containerId) {
+    try {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        // 중요 공지를 상단으로 정렬
+        const sortedNotices = [...notices].sort((a, b) => {
+            // 먼저 중요 공지 여부로 정렬
+            if (a.is_important && !b.is_important) return -1;
+            if (!a.is_important && b.is_important) return 1;
+            // 중요도가 같으면 날짜순으로 정렬
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        // HTML 생성 - data-notice-id와 data-notice-real-id 속성 추가
+        container.innerHTML = sortedNotices.map((notice, index) => `
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
+                 data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <h3 class="text-xl font-semibold">${notice.title}</h3>
+                        ${notice.is_important ? 
+                            '<span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                            ''}
+                    </div>
+                    <span class="text-sm text-gray-500">
+                        ${new Date(notice.created_at).toLocaleDateString()}
+                    </span>
+                </div>
+                <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">작성자: ${notice.author || '관리자'}</span>
+                    <span class="px-2 py-1 rounded-full text-sm ${
+                        notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                        notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                    }">
+                        ${notice.region === 'all' ? '전체공지' :
+                          notice.region === 'south' ? '남부공지' : '북부공지'}
+                    </span>
+                </div>
+            </div>
+        `).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+        
+        // 이벤트 리스너 추가
+        container.querySelectorAll('[data-notice-id]').forEach(item => {
+            item.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-notice-id'));
+                const notice = sortedNotices[index];
+                notice.id = parseInt(this.getAttribute('data-notice-real-id')); // 실제 ID 저장
+                showNoticeDetail(notice);
+            });
+        });
+        
+        // 전역 변수에 공지사항 데이터 저장
+        window.noticesData = sortedNotices;
+        
+        checkAdminStatus();
+    } catch (error) {
+        console.error('Notices rendering error:', error);
+        if (container) {
+            container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
+        }
+    }
+}
+
+// 공지사항 상세 보기 함수
 function showNoticeDetail(notice) {
     console.log('모달 표시 함수 호출:', notice);
     
@@ -1785,6 +1865,85 @@ function closeNoticeDetail() {
     console.log('모달 닫힘');
 }
 
+// 공지사항 수정 모달 HTML 추가 (body 끝 부분에 추가)
+const noticeEditModalHTML = `
+<div id="noticeEditModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">공지사항 수정</h2>
+            <button onclick="closeNoticeEditModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="noticeEditForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
+                <input type="text" id="editNoticeTitle" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                <textarea id="editNoticeContent" required rows="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">공개 범위</label>
+                <select id="editNoticeRegion" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="">선택해주세요</option>
+                    <option value="all">전체 공개</option>
+                    <option value="south">남부 지역만</option>
+                    <option value="north">북부 지역만</option>
+                </select>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="editNoticeImportant" class="w-4 h-4 text-blue-600 rounded">
+                <label for="editNoticeImportant" class="ml-2 text-gray-700 text-sm font-bold">중요 공지</label>
+            </div>
+            <button type="submit" 
+                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
+                수정하기
+            </button>
+        </form>
+    </div>
+</div>`;
+
+// body에 모달 HTML 추가
+document.body.insertAdjacentHTML('beforeend', noticeEditModalHTML);
+
+// 수정 버튼 클릭 시 호출되는 함수
+function editNotice() {
+    if (!window.currentNoticeId) {
+        showAlert('공지사항 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    // 현재 공지사항 정보 가져오기
+    const notice = window.noticesData.find(n => n.id === window.currentNoticeId);
+    if (!notice) {
+        showAlert('공지사항 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    // 수정 모달에 기존 정보 표시
+    document.getElementById('editNoticeTitle').value = notice.title;
+    document.getElementById('editNoticeContent').value = notice.content;
+    document.getElementById('editNoticeRegion').value = notice.region || 'all';
+    document.getElementById('editNoticeImportant').checked = notice.is_important === 1;
+    
+    // 공지사항 상세 모달 닫기
+    document.getElementById('independentNoticeModal').style.display = 'none';
+    
+    // 수정 모달 열기
+    openModal('noticeEditModal');
+}
+
+// 수정 모달 닫기 함수
+function closeNoticeEditModal() {
+    closeModal('noticeEditModal');
+    document.getElementById('noticeEditForm').reset();
+}
+
 function initializeNoticeListeners() {
     const noticesList = document.getElementById('homeNoticesList');
     if (!noticesList) return;
@@ -1806,48 +1965,53 @@ function initializeNoticeListeners() {
     console.log('공지사항 클릭 이벤트 리스너 등록 완료');
 }
 
-// 공지사항 수정
-async function editNotice() {
-    try {
-        if (!currentNoticeId) return;
-
-        const title = document.getElementById('noticeDetailTitle').textContent;
-        const content = document.getElementById('noticeDetailContent').textContent;
-        const region = document.getElementById('noticeRegion').value;
-
-        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ title, content, region })
-        });
-
-        if (response.success) {
-            showAlert('공지사항이 수정되었습니다.', 'success');
-            closeNoticeDetail();
-            await loadHomeNotices();  // 목록 새로고침
-        }
-    } catch (error) {
-        console.error('Notice update error:', error);
-        showAlert(error.message || '공지사항 수정 중 오류가 발생했습니다.', 'error');
-    }
-}
-
 // 공지사항 삭제
 async function deleteNotice() {
+    if (!currentNoticeId) {
+        showAlert('공지사항 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    // 삭제 확인
+    if (!confirm('정말 이 공지사항을 삭제하시겠습니까?')) {
+        return;
+    }
+    
     try {
-        if (!currentNoticeId || !confirm('정말 이 공지사항을 삭제하시겠습니까?')) return;
-
-        const response = await apiRequest(`/api/admin/notices/${currentNoticeId}`, {
-            method: 'DELETE'
+        showLoading();
+        
+        // API 요청
+        const response = await fetch(`${API_BASE_URL}/api/admin/notices/${currentNoticeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            }
         });
-
-        if (response.success) {
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || '공지사항 삭제 중 오류가 발생했습니다.');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
             showAlert('공지사항이 삭제되었습니다.', 'success');
             closeNoticeDetail();
-            await loadHomeNotices();  // 목록 새로고침
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+            // 대시보드에 있는 경우 해당 목록도 새로고침
+            if (document.getElementById('noticesListSection')) {
+                await loadNotices();
+            }
+        } else {
+            throw new Error(data.message || '공지사항 삭제에 실패했습니다.');
         }
     } catch (error) {
         console.error('Notice deletion error:', error);
         showAlert(error.message || '공지사항 삭제 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -1951,7 +2115,6 @@ function checkAdminStatus() {
 }
 
 // 페이지 로드 시 실행
-// 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
     // 공지사항 로드
     loadHomeNotices();
@@ -1993,6 +2156,58 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }, 2000);
+});
+
+// 수정 폼 제출 이벤트 리스너
+document.getElementById('noticeEditForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        showLoading();
+        
+        // 수정할 데이터 준비
+        const formData = {
+            title: document.getElementById('editNoticeTitle').value,
+            content: document.getElementById('editNoticeContent').value,
+            region: document.getElementById('editNoticeRegion').value,
+            is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0
+        };
+        
+        // API 요청
+        const response = await fetch(`${API_BASE_URL}/api/admin/notices/${currentNoticeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || '공지사항 수정 중 오류가 발생했습니다.');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('공지사항이 수정되었습니다.', 'success');
+            closeNoticeEditModal();
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+            // 대시보드에 있는 경우 해당 목록도 새로고침
+            if (document.getElementById('noticesListSection')) {
+                await loadNotices();
+            }
+        } else {
+            throw new Error(data.message || '공지사항 수정에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Notice update error:', error);
+        showAlert(error.message || '공지사항 수정 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
 });
 
 // 공지사항 모달 초기화 함수 - 페이지 로드 시 즉시 실행
@@ -2051,14 +2266,14 @@ function enhanceNoticeDetailModal() {
     return;
   }
   
-  // 첨부파일 섹션이 이미 있는지 확인
+  const modalContent = modal.querySelector('div:first-child');
+  if (!modalContent) {
+    console.error('모달 컨텐츠 요소를 찾을 수 없습니다');
+    return;
+  }
+  
+  // 1. 첨부파일 섹션이 이미 있는지 확인 후 추가
   if (!document.getElementById('independentModalAttachment')) {
-    const modalContent = modal.querySelector('div:first-child');
-    if (!modalContent) {
-      console.error('모달 컨텐츠 요소를 찾을 수 없습니다');
-      return;
-    }
-    
     const attachmentSection = document.createElement('div');
     attachmentSection.id = 'independentModalAttachment';
     attachmentSection.style.marginTop = '20px';
@@ -2084,6 +2299,36 @@ function enhanceNoticeDetailModal() {
     console.log('첨부파일 섹션이 모달에 추가되었습니다');
   }
   
+  // 2. 관리자 액션 버튼 추가 (없는 경우에만)
+  if (!document.getElementById('independentModalActions')) {
+    const adminActions = document.createElement('div');
+    adminActions.id = 'independentModalActions';
+    adminActions.style.display = 'flex';
+    adminActions.style.justifyContent = 'flex-end';
+    adminActions.style.marginTop = '20px';
+    adminActions.style.paddingTop = '15px';
+    adminActions.style.borderTop = '1px solid #eee';
+    adminActions.innerHTML = `
+      <button id="editNoticeBtn" style="background:#3B82F6; color:white; padding:8px 16px; border-radius:4px; margin-right:8px; cursor:pointer; border:none;">수정</button>
+      <button id="deleteNoticeBtn" style="background:#EF4444; color:white; padding:8px 16px; border-radius:4px; cursor:pointer; border:none;">삭제</button>
+    `;
+    adminActions.style.display = 'none'; // 기본적으로 숨김
+    
+    modalContent.appendChild(adminActions);
+    console.log('관리자 액션 버튼이 모달에 추가되었습니다');
+    
+    // 버튼 이벤트 리스너 추가
+    document.getElementById('editNoticeBtn').addEventListener('click', function() {
+      modal.style.display = 'none';
+      editNotice(); // 기존 수정 함수 호출
+    });
+    
+    document.getElementById('deleteNoticeBtn').addEventListener('click', function() {
+      deleteNotice(); // 기존 삭제 함수 호출
+    });
+  }
+}
+  
   // 공지사항 처리 함수 수정
   window.handleNoticeClick = function(e) {
   e.preventDefault();
@@ -2093,10 +2338,14 @@ function enhanceNoticeDetailModal() {
   
   const noticeItem = e.currentTarget;
   const noticeId = parseInt(noticeItem.getAttribute('data-notice-id'));
+  const realNoticeId = parseInt(noticeItem.getAttribute('data-notice-real-id'));
   
   if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
     const notice = window.noticesData[noticeId];
     console.log('표시할 공지사항:', notice);
+    
+    // 중요: 실제 ID 저장 (수정/삭제에 필요)
+    window.currentNoticeId = realNoticeId || notice.id;
     
     // 모달 내용 설정
     document.getElementById('independentModalTitle').textContent = notice.title;
@@ -2113,9 +2362,7 @@ function enhanceNoticeDetailModal() {
     
     if (attachmentSection) {
       if (notice.attachment_url) {
-        // 파일명과 URL 직접 사용 (GitHub 변환 없이)
         const fileName = notice.attachment_name || '첨부파일';
-        
         document.getElementById('independentModalFileName').textContent = fileName;
         document.getElementById('independentModalFileLink').href = notice.attachment_url;
         attachmentSection.style.display = 'block';
@@ -2124,6 +2371,14 @@ function enhanceNoticeDetailModal() {
         attachmentSection.style.display = 'none';
         console.log('첨부파일이 없어 섹션이 숨겨짐');
       }
+    }
+    
+    // 관리자 권한 확인 및 버튼 표시
+    const adminActions = document.getElementById('independentModalActions');
+    if (adminActions) {
+      const isAdmin = sessionStorage.getItem('role') === 'admin';
+      adminActions.style.display = isAdmin ? 'flex' : 'none';
+      console.log('관리자 권한 확인:', isAdmin ? '관리자 맞음' : '관리자 아님');
     }
     
     // 모달 표시
@@ -2176,7 +2431,6 @@ function enhanceNoticeDetailModal() {
     
     console.log('현재 공지사항 이벤트 리스너 설정 완료');
   }, 500);
-}
 
     // 시군 선택 드롭다운 초기화 수정
     function initializeCitySelect() {
