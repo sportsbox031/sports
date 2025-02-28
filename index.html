@@ -2345,20 +2345,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 디버깅 함수 추가 - 전역 스코프에 정의
     window.debugNotices = function() {
-        console.log('===== 공지사항 디버깅 =====');
-        console.log('독립 모달 존재:', !!document.getElementById('independentNoticeModal'));
-        console.log('공지사항 데이터:', window.noticesData);
-        console.log('공지사항 컨테이너:', document.getElementById('noticesListSection'));
-        console.log('loadUserNotices 함수:', typeof window.loadUserNotices);
-        console.log('handleNoticeClick 함수:', typeof window.handleNoticeClick);
-        console.log('===========================');
-        
-        // 공지사항 컨테이너가 있으면 강제로 다시 로드
-        if (document.getElementById('noticesListSection') && typeof window.loadUserNotices === 'function') {
-            console.log('공지사항 강제 로드 시도');
-            window.loadUserNotices();
-        }
-    };
+    console.log('===== 공지사항 디버깅 =====');
+    console.log('독립 모달 존재:', !!document.getElementById('independentNoticeModal'));
+    console.log('공지사항 데이터:', window.noticesData);
+    console.log('공지사항 컨테이너:', document.getElementById('noticesListSection'));
+    console.log('loadUserNotices 함수:', typeof window.loadUserNotices);
+    console.log('handleNoticeClick 함수:', typeof window.handleNoticeClick);
+    console.log('로그인 상태:', !!sessionStorage.getItem('token'));
+    console.log('===========================');
+    
+    // 중요: 로그인 상태일 때만 API 호출
+    if (sessionStorage.getItem('token') && 
+        document.getElementById('noticesListSection') && 
+        typeof window.loadUserNotices === 'function') {
+        console.log('공지사항 강제 로드 시도');
+        window.loadUserNotices();
+    }
+};
     
     // 3초 후 디버깅 실행 (페이지 로드 후)
     setTimeout(window.debugNotices, 3000);
