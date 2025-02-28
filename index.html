@@ -1968,38 +1968,30 @@ function sortNoticesByImportanceAndDate(notices) {
         return [];
     }
     
-    // 디버깅: 정렬 전 데이터 출력
-    console.log('정렬 전 데이터 상세:', notices.map(n => ({
+    console.log('정렬 전 공지사항 raw 데이터:', notices.map(n => ({
         id: n.id,
         title: n.title,
         is_important: n.is_important,
-        type: typeof n.is_important,
-        value: Number(n.is_important)
+        raw_type: typeof n.is_important
     })));
     
     const sorted = [...notices].sort((a, b) => {
-        // 중요 공지 여부를 명시적으로 숫자로 변환
-        const aImportant = a.is_important === 1 || a.is_important === '1' || a.is_important === true;
-const bImportant = b.is_important === 1 || b.is_important === '1' || b.is_important === true;
+        // 명시적으로 숫자로 변환하여 비교 (0, 1)
+        const aImportant = Number(a.is_important);
+        const bImportant = Number(b.is_important);
         
-        // 디버깅 로그
-        console.log(`비교: "${a.title}" (중요: ${aImportant}) vs "${b.title}" (중요: ${bImportant})`);
-        
-        // 중요 공지 우선 정렬 (boolean 비교)
-        if (aImportant && !bImportant) return -1;
-if (!aImportant && bImportant) return 1;
+        // 중요 공지 우선 정렬
+        if (aImportant > bImportant) return -1;
+        if (aImportant < bImportant) return 1;
         
         // 중요도가 같으면 날짜순으로 정렬 (최신순)
         return new Date(b.created_at) - new Date(a.created_at);
     });
     
-    // 디버깅: 정렬 후 데이터 출력
-    console.log('정렬 후 데이터 상세:', sorted.map(n => ({
+    console.log('정렬 후 공지사항:', sorted.map(n => ({
         id: n.id,
         title: n.title,
-        is_important: n.is_important,
-        type: typeof n.is_important,
-        value: Number(n.is_important)
+        is_important: n.is_important
     })));
     
     return sorted;
