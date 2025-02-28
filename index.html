@@ -268,28 +268,28 @@
 
     /* 스크롤바 스타일 */
     .overflow-y-auto {
-        scrollbar-width: thin;
-        scrollbar-color: #CBD5E0 #EDF2F7;
-    }
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E0 #EDF2F7;
+}
 
-    .overflow-y-auto::-webkit-scrollbar {
-        width: 6px;
-    }
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
 
-    .overflow-y-auto::-webkit-scrollbar-track {
-        background: #EDF2F7;
-        border-radius: 3px;
-    }
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #EDF2F7;
+    border-radius: 3px;
+}
 
-    .overflow-y-auto::-webkit-scrollbar-thumb {
-        background-color: #CBD5E0;
-        border-radius: 3px;
-        border: 2px solid #EDF2F7;
-    }
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: #CBD5E0;
+    border-radius: 3px;
+    border: 2px solid #EDF2F7;
+}
 
-    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-        background-color: #A0AEC0;
-    }
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: #A0AEC0;
+}
 
     /* 폼 입력 필드 포커스 스타일 */
     .focus\:ring-2:focus {
@@ -925,15 +925,6 @@
                             </form>
                         </div>
 
-                       <!-- 여기에 공지사항 섹션 추가 -->
-                       <div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
-                        <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
-                        <div id="noticesListSection" class="grid gap-6">
-                            <!-- 공지사항이 여기에 동적으로 추가됨 -->
-                            <p class="text-center text-gray-500">공지사항을 불러오는 중...</p>
-                        </div>
-                    </div>
-
                         <!-- 내 예약 목록 -->
                         <div class="mt-8 bg-white rounded-lg shadow-lg p-6 col-span-2">
                             <h2 class="text-xl font-bold text-gray-700 mb-6">내 예약 목록</h2>
@@ -954,9 +945,17 @@
                                 </table>
                             </div>
                         </div>
-                    </div>
-                </main>
-            </div>
+
+<!-- 여기에 공지사항 섹션 추가 -->
+<div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">공지사항</h2>
+    <div id="noticesListSection" class="grid gap-6">
+        <!-- 공지사항이 여기에 동적으로 추가됨 -->
+    </div>
+</div>
+</div>
+</main>
+</div>
 
     <!-- 사용자 프로필 관리 모달 -->
     <div id="userProfileModal" class="modal">
@@ -1584,43 +1583,46 @@ function setupIndependentNoticeSystem() {
     
     // 11. 사용자 대시보드 공지사항 렌더링 함수
     function renderUserNoticesList(notices, container) {
-        // 공통 정렬 함수 사용
-        const sortedNotices = sortNoticesByImportanceAndDate(notices);
-        
-        // 디버깅 로그
-        if (DEBUG && typeof logSortedNotices === 'function') {
-            logSortedNotices(sortedNotices);
-        }
-        
-        // 공지사항이 없는 경우
-        if (sortedNotices.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
-            return;
-        }
-        
-        // HTML 생성 - 간결한 디자인으로 변경
-        container.innerHTML = sortedNotices.map((notice, index) => {
-            // 날짜 형식 변환
-            const date = new Date(notice.created_at);
-            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            
-            return `
-                <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
-                     data-notice-id="${index}" data-notice-real-id="${notice.id}">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">
-                            ${notice.is_important ? 
-                                '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                ''}
-                            ${notice.title}
-                        </h3>
-                        <span class="text-sm text-gray-500">${formattedDate}</span>
-                    </div>
-                    <p class="text-gray-600 text-sm line-clamp-2">${notice.content}</p>
-                </div>
-            `;
-        }).join('');
+    // 공통 정렬 함수 사용
+    const sortedNotices = sortNoticesByImportanceAndDate(notices);
+    
+    // 디버깅 로그
+    if (DEBUG && typeof logSortedNotices === 'function') {
+        logSortedNotices(sortedNotices);
     }
+    
+    // 공지사항이 없는 경우
+    if (sortedNotices.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
+        return;
+    }
+    
+    // HTML 생성 - 스크롤 컨테이너 추가
+    container.innerHTML = `
+        <div class="overflow-y-auto max-h-[500px] pr-2"> <!-- 스크롤 컨테이너 추가 -->
+            ${sortedNotices.map((notice, index) => {
+                // 날짜 형식 변환
+                const date = new Date(notice.created_at);
+                const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
+                         data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold">
+                                ${notice.is_important ? 
+                                    '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                    ''}
+                                ${notice.title}
+                            </h3>
+                            <span class="text-sm text-gray-500">${formattedDate}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm line-clamp-2">${notice.content}</p>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
     
     // 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가
     const originalInitUserDashboard = window.initializeUserDashboard;
@@ -1918,52 +1920,106 @@ function renderNoticesList(notices, containerId) {
             logSortedNotices(sortedNotices);
         }
 
-        // HTML 생성 - 간결한 디자인으로 변경
-        container.innerHTML = sortedNotices.map((notice, index) => {
-            // 날짜 형식 변환
-            const date = new Date(notice.created_at);
-            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            
-            return `
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
-                     data-notice-id="${index}" data-notice-real-id="${notice.id}">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center">
-                            <h3 class="text-xl font-semibold">
-                                ${notice.is_important ? 
-                                    '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                    ''}
-                                ${notice.title}
-                            </h3>
+        // 공지사항이 없는 경우
+        if (!sortedNotices || sortedNotices.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
+            return;
+        }
+
+        // HTML 생성 - 스크롤 컨테이너 추가 및 디자인 개선
+        container.innerHTML = `
+            <div class="overflow-y-auto max-h-[500px] pr-2">
+                ${sortedNotices.map((notice, index) => {
+                    // 날짜 형식 변환
+                    const date = new Date(notice.created_at);
+                    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    
+                    return `
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${notice.is_important ? 'border-l-4 border-red-500' : ''}"
+                             data-notice-id="${index}" data-notice-real-id="${notice.id}">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-lg font-semibold flex items-center">
+                                    ${notice.is_important ? 
+                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                        ''}
+                                    ${notice.title}
+                                </h3>
+                                <span class="text-sm text-gray-500">${formattedDate}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-3 line-clamp-2">${notice.content}</p>
+                            <div class="flex justify-end">
+                                <span class="px-2 py-1 rounded-full text-xs ${
+                                    notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
+                                    notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-green-100 text-green-800'
+                                }">
+                                    ${notice.region === 'all' ? '전체공지' :
+                                      notice.region === 'south' ? '남부공지' : '북부공지'}
+                                </span>
+                            </div>
                         </div>
-                        <span class="text-sm text-gray-500">${formattedDate}</span>
-                    </div>
-                    <p class="text-gray-600 mb-4 line-clamp-3">${notice.content}</p>
-                    <div class="flex justify-end">
-                        <span class="px-2 py-1 rounded-full text-sm ${
-                            notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                            notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                        }">
-                            ${notice.region === 'all' ? '전체공지' :
-                              notice.region === 'south' ? '남부공지' : '북부공지'}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }).join('') || '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+                    `;
+                }).join('')}
+            </div>
+        `;
         
         // 전역 변수에 공지사항 데이터 저장 (이벤트 리스너 추가 전에 설정)
         window.noticesData = sortedNotices;
         
         // 이벤트 리스너 추가
-        container.querySelectorAll('[data-notice-id]').forEach(item => {
+        const noticeItems = container.querySelectorAll('[data-notice-id]');
+        console.log(`${noticeItems.length}개 공지사항 항목에 이벤트 리스너 추가`);
+        
+        noticeItems.forEach(item => {
             // 기존 이벤트 리스너 제거 (중복 방지)
             const clone = item.cloneNode(true);
             item.parentNode.replaceChild(clone, item);
             
             // 새 이벤트 리스너 추가 - 직접 handleNoticeClick 함수 사용
-            clone.addEventListener('click', window.handleNoticeClick);
+            clone.addEventListener('click', window.handleNoticeClick || function(e) {
+                const noticeId = parseInt(this.getAttribute('data-notice-id'));
+                const realNoticeId = parseInt(this.getAttribute('data-notice-real-id'));
+                
+                console.log('공지사항 클릭:', noticeId, realNoticeId);
+                
+                if (window.noticesData && noticeId >= 0 && noticeId < window.noticesData.length) {
+                    const notice = window.noticesData[noticeId];
+                    
+                    // 현재 공지사항 ID 저장
+                    window.currentNoticeId = realNoticeId || notice.id;
+                    
+                    // 독립 모달 시스템 사용
+                    const modal = document.getElementById('independentNoticeModal');
+                    if (modal) {
+                        document.getElementById('independentModalTitle').textContent = notice.title;
+                        document.getElementById('independentModalContent').textContent = notice.content;
+                        document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+                        document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+                        
+                        // 첨부파일 처리 (있는 경우)
+                        const attachmentSection = document.getElementById('independentModalAttachment');
+                        if (attachmentSection) {
+                            if (notice.attachment_url) {
+                                document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+                                document.getElementById('independentModalFileLink').href = notice.attachment_url;
+                                attachmentSection.style.display = 'block';
+                            } else {
+                                attachmentSection.style.display = 'none';
+                            }
+                        }
+                        
+                        // 관리자 액션 버튼 표시 여부
+                        const adminActions = document.getElementById('independentModalActions');
+                        if (adminActions) {
+                            const isAdmin = sessionStorage.getItem('role') === 'admin';
+                            adminActions.style.display = isAdmin ? 'flex' : 'none';
+                        }
+                        
+                        modal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+            });
         });
         
         console.log('공지사항 목록 렌더링 완료:', sortedNotices.length, '개 항목');
