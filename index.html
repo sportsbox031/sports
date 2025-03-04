@@ -2129,8 +2129,34 @@ async function loadHomeNotices() {
         if (data.success && data.data && data.data.length > 0) {
             console.log('원본 공지사항 데이터:', data.data);
             
-            // 새 통합 렌더링 함수 사용
-            renderNotices(data.data, 'homeNoticesList');
+            // 중요공지 값 디버깅을 위한 추가 로그
+            console.log('is_important 값 확인:', data.data.map(notice => ({
+                id: notice.id,
+                title: notice.title,
+                is_important: notice.is_important,
+                type: typeof notice.is_important,
+                boolValue: Boolean(notice.is_important)
+            })));
+            
+            // 중요공지 값 전처리 (모든 공지사항의 is_important 값을 일관된 형태로 변환)
+            const processedData = data.data.map(notice => ({
+                ...notice,
+                is_important: notice.is_important === 1 || 
+                              notice.is_important === '1' || 
+                              notice.is_important === true ? 1 : 0
+            }));
+            
+            console.log('전처리 후 데이터:', processedData.map(n => ({
+                id: n.id, 
+                title: n.title, 
+                is_important: n.is_important
+            })));
+            
+            // 새 통합 렌더링 함수 사용 (전처리된 데이터 전달)
+            renderNotices(processedData, 'homeNoticesList');
+            
+            // 전역 변수에 처리된 데이터 저장 (다른 함수에서 사용할 수 있도록)
+            window.noticesData = processedData;
         } else {
             noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
@@ -2523,14 +2549,23 @@ function editNotice() {
         return;
     }
     
+    console.log('수정할 공지사항 데이터:', notice);
+    
     // 수정 모달에 기존 정보 표시
     document.getElementById('editNoticeTitle').value = notice.title;
     document.getElementById('editNoticeContent').value = notice.content;
     document.getElementById('editNoticeRegion').value = notice.region || 'all';
-    document.getElementById('editNoticeImportant').checked = notice.is_important === 1;
+    
+    // 중요 공지 체크박스 상태 설정 (개선됨)
+    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
+    document.getElementById('editNoticeImportant').checked = isImportant;
+    console.log('체크박스 상태 설정:', isImportant);
     
     // 공지사항 상세 모달 닫기
-    document.getElementById('independentNoticeModal').style.display = 'none';
+    const modal = document.getElementById('independentNoticeModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     
     // 수정 모달 열기
     openModal('noticeEditModal');
