@@ -2663,6 +2663,7 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
     e.preventDefault();
     
     try {
+        console.log('공지사항 폼 제출 시작');
         showLoading();
         
         // FormData 객체 생성
@@ -2671,18 +2672,9 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
         formData.append('content', document.getElementById('noticeContent').value);
         formData.append('region', document.getElementById('noticeRegion').value);
         
-        // 체크박스 참조 부분 수정 - 요소가 없으면 기본값 사용
+        // 중요 공지 체크박스
         const importantCheckbox = document.getElementById('noticeImportant');
-        console.log('중요 공지 체크박스 요소:', importantCheckbox); // 디버깅 로그 추가
-        
-        // null 체크 추가
-        if (importantCheckbox) {
-            formData.append('is_important', importantCheckbox.checked ? '1' : '0');
-        } else {
-            // 요소를 찾을 수 없는 경우 기본값 사용
-            console.warn('중요 공지 체크박스를 찾을 수 없습니다. 기본값 0을 사용합니다.');
-            formData.append('is_important', '0');
-        }
+        formData.append('is_important', importantCheckbox.checked ? '1' : '0');
         
         // 첨부파일 추가
         const fileInput = document.getElementById('noticeFile');
@@ -2690,6 +2682,8 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
             formData.append('attachment', fileInput.files[0]);
         }
         
+        console.log('API 요청 전송 시작');
+        // 응답 로깅 추가
         const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
             method: 'POST',
             headers: {
@@ -2699,12 +2693,9 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
             body: formData
         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
-        }
-        
+        console.log('API 응답 상태:', response.status);
         const data = await response.json();
+        console.log('API 응답 데이터:', data);
         
         if (data.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
