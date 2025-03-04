@@ -2663,7 +2663,6 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
     e.preventDefault();
     
     try {
-        console.log('공지사항 폼 제출 시작');
         showLoading();
         
         // FormData 객체 생성
@@ -2682,7 +2681,6 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
             formData.append('attachment', fileInput.files[0]);
         }
         
-        console.log('API 요청 전송 시작');
         // 응답 로깅 추가
         const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
             method: 'POST',
@@ -2693,9 +2691,7 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
             body: formData
         });
         
-        console.log('API 응답 상태:', response.status);
         const data = await response.json();
-        console.log('API 응답 데이터:', data);
         
         if (data.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
@@ -3935,7 +3931,7 @@ async function validateStoredToken() {
     }
 }
 
-async function signup(formData) {
+async function signup(formData, signal) {
     try {
         // 입력값 검증
         if (!formData.groupName || !formData.password || !formData.manager || 
@@ -3959,23 +3955,21 @@ async function signup(formData) {
             region: region
         };
 
+        // 요청 시 signal 추가
         const response = await apiRequest('/api/signup', {
             method: 'POST',
-            body: JSON.stringify(signupData)
+            body: JSON.stringify(signupData),
+            signal: signal // AbortController의 signal 전달
         });
 
         if (response.success) {
-            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
-            document.getElementById('signupModal').classList.remove('show');
-            document.getElementById('signupForm').reset();
             return response;
         } else {
             throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
         }
     } catch (error) {
         console.error('Signup error:', error);
-        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
-        throw error;
+        throw error; // 오류를 상위로 전파
     }
 }
 
@@ -5110,38 +5104,122 @@ async function login(username, password) {
     }
 }
 
-// 회원가입시 자동 지역 설정을 위한 수정
+// 제출 버튼 중복 클릭 방지
+let isSubmitting = false;
+
 // 회원가입 폼 제출 이벤트 리스너
 document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    // 이미 제출 중인지 확인하는 플래그 추가
+    if (this.dataset.isSubmitting === 'true') {
+        console.log('이미 제출 중입니다. 중복 요청 방지.');
+        return;
+    }
+    
     try {
+        // 단체명 전처리 및 유효성 검사 강화
+        const groupName = document.getElementById('groupName').value.trim();
+        
+        // 단체명 상세 로깅
+        console.log(`회원가입 시도: 단체명="${groupName}", 길이=${groupName.length}, 코드포인트=[${[...groupName].map(c => c.charCodeAt(0))}]`);
+        
+        // 단체명 유효성 검사 추가
+        if (groupName.length < 2) {
+            showAlert('단체명은 2자 이상이어야 합니다.', 'error');
+            document.getElementById('groupName').focus();
+            return;
+        }
+        
+        // 특수문자 제한 (선택적)
+        if (/[^\w\s가-힣]/.test(groupName)) {
+            showAlert('단체명에는 특수문자를 사용할 수 없습니다.', 'error');
+            document.getElementById('groupName').focus();
+            return;
+        }
+        
+        // 제출 중 상태 설정
+        this.dataset.isSubmitting = 'true';
         const submitButton = e.target.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         
+        // 로딩 표시
         showLoading();
         
+        // 폼 데이터 구성 (불필요한 공백 제거)
         const formData = {
-            groupName: document.getElementById('groupName').value.trim(),
+            groupName: groupName,
             password: document.getElementById('signupPassword').value,
             manager: document.getElementById('manager').value.trim(),
             contact: document.getElementById('contact').value.trim(),
             city: document.getElementById('city').value
         };
-
-        const response = await signup(formData);
         
-        if (response.success) {
-            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
-            document.getElementById('signupModal').classList.remove('show');
-            this.reset();
+        // 모든 필수 필드 확인
+        for (const [key, value] of Object.entries(formData)) {
+            if (!value) {
+                throw new Error(`${key} 필드는 필수입니다.`);
+            }
+        }
+        
+        // 회원가입 API 호출 - 타임아웃 추가
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+        
+        try {
+            const response = await signup(formData, controller.signal);
+            clearTimeout(timeoutId);
+            
+            if (response && response.success) {
+                showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+                document.getElementById('signupModal').classList.remove('show');
+                this.reset();
+            } else {
+                throw new Error(response?.message || '회원가입 처리 중 오류가 발생했습니다.');
+            }
+        } catch (apiError) {
+            clearTimeout(timeoutId);
+            
+            // 단체명 중복 오류인 경우 특별 처리
+            if (apiError.message && apiError.message.includes('이미 등록된 단체명')) {
+                console.error('단체명 중복 오류:', apiError);
+                
+                // 단체명 필드에 시각적 표시 추가
+                const groupNameField = document.getElementById('groupName');
+                groupNameField.classList.add('border-red-500');
+                
+                // 단체명 수정 제안
+                const suggestedName = `${groupName}${Math.floor(Math.random() * 1000)}`;
+                
+                showAlert(`이미 등록된 단체명입니다. "${suggestedName}"와 같이 다른 이름을 시도해보세요.`, 'error');
+                groupNameField.focus();
+            } else {
+                throw apiError; // 다른 오류는 상위 catch 블록으로 전달
+            }
         }
         
     } catch (error) {
-        console.error('Form submission error:', error);
-        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
+        console.error('회원가입 제출 오류:', error);
+        
+        // 오류 메시지 개선
+        let errorMessage = '회원가입 처리 중 오류가 발생했습니다.';
+        
+        if (error.message) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                errorMessage = '서버 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.';
+            } else if (error.message.includes('timeout') || error.message.includes('abort')) {
+                errorMessage = '서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
+            } else {
+                errorMessage = error.message;
+            }
+        }
+        
+        showAlert(errorMessage, 'error');
     } finally {
+        // 항상 실행되는 정리 작업
         hideLoading();
+        this.dataset.isSubmitting = 'false';
+        
         const submitButton = e.target.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = false;
