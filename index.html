@@ -6078,6 +6078,21 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
     }
 });
 
+    // 단체명 입력 필드에 이벤트 리스너 추가
+document.getElementById('groupName').addEventListener('blur', async function() {
+    const groupName = this.value.trim();
+    if (groupName.length >= 2) {
+        const isAvailable = await checkGroupNameAvailability(groupName);
+        if (!isAvailable) {
+            showAlert('이미 사용 중인 단체명입니다. 다른 단체명을 사용해주세요.', 'error');
+            this.classList.add('border-red-500');
+        } else {
+            this.classList.remove('border-red-500');
+            this.classList.add('border-green-500');
+        }
+    }
+});
+
     // 회원가입 모달 컨트롤
     document.getElementById('showSignup').addEventListener('click', function() {
     document.getElementById('signupModal').classList.add('show');
