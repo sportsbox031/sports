@@ -5210,16 +5210,25 @@ document.getElementById('signupForm').addEventListener('submit', async function(
         
         // 단체명 필드에 시각적 표시 추가
         const groupNameField = document.getElementById('groupName');
-        groupNameField.classList.add('border-red-500');
+if (groupNameField) {
+    // 기존 이벤트 리스너 제거
+    const newElement = groupNameField.cloneNode(true);
+    groupNameField.parentNode.replaceChild(newElement, groupNameField);
+    
+    // 새 이벤트 리스너 추가
+    newElement.addEventListener('blur', function() {
+        const groupName = this.value.trim();
         
-        // 단체명 수정 제안
-        const suggestedName = `${groupName}${Math.floor(Math.random() * 1000)}`;
-        
-        showAlert(`이미 등록된 단체명입니다. "${suggestedName}"와 같이 다른 이름을 시도해보세요.`, 'error');
-        groupNameField.focus();
-    } else {
-        throw apiError; // 다른 오류는 상위 catch 블록으로 전달
-    }
+        // 기본 유효성 검사만 수행
+        if (groupName.length < 2) {
+            this.classList.add('border-red-500');
+            this.classList.remove('border-green-500');
+            showAlert('단체명은 2자 이상이어야 합니다.', 'error');
+        } else {
+            this.classList.remove('border-red-500');
+            this.classList.add('border-green-500');
+        }
+    });
 }
         
     } catch (error) {
