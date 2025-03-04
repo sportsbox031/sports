@@ -2553,13 +2553,13 @@ function editNotice() {
     
     // 수정 모달에 기존 정보 표시
     document.getElementById('editNoticeTitle').value = notice.title;
-    document.getElementById('editNoticeContent').value = notice.content;
-    document.getElementById('editNoticeRegion').value = notice.region || 'all';
-    
-    // 중요 공지 체크박스 상태 설정 (개선됨)
-    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
-    document.getElementById('editNoticeImportant').checked = isImportant;
-    console.log('체크박스 상태 설정:', isImportant);
+document.getElementById('editNoticeContent').value = notice.content;
+document.getElementById('editNoticeRegion').value = notice.region || 'all';
+
+// 중요 공지 체크박스 상태 설정 (개선됨)
+const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
+document.getElementById('editNoticeImportant').checked = isImportant;
+console.log('체크박스 상태 설정:', isImportant);
     
     // 공지사항 상세 모달 닫기
     const modal = document.getElementById('independentNoticeModal');
@@ -2830,13 +2830,13 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
         
         // 수정할 데이터 준비
         const formData = {
-            title: document.getElementById('editNoticeTitle').value,
-            content: document.getElementById('editNoticeContent').value,
-            region: document.getElementById('editNoticeRegion').value,
-            is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0
-        };
-        
-        console.log('수정 데이터:', formData); // 디버깅 로그 추가
+    title: document.getElementById('editNoticeTitle').value,
+    content: document.getElementById('editNoticeContent').value,
+    region: document.getElementById('editNoticeRegion').value,
+    is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0  // 숫자 타입으로 전송
+};
+
+console.log('수정 데이터:', formData); // 디버깅 로그 추가
         
         // API 요청
         const response = await fetch(`${API_BASE_URL}/api/admin/notices/${window.currentNoticeId}`, {
