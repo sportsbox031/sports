@@ -506,7 +506,7 @@
                 <textarea id="noticeContent" required rows="6"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
             </div>
-            <!-- 첨부파일 필드 수정 -->
+            <!-- 첨부파일 필드 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
                 <div class="flex items-center space-x-2">
@@ -532,7 +532,7 @@
                 </select>
             </div>
             <div class="flex items-center">
-                <input type="checkbox" id="editNoticeImportant" value="1" class="w-4 h-4 text-blue-600 rounded">
+                <input type="checkbox" id="noticeImportant" value="1" class="w-4 h-4 text-blue-600 rounded">
                 <label for="noticeImportant" class="ml-2 text-gray-700 text-sm font-bold">중요 공지</label>
             </div>
             <button type="submit" 
@@ -2672,6 +2672,10 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
         formData.append('region', document.getElementById('noticeRegion').value);
         formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
         
+        // 체크박스 요소 확인 후 값 추가
+        const importantCheckbox = document.getElementById('noticeImportant');
+        formData.append('is_important', importantCheckbox ? (importantCheckbox.checked ? '1' : '0') : '0');  
+
         // 첨부파일 추가
         const fileInput = document.getElementById('noticeFile');
         if (fileInput.files.length > 0) {
