@@ -532,7 +532,7 @@
                 </select>
             </div>
             <div class="flex items-center">
-                <input type="checkbox" id="noticeImportant" class="w-4 h-4 text-blue-600 rounded">
+                <input type="checkbox" id="editNoticeImportant" value="1" class="w-4 h-4 text-blue-600 rounded">
                 <label for="noticeImportant" class="ml-2 text-gray-700 text-sm font-bold">중요 공지</label>
             </div>
             <button type="submit" 
@@ -2830,11 +2830,11 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
         
         // 수정할 데이터 준비
         const formData = {
-    title: document.getElementById('editNoticeTitle').value,
-    content: document.getElementById('editNoticeContent').value,
-    region: document.getElementById('editNoticeRegion').value,
-    is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0  // 숫자 타입으로 전송
-};
+            title: document.getElementById('editNoticeTitle').value,
+            content: document.getElementById('editNoticeContent').value,
+            region: document.getElementById('editNoticeRegion').value,
+            is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0  // 숫자 타입으로 전송
+        };
 
 console.log('수정 데이터:', formData); // 디버깅 로그 추가
         
