@@ -3180,18 +3180,16 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('인증이 필요합니다.');
         }
 
-        // 캐시 방지를 위한 타임스탬프 추가
+        // 캐시 방지를 위한 타임스탬프 추가 (헤더 대신 URL 파라미터 사용)
         const cacheBuster = `${endpoint.includes('?') ? '&' : '?'}_=${Date.now()}`;
         const urlWithCacheBuster = `${API_BASE_URL}${endpoint}${cacheBuster}`;
 
         const defaultHeaders = {
             'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
+        // 요청 URL과 옵션 로깅
         console.log(`[apiRequest] 요청: ${urlWithCacheBuster}`, options);
         
         const response = await fetch(urlWithCacheBuster, {
@@ -3208,6 +3206,7 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         const data = await response.json();
+        // 응답 데이터 로깅 (민감 정보 제외)
         if (!endpoint.includes('/login')) {
             console.log(`[apiRequest] 응답:`, data);
         }
