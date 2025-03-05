@@ -506,7 +506,7 @@
                 <textarea id="noticeContent" required rows="6"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
             </div>
-            <!-- 첨부파일 필드 -->
+            <!-- 첨부파일 필드 수정 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
                 <div class="flex items-center space-x-2">
@@ -532,7 +532,7 @@
                 </select>
             </div>
             <div class="flex items-center">
-                <input type="checkbox" id="noticeImportant" value="1" class="w-4 h-4 text-blue-600 rounded">
+                <input type="checkbox" id="noticeImportant" class="w-4 h-4 text-blue-600 rounded">
                 <label for="noticeImportant" class="ml-2 text-gray-700 text-sm font-bold">중요 공지</label>
             </div>
             <button type="submit" 
@@ -1355,8 +1355,6 @@
 <script>
 // 전역 스코프에 함수 정의 및 window 객체에 명시적 할당
 window.addDirectNoticeListeners = function() {
-    console.log('공지사항 이벤트 리스너 추가 함수 실행');
-    
     // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
     const noticeItems = document.querySelectorAll('.notice-item, [data-notice-id]');
     console.log('공지사항 항목 수:', noticeItems.length);
@@ -1371,8 +1369,8 @@ window.addDirectNoticeListeners = function() {
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
         
-        // 새 이벤트 추가
-        newItem.addEventListener('click', function(e) {
+        // 새 이벤트 추가 - 여기서 handleNoticeClick 함수 사용
+        newItem.addEventListener('click', window.handleNoticeClick || function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -1943,9 +1941,6 @@ const REGION_MAPPING = {
 
 // 11. 사용자 대시보드 공지사항 렌더링 함수
 function renderUserNoticesList(notices, container) {
-    console.log('기존 renderUserNoticesList 함수 호출 -> renderNotices로 전달');
-    const containerId = container.id;
-    return renderNotices(notices, containerId);
     try {
         if (!container) {
             console.error('공지사항 컨테이너 요소가 없습니다');
@@ -2025,9 +2020,8 @@ function sortNoticesByImportanceAndDate(notices) {
     
     const sorted = [...notices].sort((a, b) => {
         // 명시적으로 숫자로 변환하여 비교 (0, 1)
-        // null, undefined, false, "" 등을 0으로 처리
-        const aImportant = a.is_important === 1 || a.is_important === '1' || a.is_important === true ? 1 : 0;
-        const bImportant = b.is_important === 1 || b.is_important === '1' || b.is_important === true ? 1 : 0;
+        const aImportant = Number(a.is_important);
+        const bImportant = Number(b.is_important);
         
         // 중요 공지 우선 정렬
         if (aImportant > bImportant) return -1;
@@ -2128,76 +2122,20 @@ async function loadHomeNotices() {
 
         if (data.success && data.data && data.data.length > 0) {
             console.log('원본 공지사항 데이터:', data.data);
+            // 공통 정렬 함수 사용
+            const sortedNotices = sortNoticesByImportanceAndDate(data.data);
+            console.log('정렬된 공지사항 데이터:', sortedNotices);
             
-            // 중요공지 값 디버깅을 위한 추가 로그
-            console.log('is_important 값 확인:', data.data.map(notice => ({
-                id: notice.id,
-                title: notice.title,
-                is_important: notice.is_important,
-                type: typeof notice.is_important,
-                boolValue: Boolean(notice.is_important)
-            })));
+            // 디버깅 로그
+            if (DEBUG && typeof logSortedNotices === 'function') {
+                logSortedNotices(sortedNotices);
+            }
+
+            // 공지사항 데이터를 전역 객체에 저장
+            window.noticesData = sortedNotices;
             
-            // 중요공지 값 전처리 (모든 공지사항의 is_important 값을 일관된 형태로 변환)
-            const processedData = data.data.map(notice => ({
-    ...notice,
-    is_important: notice.is_important === 1 || 
-                  notice.is_important === '1' || 
-                  notice.is_important === true ? 1 : 0
-}));
-
-console.log('전처리 후 데이터:', processedData.map(n => ({
-    id: n.id, 
-    title: n.title, 
-    is_important: n.is_important
-})));
-
-// 새 통합 렌더링 함수 사용 (전처리된 데이터 전달)
-renderNotices(processedData, 'homeNoticesList');
-
-// 전역 변수에 처리된 데이터 저장 (다른 함수에서 사용할 수 있도록)
-window.noticesData = processedData;
-        } else {
-            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
-        }
-        
-        checkAdminStatus();
-        console.log('홈화면 공지사항 로드 완료');
-    } catch (error) {
-        console.error('Home notices loading error:', error);
-        document.getElementById('homeNoticesList').innerHTML = 
-            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
-    }
-}
-
-// 공지사항 렌더링 함수 통합
-function renderNotices(notices, containerId) {
-    try {
-        const container = document.getElementById(containerId);
-        if (!container) {
-            console.error(`컨테이너 요소를 찾을 수 없음: ${containerId}`);
-            return;
-        }
-        
-        // 데이터 검증 및 정렬
-        if (!notices || !Array.isArray(notices) || notices.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
-            return;
-        }
-        
-        // 공통 정렬 함수 사용
-        const sortedNotices = sortNoticesByImportanceAndDate(notices);
-        console.log(`${containerId}에 렌더링할 정렬된 공지사항:`, sortedNotices);
-        
-        // 전역 변수에 공지사항 데이터 저장
-        window.noticesData = sortedNotices;
-        
-        // HTML 생성
-        let html = '';
-        
-        if (containerId === 'homeNoticesList') {
-            // 홈화면 스타일
-            html = `
+            // HTML 생성 - 새로운 디자인 적용
+            noticesList.innerHTML = `
                 <div class="notice-tabs mb-4 border-b">
                     <div class="flex">
                         <h3 class="text-2xl font-bold mr-4 pb-2 border-b-2 border-blue-500 text-blue-500">소식</h3>
@@ -2205,15 +2143,14 @@ function renderNotices(notices, containerId) {
                 </div>
                 <div class="notice-list space-y-6 overflow-y-auto max-h-[500px] pr-2">
                     ${sortedNotices.map((notice, index) => {
+                        // 날짜 형식 변환
                         const date = new Date(notice.created_at);
                         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                         
+                        // 내용 요약 (100자 제한)
                         const contentSummary = notice.content.length > 100 
                             ? notice.content.substring(0, 100) + '...' 
                             : notice.content;
-                        
-                        // 명시적으로 is_important 값 확인
-                        const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                         
                         return `
                             <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
@@ -2221,7 +2158,7 @@ function renderNotices(notices, containerId) {
                                     <div class="notice-content flex-1 pr-4">
                                         <h4 class="text-xl font-bold mb-2 text-gray-800 flex items-center justify-between">
                                             <span class="flex items-center">
-                                                ${isImportant ? 
+                                                ${notice.is_important ? 
                                                     '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
                                                     ''}
                                                 ${notice.title}
@@ -2236,69 +2173,25 @@ function renderNotices(notices, containerId) {
                     }).join('')}
                 </div>
             `;
+            
+            // 이벤트 리스너 추가는 독립 시스템에 위임
+            setTimeout(addDirectNoticeListeners, 100);
+            
         } else {
-            // 대시보드 스타일
-            html = `
-                <div class="overflow-y-auto max-h-[500px] pr-2">
-                    ${sortedNotices.map((notice, index) => {
-                        const date = new Date(notice.created_at);
-                        const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                        
-                        // 명시적으로 is_important 값 확인
-                        const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
-
-return `
-    <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
-         data-notice-id="${index}" data-notice-real-id="${notice.id}">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h3 class="text-lg font-semibold flex items-center">
-                                        ${isImportant ? 
-                                            '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
-                                            ''}
-                                        ${notice.title}
-                                    </h3>
-                                    <span class="text-sm text-gray-500">${formattedDate}</span>
-                                </div>
-                                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${notice.content}</p>
-                                <div class="flex justify-end">
-                                    <span class="px-2 py-1 rounded-full text-xs ${
-                                        notice.region === 'all' ? 'bg-purple-100 text-purple-800' :
-                                        notice.region === 'south' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-green-100 text-green-800'
-                                    }">
-                                        ${notice.region === 'all' ? '전체공지' :
-                                          notice.region === 'south' ? '남부공지' : '북부공지'}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
+            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
         
-        container.innerHTML = html;
-        
-        // 이벤트 리스너 추가
-        setTimeout(() => {
-            addDirectNoticeListeners();
-        }, 100);
-        
-        console.log(`${containerId}에 공지사항 렌더링 완료`);
-        
+        checkAdminStatus();
+        console.log('홈화면 공지사항 로드 완료');
     } catch (error) {
-        console.error('공지사항 렌더링 오류:', error);
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
-        }
+        console.error('Home notices loading error:', error);
+        document.getElementById('homeNoticesList').innerHTML = 
+            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
     }
 }
 
 // 공지사항 목록 렌더링 함수 수정 (대시보드용)
 function renderNoticesList(notices, containerId) {
-    console.log('기존 renderNoticesList 함수 호출 -> renderNotices로 전달');
-    return renderNotices(notices, containerId);
     try {
         const container = document.getElementById(containerId);
         if (!container) {
@@ -2549,23 +2442,14 @@ function editNotice() {
         return;
     }
     
-    console.log('수정할 공지사항 데이터:', notice);
-    
     // 수정 모달에 기존 정보 표시
     document.getElementById('editNoticeTitle').value = notice.title;
-document.getElementById('editNoticeContent').value = notice.content;
-document.getElementById('editNoticeRegion').value = notice.region || 'all';
-
-// 중요 공지 체크박스 상태 설정 (개선됨)
-const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
-document.getElementById('editNoticeImportant').checked = isImportant;
-console.log('체크박스 상태 설정:', isImportant);
+    document.getElementById('editNoticeContent').value = notice.content;
+    document.getElementById('editNoticeRegion').value = notice.region || 'all';
+    document.getElementById('editNoticeImportant').checked = notice.is_important === 1;
     
     // 공지사항 상세 모달 닫기
-    const modal = document.getElementById('independentNoticeModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    document.getElementById('independentNoticeModal').style.display = 'none';
     
     // 수정 모달 열기
     openModal('noticeEditModal');
@@ -2665,46 +2549,44 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
     try {
         showLoading();
         
+        // FormData 객체 생성
         const formData = new FormData();
         formData.append('title', document.getElementById('noticeTitle').value);
         formData.append('content', document.getElementById('noticeContent').value);
         formData.append('region', document.getElementById('noticeRegion').value);
         formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
         
+        // 첨부파일 추가
         const fileInput = document.getElementById('noticeFile');
         if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            // 파일 크기 제한 (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert('파일 크기는 10MB를 초과할 수 없습니다.', 'error');
-                return;
-            }
-            formData.append('attachment', file);
+            formData.append('attachment', fileInput.files[0]);
         }
-
+        
         const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                // Content-Type은 FormData를 사용할 때 자동으로 설정됨
             },
             body: formData
         });
-
-        const data = await response.json();
-
+        
         if (!response.ok) {
-            throw new Error(data.message || '서버 오류가 발생했습니다.');
+            const errorData = await response.json();
+            throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
         }
-
+        
+        const data = await response.json();
+        
         if (data.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
             closeNoticeWriteModal();
-            loadHomeNotices();
+            loadHomeNotices(); // 공지사항 목록 새로고침
         } else {
             throw new Error(data.message || '공지사항 등록에 실패했습니다.');
         }
     } catch (error) {
-        console.error('공지사항 제출 오류:', error);
+        console.error('Notice submission error:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
@@ -2835,10 +2717,10 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
             title: document.getElementById('editNoticeTitle').value,
             content: document.getElementById('editNoticeContent').value,
             region: document.getElementById('editNoticeRegion').value,
-            is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0  // 숫자 타입으로 전송
+            is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0
         };
-
-console.log('수정 데이터:', formData); // 디버깅 로그 추가
+        
+        console.log('수정 데이터:', formData); // 디버깅 로그 추가
         
         // API 요청
         const response = await fetch(`${API_BASE_URL}/api/admin/notices/${window.currentNoticeId}`, {
@@ -2867,16 +2749,6 @@ console.log('수정 데이터:', formData); // 디버깅 로그 추가
                 
                 // API에서 최신 데이터 가져오기
                 const noticesResponse = await apiRequest('/api/notices');
-                
-                // 여기에 디버깅 코드 추가
-                console.log('API 응답 원본 데이터:', noticesResponse.data);
-                console.log('is_important 값 확인:', noticesResponse.data.map(n => ({
-                    id: n.id,
-                    title: n.title,
-                    is_important: n.is_important,
-                    type: typeof n.is_important
-                })));
-                
                 if (noticesResponse.success && noticesResponse.data) {
                     console.log(`${noticesResponse.data.length}개 공지사항 데이터 받음`);
                     
@@ -2925,29 +2797,6 @@ console.log('수정 데이터:', formData); // 디버깅 로그 추가
         hideLoading();
     }
 });
-
-    // 단체명 입력 필드 이벤트 리스너 수정
-    const groupNameField = document.getElementById('groupName');
-    if (groupNameField) {
-        // 기존 이벤트 리스너 제거
-        const newElement = groupNameField.cloneNode(true);
-        groupNameField.parentNode.replaceChild(newElement, groupNameField);
-        
-        // 새 이벤트 리스너 추가
-        newElement.addEventListener('blur', function() {
-            const groupName = this.value.trim();
-            
-            // 기본 유효성 검사만 수행
-            if (groupName.length < 2) {
-                this.classList.add('border-red-500');
-                this.classList.remove('border-green-500');
-                showAlert('단체명은 2자 이상이어야 합니다.', 'error');
-            } else {
-                this.classList.remove('border-red-500');
-                this.classList.add('border-green-500');
-            }
-        });
-    };
 
 // 공지사항 모달 초기화 함수 - 페이지 로드 시 즉시 실행
 function initializeNoticeModal() {
@@ -3230,27 +3079,6 @@ function updateRemainingBookingsDisplay(remainingBookings) {
     }
 }
 
-// 단체명 중복 확인 함수
-async function checkGroupNameAvailability(groupName) {
-    try {
-        showLoading();
-        const response = await fetch(`${API_BASE_URL}/api/check-group-name?name=${encodeURIComponent(groupName)}`);
-        
-        if (!response.ok) {
-            throw new Error('서버 응답 오류');
-        }
-        
-        const data = await response.json();
-        return data.available; // true면 사용 가능, false면 이미 사용 중
-    } catch (error) {
-        console.error('단체명 확인 오류:', error);
-        // 오류 발생 시 기본적으로 사용 가능으로 처리 (서버 검증에서 다시 확인됨)
-        return true;
-    } finally {
-        hideLoading();
-    }
-}
-
 // API 요청 헬퍼 함수
 async function apiRequest(endpoint, options = {}) {
     showLoading();
@@ -3261,19 +3089,15 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('인증이 필요합니다.');
         }
 
-        // 캐시 방지를 위한 타임스탬프 추가 (헤더 대신 URL 파라미터 사용)
-        const cacheBuster = `${endpoint.includes('?') ? '&' : '?'}_=${Date.now()}`;
-        const urlWithCacheBuster = `${API_BASE_URL}${endpoint}${cacheBuster}`;
-
         const defaultHeaders = {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
         // 요청 URL과 옵션 로깅
-        console.log(`[apiRequest] 요청: ${urlWithCacheBuster}`, options);
+        console.log(`[apiRequest] 요청: ${endpoint}`, options);
         
-        const response = await fetch(urlWithCacheBuster, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
                 ...defaultHeaders,
@@ -3978,7 +3802,7 @@ async function validateStoredToken() {
     }
 }
 
-async function signup(formData, signal) {
+async function signup(formData) {
     try {
         // 입력값 검증
         if (!formData.groupName || !formData.password || !formData.manager || 
@@ -4002,21 +3826,23 @@ async function signup(formData, signal) {
             region: region
         };
 
-        // 요청 시 signal 추가
         const response = await apiRequest('/api/signup', {
             method: 'POST',
-            body: JSON.stringify(signupData),
-            signal: signal // AbortController의 signal 전달
+            body: JSON.stringify(signupData)
         });
 
         if (response.success) {
+            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('signupModal').classList.remove('show');
+            document.getElementById('signupForm').reset();
             return response;
         } else {
             throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
         }
     } catch (error) {
         console.error('Signup error:', error);
-        throw error; // 오류를 상위로 전파
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
+        throw error;
     }
 }
 
@@ -5151,123 +4977,38 @@ async function login(username, password) {
     }
 }
 
-// 제출 버튼 중복 클릭 방지
-let isSubmitting = false;
-
+// 회원가입시 자동 지역 설정을 위한 수정
 // 회원가입 폼 제출 이벤트 리스너
 document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // 이미 제출 중인지 확인하는 플래그 추가
-    if (this.dataset.isSubmitting === 'true') {
-        console.log('이미 제출 중입니다. 중복 요청 방지.');
-        return;
-    }
-    
     try {
-        // 단체명 전처리 및 유효성 검사 강화
-        const groupName = document.getElementById('groupName').value.trim();
-        
-        // 단체명 상세 로깅
-        console.log(`회원가입 시도: 단체명="${groupName}", 길이=${groupName.length}, 코드포인트=[${[...groupName].map(c => c.charCodeAt(0))}]`);
-        
-        // 단체명 유효성 검사 추가
-        if (groupName.length < 2) {
-            showAlert('단체명은 2자 이상이어야 합니다.', 'error');
-            document.getElementById('groupName').focus();
-            return;
-        }
-        
-        // 특수문자 제한 (선택적)
-        if (/[^\w\s가-힣]/.test(groupName)) {
-            showAlert('단체명에는 특수문자를 사용할 수 없습니다.', 'error');
-            document.getElementById('groupName').focus();
-            return;
-        }
-        
-        // 제출 중 상태 설정
-        this.dataset.isSubmitting = 'true';
         const submitButton = e.target.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         
-        // 로딩 표시
         showLoading();
         
-        // 폼 데이터 구성 (불필요한 공백 제거)
         const formData = {
-            groupName: groupName,
+            groupName: document.getElementById('groupName').value.trim(),
             password: document.getElementById('signupPassword').value,
             manager: document.getElementById('manager').value.trim(),
             contact: document.getElementById('contact').value.trim(),
             city: document.getElementById('city').value
         };
+
+        const response = await signup(formData);
         
-        // 모든 필수 필드 확인
-        for (const [key, value] of Object.entries(formData)) {
-            if (!value) {
-                throw new Error(`${key} 필드는 필수입니다.`);
-            }
-        }
-        
-        // 회원가입 API 호출 - 타임아웃 추가
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-        
-        try {
-            const response = await signup(formData, controller.signal);
-            clearTimeout(timeoutId);
-            
-            if (response && response.success) {
-                showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
-                document.getElementById('signupModal').classList.remove('show');
-                this.reset();
-            } else {
-                throw new Error(response?.message || '회원가입 처리 중 오류가 발생했습니다.');
-            }
-        } catch (apiError) {
-            clearTimeout(timeoutId);
-            
-            // 단체명 중복 오류인 경우 특별 처리
-            if (apiError.message && apiError.message.includes('이미 등록된 단체명')) {
-                console.error('단체명 중복 오류:', apiError);
-                
-                // 단체명 필드에 시각적 표시 추가
-                const groupNameField = document.getElementById('groupName');
-                groupNameField.classList.add('border-red-500');
-                groupNameField.classList.remove('border-green-500');
-                
-                // 단체명 수정 제안
-                const suggestedName = `${groupName}${Math.floor(Math.random() * 1000)}`;
-                
-                showAlert(`이미 등록된 단체명입니다. "${suggestedName}"와 같이 다른 이름을 시도해보세요.`, 'error');
-                groupNameField.focus();
-            } else {
-                throw apiError; // 다른 오류는 상위 catch 블록으로 전달
-            }
+        if (response.success) {
+            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('signupModal').classList.remove('show');
+            this.reset();
         }
         
     } catch (error) {
-        console.error('회원가입 제출 오류:', error);
-        
-        // 오류 메시지 개선
-        let errorMessage = '회원가입 처리 중 오류가 발생했습니다.';
-        
-        if (error.message) {
-            if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-                errorMessage = '서버 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.';
-            } else if (error.message.includes('timeout') || error.message.includes('abort')) {
-                errorMessage = '서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
-            } else {
-                errorMessage = error.message;
-            }
-        }
-        
-        showAlert(errorMessage, 'error');
+        console.error('Form submission error:', error);
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
     } finally {
-        // 항상 실행되는 정리 작업
         hideLoading();
-        this.dataset.isSubmitting = 'false';
-        
         const submitButton = e.target.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = false;
@@ -6123,21 +5864,6 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
         showAlert('로그인 처리 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
-    }
-});
-
-    // 단체명 입력 필드에 이벤트 리스너 추가
-    document.getElementById('groupName').addEventListener('blur', function() {
-    const groupName = this.value.trim();
-    
-    // 기본 유효성 검사만 수행
-    if (groupName.length < 2) {
-        this.classList.add('border-red-500');
-        this.classList.remove('border-green-500');
-        showAlert('단체명은 2자 이상이어야 합니다.', 'error');
-    } else {
-        this.classList.remove('border-red-500');
-        this.classList.add('border-green-500');
     }
 });
 
