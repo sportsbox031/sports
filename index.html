@@ -1952,31 +1952,26 @@ function renderUserNoticesList(notices, container) {
         }
         
         const sortedNotices = sortNoticesByImportanceAndDate(notices);
-        
         if (!sortedNotices || sortedNotices.length === 0) {
             container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
             return;
         }
-        
-        console.log(`사용자 대시보드에 ${sortedNotices.length}개 공지사항 렌더링 시작`);
         
         window.noticesData = sortedNotices;
         
         container.innerHTML = `
             <div class="overflow-y-auto max-h-[500px] pr-2">
                 ${sortedNotices.map((notice, index) => {
+                    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     const date = new Date(notice.created_at);
                     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     
                     return `
                         <div class="notice-item ${isImportant ? 'important' : ''} bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer"
                              data-notice-id="${index}" data-notice-real-id="${notice.id}">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-semibold">
-                                    ${isImportant ? 
-                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">중요</span>' : 
-                                        ''}
+                                    ${isImportant ? '<span class="inline-block mr-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">중요</span>' : ''}
                                     ${notice.title}
                                 </h3>
                                 <span class="text-sm text-gray-500">${formattedDate}</span>
@@ -1997,49 +1992,15 @@ function renderUserNoticesList(notices, container) {
 
 // 공통 정렬 함수 (utils.js 또는 전역 스코프에 정의)
 function sortNoticesByImportanceAndDate(notices) {
-    if (!notices || !Array.isArray(notices)) {
-        console.error('Invalid notices data:', notices);
-        return [];
-    }
+    if (!notices || !Array.isArray(notices)) return [];
     
-    console.log('정렬 전 공지사항 raw 데이터:', notices.map(n => ({
-        id: n.id,
-        title: n.title,
-        is_important: n.is_important,
-        raw_type: typeof n.is_important
-    })));
-    
-    const sorted = [...notices].sort((a, b) => {
-        // 명시적으로 숫자로 변환하여 비교 (0, 1)
-        const aImportant = Number(a.is_important);
-        const bImportant = Number(b.is_important);
+    return [...notices].sort((a, b) => {
+        const aImportant = Number(a.is_important || 0); // 기본값 0
+        const bImportant = Number(b.is_important || 0);
         
-        // 중요 공지 우선 정렬
-        if (aImportant > bImportant) return -1;
-        if (aImportant < bImportant) return 1;
-        
-        // 중요도가 같으면 날짜순으로 정렬 (최신순)
-        return new Date(b.created_at) - new Date(a.created_at);
+        if (aImportant !== bImportant) return bImportant - aImportant; // 중요 공지 우선
+        return new Date(b.created_at) - new Date(a.created_at); // 날짜 내림차순
     });
-    
-    console.log('정렬 후 공지사항:', sorted.map(n => ({
-        id: n.id,
-        title: n.title,
-        is_important: n.is_important
-    })));
-    
-    return sorted;
-}
-
-function logSortedNotices(notices) {
-    if (DEBUG) {
-        console.log('정렬된 공지사항:', notices.map(n => ({
-            id: n.id,
-            title: n.title,
-            is_important: n.is_important,
-            created_at: n.created_at
-        })));
-    }
 }
 
 // 모달 상태 진단 함수
@@ -2117,11 +2078,6 @@ async function loadHomeNotices() {
             const sortedNotices = sortNoticesByImportanceAndDate(data.data);
             console.log('정렬된 공지사항 데이터:', sortedNotices);
             
-            // 디버깅 로그
-            if (DEBUG && typeof logSortedNotices === 'function') {
-                logSortedNotices(sortedNotices);
-            }
-
             // 공지사항 데이터를 전역 객체에 저장
             window.noticesData = sortedNotices;
             
@@ -2190,10 +2146,8 @@ function renderNoticesList(notices, containerId) {
             return;
         }
         
-        // 공통 정렬 함수 사용
         const sortedNotices = sortNoticesByImportanceAndDate(notices);
         
-        // 공지사항이 없는 경우
         if (!sortedNotices || sortedNotices.length === 0) {
             container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
             return;
@@ -2201,19 +2155,18 @@ function renderNoticesList(notices, containerId) {
 
         console.log(`${containerId}에 ${sortedNotices.length}개 공지사항 렌더링 시작`);
 
-        // 전역 변수에 공지사항 데이터 저장
         window.noticesData = sortedNotices;
         
-        // HTML 생성 - 디버깅을 위해 클래스명 명확하게 지정
         container.innerHTML = `
             <div class="overflow-y-auto max-h-[500px] pr-2">
                 ${sortedNotices.map((notice, index) => {
-                    // 날짜 형식 변환
+                    const rawIsImportant = notice.is_important;
+                    const isImportant = rawIsImportant === 1 || rawIsImportant === '1' || rawIsImportant === true;
+                    
+                    console.log(`공지사항 ${notice.title}: rawIsImportant = ${rawIsImportant}, typeof = ${typeof rawIsImportant}, isImportant = ${isImportant}`);
+                    
                     const date = new Date(notice.created_at);
                     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    
-                    // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
-                    const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     
                     return `
                         <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
@@ -2246,12 +2199,10 @@ function renderNoticesList(notices, containerId) {
         
         console.log(`${containerId}에 공지사항 렌더링 완료`);
         
-        // 이벤트 리스너 추가 전에 DOM이 완전히 업데이트되도록 약간의 지연 추가
         setTimeout(() => {
             const noticeItems = document.querySelectorAll('.notice-item');
             console.log(`이벤트 리스너 추가 전 공지사항 항목 수: ${noticeItems.length}`);
             
-            // 직접 이벤트 리스너 추가
             noticeItems.forEach(item => {
                 item.addEventListener('click', function(e) {
                     const noticeId = parseInt(this.getAttribute('data-notice-id'));
@@ -3881,31 +3832,21 @@ async function loadBookings() {
 // 공지사항 작성
 async function createNotice(noticeData) {
     try {
-        // FormData 객체로 변환
+        showLoading();
         const formData = new FormData();
         formData.append('title', noticeData.title);
         formData.append('content', noticeData.content);
         formData.append('region', noticeData.region);
         formData.append('is_important', noticeData.is_important ? '1' : '0');
-        if (noticeData.attachment) {
-            formData.append('attachment', noticeData.attachment);
-        }
-
-        console.log('Sending notice data:', {
-            title: noticeData.title,
-            content: noticeData.content,
-            region: noticeData.region,
-            is_important: noticeData.is_important,
-            attachment: noticeData.attachment ? noticeData.attachment.name : null
-        });
+        if (noticeData.attachment) formData.append('attachment', noticeData.attachment);
 
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: { 'Cache-Control': 'no-cache' }
         });
 
-        console.log('Notice creation response:', response);
-
+        console.log('공지사항 생성 응답:', response.data);
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
             document.getElementById('noticeWriteForm').reset();
@@ -3913,12 +3854,12 @@ async function createNotice(noticeData) {
             if (document.getElementById('noticesListSection')) {
                 await loadUserNotices();
             }
-        } else {
-            throw new Error(response.message || '공지사항 등록 실패');
         }
     } catch (error) {
-        console.error('Notice creation error:', error.message);
+        console.error('공지사항 생성 오류:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
