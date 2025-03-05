@@ -195,6 +195,10 @@
   border-radius: 8px;
   padding: 16px;
 }
+.notice-item.important {
+  background-color: #fff3e0;
+  border-left: 4px solid #ff5722;
+}
 
 .notice-item:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -1947,15 +1951,8 @@ function renderUserNoticesList(notices, container) {
             return;
         }
         
-        // 공통 정렬 함수 사용
         const sortedNotices = sortNoticesByImportanceAndDate(notices);
         
-        // 디버깅 로그
-        if (DEBUG && typeof logSortedNotices === 'function') {
-            logSortedNotices(sortedNotices);
-        }
-        
-        // 공지사항이 없는 경우
         if (!sortedNotices || sortedNotices.length === 0) {
             container.innerHTML = '<p class="text-center text-gray-500 py-4">등록된 공지사항이 없습니다.</p>';
             return;
@@ -1963,26 +1960,22 @@ function renderUserNoticesList(notices, container) {
         
         console.log(`사용자 대시보드에 ${sortedNotices.length}개 공지사항 렌더링 시작`);
         
-        // 전역 변수에 공지사항 데이터 저장
         window.noticesData = sortedNotices;
         
-        // HTML 생성
         container.innerHTML = `
             <div class="overflow-y-auto max-h-[500px] pr-2">
                 ${sortedNotices.map((notice, index) => {
                     const date = new Date(notice.created_at);
                     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    
-                    // 중요 공지 여부 명시적 확인 (숫자 1 또는 문자열 "1" 모두 처리)
                     const isImportant = notice.is_important === 1 || notice.is_important === '1' || notice.is_important === true;
                     
                     return `
-                        <div class="notice-item bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${isImportant ? 'border-l-4 border-red-500' : ''}"
+                        <div class="notice-item ${isImportant ? 'important' : ''} bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer"
                              data-notice-id="${index}" data-notice-real-id="${notice.id}">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-lg font-semibold">
                                     ${isImportant ? 
-                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
+                                        '<span class="inline-block mr-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">중요</span>' : 
                                         ''}
                                     ${notice.title}
                                 </h3>
@@ -1995,12 +1988,10 @@ function renderUserNoticesList(notices, container) {
             </div>
         `;
         
-        console.log('사용자 대시보드 공지사항 렌더링 완료');
+        setTimeout(addDirectNoticeListeners, 200);
     } catch (error) {
         console.error('사용자 대시보드 공지사항 렌더링 오류:', error);
-        if (container) {
-            container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
-        }
+        container.innerHTML = '<p class="text-center text-gray-500">공지사항을 표시하는 중 오류가 발생했습니다.</p>';
     }
 }
 
@@ -2547,49 +2538,24 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
     e.preventDefault();
     
     try {
-        showLoading();
+        showLoading(); // 로딩 상태 표시
         
-        // FormData 객체 생성
-        const formData = new FormData();
-        formData.append('title', document.getElementById('noticeTitle').value);
-        formData.append('content', document.getElementById('noticeContent').value);
-        formData.append('region', document.getElementById('noticeRegion').value);
-        formData.append('is_important', document.getElementById('noticeImportant').checked ? '1' : '0');
+        const noticeData = {
+            title: document.getElementById('noticeTitle').value,
+            content: document.getElementById('noticeContent').value,
+            region: document.getElementById('noticeRegion').value,
+            is_important: document.getElementById('noticeImportant').checked,
+            attachment: document.getElementById('noticeFile').files[0]
+        };
         
-        // 첨부파일 추가
-        const fileInput = document.getElementById('noticeFile');
-        if (fileInput.files.length > 0) {
-            formData.append('attachment', fileInput.files[0]);
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-                // Content-Type은 FormData를 사용할 때 자동으로 설정됨
-            },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '공지사항 등록 중 오류가 발생했습니다.');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showAlert('공지사항이 등록되었습니다.', 'success');
-            closeNoticeWriteModal();
-            loadHomeNotices(); // 공지사항 목록 새로고침
-        } else {
-            throw new Error(data.message || '공지사항 등록에 실패했습니다.');
-        }
+        await createNotice(noticeData);
+        closeNoticeWriteModal();
+        await loadHomeNotices(); // 공지사항 목록 새로고침
     } catch (error) {
-        console.error('Notice submission error:', error);
+        console.error('Notice form submission error:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
     } finally {
-        hideLoading();
+        hideLoading(); // 로딩 상태 해제
     }
 });
 
@@ -3090,12 +3056,17 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         const defaultHeaders = {
-            'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
+        if (options.body && !(options.body instanceof FormData)) {
+            defaultHeaders['Content-Type'] = 'application/json';
+        }
 
-        // 요청 URL과 옵션 로깅
-        console.log(`[apiRequest] 요청: ${endpoint}`, options);
+        console.log(`[apiRequest] 요청: ${endpoint}`, {
+            method: options.method,
+            headers: { ...defaultHeaders, ...options.headers },
+            body: options.body instanceof FormData ? '[FormData]' : options.body
+        });
         
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
@@ -3111,7 +3082,6 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         const data = await response.json();
-        // 응답 데이터 로깅 (민감 정보 제외)
         if (!endpoint.includes('/login')) {
             console.log(`[apiRequest] 응답:`, data);
         }
@@ -3348,42 +3318,26 @@ async function showDashboard(role) {
 }
 
 async function initializeUserDashboard(region, username) {
-    // 대시보드 표시
     document.getElementById('userDashboard').classList.remove('hidden');
     document.getElementById('adminDashboard').classList.add('hidden');
 
-    // 대시보드 제목 및 사용자 정보 설정
-    const dashboardTitle = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
-    document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
-    
-    // 사용자 정보 표시
+    document.querySelector('#userDashboard .dashboard-title').textContent = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
     document.getElementById('userGroupName').textContent = username;
     
-    // 지역 뱃지 업데이트
     const regionBadge = document.getElementById('regionBadge');
     regionBadge.textContent = region === 'south' ? '남부' : '북부';
-    regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
-        region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-    }`;
+    regionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`;
 
     try {
-        // 예약 시스템 상태 확인
         const settings = await apiRequest('/api/booking-settings');
         updateUserDashboardState(settings.data?.is_active);
-
-        // 캘린더 초기화
+        
         initializeCalendar();
-        
-        // 시간 선택 초기화
         initializeTimeSelects();
-        
-        // 예약 상태 업데이트
         await debouncedUpdateCalendarStatus();
-        
-        // 예약 목록 로드
         await loadBookings();
         
-        // 공지사항 로드 추가
+        // 공지사항 로드 (함수 존재 여부 확인 후 호출)
         if (typeof window.loadUserNotices === 'function') {
             console.log('사용자 대시보드 초기화 중 공지사항 로드 호출');
             await window.loadUserNotices();
@@ -3393,7 +3347,6 @@ async function initializeUserDashboard(region, username) {
 
         // 남은 예약 횟수 표시 업데이트
         updateRemainingBookingsDisplay();
-
     } catch (error) {
         console.error('User dashboard initialization error:', error);
         showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
@@ -3928,22 +3881,43 @@ async function loadBookings() {
 // 공지사항 작성
 async function createNotice(noticeData) {
     try {
+        // FormData 객체로 변환
+        const formData = new FormData();
+        formData.append('title', noticeData.title);
+        formData.append('content', noticeData.content);
+        formData.append('region', noticeData.region);
+        formData.append('is_important', noticeData.is_important ? '1' : '0');
+        if (noticeData.attachment) {
+            formData.append('attachment', noticeData.attachment);
+        }
+
+        console.log('Sending notice data:', {
+            title: noticeData.title,
+            content: noticeData.content,
+            region: noticeData.region,
+            is_important: noticeData.is_important,
+            attachment: noticeData.attachment ? noticeData.attachment.name : null
+        });
+
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
-            body: JSON.stringify(noticeData)
+            body: formData
         });
+
+        console.log('Notice creation response:', response);
 
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
             document.getElementById('noticeWriteForm').reset();
-            // 공지사항 목록 새로고침
             await loadHomeNotices();
-            if (document.getElementById('noticesList')) {
-                await loadNotices();
+            if (document.getElementById('noticesListSection')) {
+                await loadUserNotices();
             }
+        } else {
+            throw new Error(response.message || '공지사항 등록 실패');
         }
     } catch (error) {
-        console.error('Notice creation error:', error);
+        console.error('Notice creation error:', error.message);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
     }
 }
