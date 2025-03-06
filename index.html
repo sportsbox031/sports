@@ -3708,7 +3708,13 @@ async function validateStoredToken() {
 
 async function signup(formData) {
     try {
-        // 입력값 검증
+        // API 요청 전 로그 추가 (새로 추가)
+        console.log('회원가입 요청 데이터:', {
+            ...formData,
+            password: '****'  // 비밀번호는 로그에 표시하지 않음
+        });
+
+        // 기존 검증 로직 유지
         if (!formData.groupName || !formData.password || !formData.manager || 
             !formData.contact || !formData.city) {
             throw new Error('모든 필드를 입력해주세요.');
@@ -3720,7 +3726,7 @@ async function signup(formData) {
             throw new Error('올바른 시/군을 선택해주세요.');
         }
 
-        // API 요청 데이터 구성
+        // API 요청 데이터 구성 (기존 유지)
         const signupData = {
             group_name: formData.groupName,
             password: formData.password,
@@ -3735,6 +3741,9 @@ async function signup(formData) {
             body: JSON.stringify(signupData)
         });
 
+        // 응답 로그 추가 (새로 추가)
+        console.log('회원가입 응답:', response);
+
         if (response.success) {
             showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
             document.getElementById('signupModal').classList.remove('show');
@@ -3744,8 +3753,14 @@ async function signup(formData) {
             throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
         }
     } catch (error) {
-        console.error('Signup error:', error);
+        // 에러 로깅 개선 (메시지 수정)
+        console.error('회원가입 오류:', error);
         showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error');
+        
+        // 에러 발생 시 모달 표시 유지 (새로 추가)
+        const modal = document.getElementById('signupModal');
+        if (modal) modal.classList.add('show');
+        
         throw error;
     }
 }
