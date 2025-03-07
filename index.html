@@ -3923,22 +3923,37 @@ async function loadBookings() {
 async function createNotice(noticeData) {
     try {
         showLoading();
+        // 진행 표시기 추가
+        const loadingEl = document.getElementById('loading');
+        const spinner = loadingEl.querySelector('.spinner');
+        if (spinner) {
+            // 진행 텍스트 추가
+            const progressText = document.createElement('div');
+            progressText.className = 'text-white mt-3 font-medium';
+            progressText.textContent = '파일 업로드 중...';
+            loadingEl.appendChild(progressText);
+        }
+
         const formData = new FormData();
         formData.append('title', noticeData.title);
         formData.append('content', noticeData.content);
         formData.append('region', noticeData.region);
         formData.append('is_important', noticeData.is_important ? '1' : '0');
-        if (noticeData.attachment) formData.append('attachment', noticeData.attachment);
+        
+        // 첨부파일이 있는 경우에만 추가
+        if (noticeData.attachment) {
+            const fileSize = (noticeData.attachment.size / 1024 / 1024).toFixed(2); // MB
+            console.log(`첨부파일 업로드 시작: ${noticeData.attachment.name} (${fileSize}MB)`);
+            formData.append('attachment', noticeData.attachment);
+        }
 
         const response = await apiRequest('/api/admin/notices', {
             method: 'POST',
             body: formData,
-            // 'Cache-Control' 헤더 제거 (CORS 문제 해결)
         });
 
         console.log('공지사항 생성 응답:', response.data);
         
-        // 응답이 성공이면 ID가 없어도 계속 진행
         if (response.success) {
             showAlert('공지사항이 등록되었습니다.', 'success');
             document.getElementById('noticeWriteForm').reset();
@@ -3946,15 +3961,21 @@ async function createNotice(noticeData) {
             if (document.getElementById('noticesListSection')) {
                 await loadUserNotices();
             }
-            return response; // 성공 응답 반환
+            return response;
         } else {
             throw new Error(response.message || '공지사항 등록에 실패했습니다.');
         }
     } catch (error) {
         console.error('공지사항 생성 오류:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
-        throw error; // 오류 다시 던지기
+        throw error;
     } finally {
+        // 진행 표시기 제거
+        const loadingEl = document.getElementById('loading');
+        const progressText = loadingEl.querySelector('.text-white.mt-3');
+        if (progressText) {
+            loadingEl.removeChild(progressText);
+        }
         hideLoading();
     }
 }
