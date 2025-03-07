@@ -5890,8 +5890,29 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
     // 시군 선택 이벤트
     document.getElementById('city')?.addEventListener('change', function() {
     const city = this.value;
-    const region = determineRegion(city);  // 기존 함수 사용
     const regionInfo = document.getElementById('regionInfo');
+    
+    // REGION_MAPPING 정의 (백엔드와 동일하게)
+    const REGION_MAPPING = {
+        south: [
+            '과천시', '광명시', '광주시', '군포시', '김포시', '부천시', '성남시', 
+            '수원시', '시흥시', '안산시', '안성시', '안양시', '양평군', '여주시', '오산시', 
+            '용인시', '의왕시', '이천시', '평택시', '하남시', '화성시'
+        ],
+        north: [
+            '고양시', '구리시', '남양주시', '동두천시', '양주시', '의정부시', 
+            '파주시', '포천시', '가평군', '연천군'
+        ]
+    };
+    
+    // 지역 결정 함수
+    function determineRegion(city) {
+        if (REGION_MAPPING.south.includes(city)) return 'south';
+        if (REGION_MAPPING.north.includes(city)) return 'north';
+        return null;
+    }
+    
+    const region = determineRegion(city);
     
     if (region) {
         regionInfo.textContent = `${region === 'south' ? '남부' : '북부'} 지역`;
