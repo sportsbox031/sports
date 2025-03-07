@@ -2994,6 +2994,61 @@ function getDownloadUrl(attachmentUrl) {
     return `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
 }
 
+// 첨부파일 링크를 강제로 다운로드하게 만드는 함수
+function forceFileDownload(url, fileName) {
+    // 링크를 새로 생성하여 download 속성 설정
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName || 'download';
+    link.target = '_blank';
+    
+    // 링크를 DOM에 추가하고 클릭 이벤트 발생
+    document.body.appendChild(link);
+    link.click();
+    
+    // 링크 제거
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
+    
+    return false; // 기본 동작 방지
+}
+
+// DOMContentLoaded 내에 다음 코드 추가
+document.addEventListener('DOMContentLoaded', function() {
+    // 기존 코드...
+    
+    // 모든 첨부파일 링크에 클릭 이벤트 추가 (주기적 체크)
+    setInterval(function() {
+        const fileLinks = document.querySelectorAll('#independentModalFileLink, #noticeDetailModalFileLink');
+        fileLinks.forEach(link => {
+            // 이미 처리된 링크 건너뛰기
+            if (link.getAttribute('data-download-handler')) return;
+            
+            // 처리 표시 추가
+            link.setAttribute('data-download-handler', 'true');
+            
+            // 기본 href 수정
+            if (link.href && link.href.includes('r2.dev')) {
+                const originalUrl = link.href;
+                const downloadUrl = getDownloadUrl(originalUrl);
+                link.href = downloadUrl;
+            }
+            
+            // 클릭 이벤트 추가
+            link.addEventListener('click', function(e) {
+                e.preventDefault(); // 기본 동작 방지
+                e.stopPropagation(); // 이벤트 버블링 방지
+                
+                const fileName = this.textContent.trim() || 'download';
+                forceFileDownload(this.href, fileName);
+                
+                return false;
+            });
+        });
+    }, 1000);
+});
+
 // 이벤트 리스너 정리 함수
 function cleanupEventListeners() {
     // 공지사항 목록 이벤트 리스너 제거
