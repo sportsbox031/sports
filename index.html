@@ -270,6 +270,15 @@
         100% { transform: rotate(360deg); }
     }
 
+    /* 기존 로딩 스타일 하단에 추가 */
+    .upload-progress-text {
+        font-size: 16px;
+        margin-top: 15px;
+        color: white;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
     /* 스크롤바 스타일 */
     .overflow-y-auto {
     scrollbar-width: thin;
@@ -2489,24 +2498,35 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
     e.preventDefault();
     
     try {
-        showLoading(); // 로딩 상태 표시
+        const attachment = document.getElementById('noticeFile').files[0];
+        
+        // 첨부파일이 있는 경우 알림 표시
+        if (attachment) {
+            const fileSize = (attachment.size / 1024 / 1024).toFixed(2);
+            showAlert(`${fileSize}MB 파일 업로드 중... 잠시만 기다려주세요.`, 'info', 0); // 자동으로 닫히지 않음
+        }
+        
+        showLoading();
         
         const noticeData = {
             title: document.getElementById('noticeTitle').value,
             content: document.getElementById('noticeContent').value,
             region: document.getElementById('noticeRegion').value,
             is_important: document.getElementById('noticeImportant').checked,
-            attachment: document.getElementById('noticeFile').files[0]
+            attachment: attachment
         };
         
         await createNotice(noticeData);
         closeNoticeWriteModal();
-        await loadHomeNotices(); // 공지사항 목록 새로고침
+        
+        // 알림 숨기기
+        hideAlert();
+        
     } catch (error) {
         console.error('Notice form submission error:', error);
         showAlert(error.message || '공지사항 등록 중 오류가 발생했습니다.', 'error');
     } finally {
-        hideLoading(); // 로딩 상태 해제
+        hideLoading();
     }
 });
 
