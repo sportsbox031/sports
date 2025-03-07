@@ -1399,15 +1399,26 @@ window.addDirectNoticeListeners = function() {
                     
                     // 첨부파일 섹션 처리
                     const attachmentSection = document.getElementById('independentModalAttachment');
-                    if (attachmentSection) {
-                        if (notice.attachment_url) {
-                            document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                            document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                            attachmentSection.style.display = 'block';
-                        } else {
-                            attachmentSection.style.display = 'none';
-                        }
-                    }
+if (attachmentSection) {
+    if (notice.attachment_url) {
+        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+        
+        // R2 URL에서 파일명만 추출
+        const fileName = notice.attachment_url.split('/').pop();
+        
+        // Worker API URL로 변환
+        const downloadUrl = `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
+        
+        // 다운로드 링크 설정
+        const fileLink = document.getElementById('independentModalFileLink');
+        fileLink.href = downloadUrl;
+        fileLink.setAttribute('download', notice.attachment_name || fileName);
+        
+        attachmentSection.style.display = 'block';
+    } else {
+        attachmentSection.style.display = 'none';
+    }
+}
                     
                     // 관리자 권한 확인 및 버튼 표시
                     const adminActions = document.getElementById('independentModalActions');
@@ -1604,15 +1615,26 @@ function setupIndependentNoticeSystem() {
             
             // 첨부파일 섹션 처리
             const attachmentSection = document.getElementById('independentModalAttachment');
-            if (attachmentSection) {
-                if (notice.attachment_url) {
-                    document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                    document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                    attachmentSection.style.display = 'block';
-                } else {
-                    attachmentSection.style.display = 'none';
-                }
-            }
+if (attachmentSection) {
+    if (notice.attachment_url) {
+        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+        
+        // R2 URL에서 파일명만 추출
+        const fileName = notice.attachment_url.split('/').pop();
+        
+        // Worker API URL로 변환
+        const downloadUrl = `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
+        
+        // 다운로드 링크 설정
+        const fileLink = document.getElementById('independentModalFileLink');
+        fileLink.href = downloadUrl;
+        fileLink.setAttribute('download', notice.attachment_name || fileName);
+        
+        attachmentSection.style.display = 'block';
+    } else {
+        attachmentSection.style.display = 'none';
+    }
+}
             
             // 관리자 권한 확인 및 버튼 표시
             const adminActions = document.getElementById('independentModalActions');
@@ -1677,15 +1699,26 @@ function setupIndependentNoticeSystem() {
                                 
                                 // 첨부파일 섹션 처리
                                 const attachmentSection = document.getElementById('independentModalAttachment');
-                                if (attachmentSection) {
-                                    if (notice.attachment_url) {
-                                        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                                        document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                                        attachmentSection.style.display = 'block';
-                                    } else {
-                                        attachmentSection.style.display = 'none';
-                                    }
-                                }
+if (attachmentSection) {
+    if (notice.attachment_url) {
+        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+        
+        // R2 URL에서 파일명만 추출
+        const fileName = notice.attachment_url.split('/').pop();
+        
+        // Worker API URL로 변환
+        const downloadUrl = `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
+        
+        // 다운로드 링크 설정
+        const fileLink = document.getElementById('independentModalFileLink');
+        fileLink.href = downloadUrl;
+        fileLink.setAttribute('download', notice.attachment_name || fileName);
+        
+        attachmentSection.style.display = 'block';
+    } else {
+        attachmentSection.style.display = 'none';
+    }
+}
                                 
                                 // 관리자 권한 확인 및 버튼 표시
                                 const adminActions = document.getElementById('independentModalActions');
@@ -1740,15 +1773,26 @@ function setupIndependentNoticeSystem() {
                     
                     // 첨부파일 섹션 처리
                     const attachmentSection = document.getElementById('independentModalAttachment');
-                    if (attachmentSection) {
-                        if (notice.attachment_url) {
-                            document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-                            document.getElementById('independentModalFileLink').href = notice.attachment_url;
-                            attachmentSection.style.display = 'block';
-                        } else {
-                            attachmentSection.style.display = 'none';
-                        }
-                    }
+if (attachmentSection) {
+    if (notice.attachment_url) {
+        document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
+        
+        // R2 URL에서 파일명만 추출
+        const fileName = notice.attachment_url.split('/').pop();
+        
+        // Worker API URL로 변환
+        const downloadUrl = `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
+        
+        // 다운로드 링크 설정
+        const fileLink = document.getElementById('independentModalFileLink');
+        fileLink.href = downloadUrl;
+        fileLink.setAttribute('download', notice.attachment_name || fileName);
+        
+        attachmentSection.style.display = 'block';
+    } else {
+        attachmentSection.style.display = 'none';
+    }
+}
                     
                     // 관리자 권한 확인 및 버튼 표시
                     const adminActions = document.getElementById('independentModalActions');
@@ -1864,18 +1908,26 @@ function cleanupNoticeSystem() {
       
       // 첨부파일 섹션 처리
       const attachmentSection = document.getElementById('independentModalAttachment');
-      if (notice.attachment_url) {
+if (attachmentSection) {
+    if (notice.attachment_url) {
         document.getElementById('independentModalFileName').textContent = notice.attachment_name || '첨부파일';
-        document.getElementById('independentModalFileLink').href = notice.attachment_url;
+        
+        // R2 URL에서 파일명만 추출
+        const fileName = notice.attachment_url.split('/').pop();
+        
+        // Worker API URL로 변환
+        const downloadUrl = `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
+        
+        // 다운로드 링크 설정
+        const fileLink = document.getElementById('independentModalFileLink');
+        fileLink.href = downloadUrl;
+        fileLink.setAttribute('download', notice.attachment_name || fileName);
+        
         attachmentSection.style.display = 'block';
-      } else {
+    } else {
         attachmentSection.style.display = 'none';
-      }
-      
-      modal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
     }
-  };
+}
   
   window.closeNoticeDetail = function() {
     const modal = document.getElementById('independentNoticeModal');
