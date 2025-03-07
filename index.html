@@ -5904,8 +5904,26 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
 });
 
     // 회원가입 폼 제출
-    document.getElementById('signupForm').addEventListener('submit', function(e) {
+    const signupForm = document.getElementById('signupForm');
+if (signupForm) {
+  console.log('회원가입 폼 이벤트 핸들러 초기화');
+  
+  // 기존 이벤트 핸들러 제거를 위해 폼 복제
+  const newForm = signupForm.cloneNode(true);
+  signupForm.parentNode.replaceChild(newForm, signupForm);
+  
+  // 폼 제출 진행 중인지 추적하는 플래그
+  let isSubmitting = false;
+  
+  // 새 이벤트 핸들러 등록
+  newForm.addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // 중복 제출 방지
+    if (isSubmitting) {
+      console.log('이미 폼 제출이 진행 중입니다');
+      return;
+    }
     
     // 모든 필수 필드 값 가져오기
     const groupName = document.getElementById('groupName').value.trim();
@@ -5915,6 +5933,8 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
     const contact = document.getElementById('contact').value.trim();
     const region = determineRegion(city);
 
+    console.log('회원가입 폼 데이터 검증 시작');
+    
     // 단체명 유효성 검사
     if (!groupName) {
         showAlert('단체명을 입력해주세요.', 'error', 3000);
@@ -5989,8 +6009,19 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
         return;
     }
 
-    // 폼 제출 전 확인
+    console.log('회원가입 폼 데이터 검증 완료');
+    
     try {
+        // 제출 시작 플래그 설정
+        isSubmitting = true;
+        
+        // 폼 버튼 비활성화
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = '처리 중...';
+        }
+        
         // 로딩 표시
         showLoading();
 
@@ -6003,22 +6034,53 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
             region: region
         };
 
-        // 회원가입 처리
-        signup(formData)
-            .catch(error => {
-                console.error('Signup error:', error);
-                showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
-            })
-            .finally(() => {
-                hideLoading();
-            });
+        console.log('회원가입 API 요청 시작:', {
+            ...formData,
+            password: '********' // 비밀번호는 로그에 표시하지 않음
+        });
 
+        // 직접 API 호출 (signup 함수 대신 apiRequest 직접 사용)
+        const response = await apiRequest('/api/signup', {
+            method: 'POST',
+            body: JSON.stringify({
+                group_name: formData.groupName,
+                password: formData.password,
+                manager: formData.manager,
+                contact: formData.contact,
+                city: formData.city
+            })
+        });
+        
+        console.log('회원가입 API 응답:', response);
+
+        if (response.success) {
+            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+            document.getElementById('signupModal').classList.remove('show');
+            newForm.reset();
+        } else {
+            throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
+        }
     } catch (error) {
+        console.error('회원가입 처리 오류:', error);
+        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
+    } finally {
+        // 로딩 숨기기
         hideLoading();
-        console.error('Form submission error:', error);
-        showAlert('회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
+        
+        // 제출 완료 플래그 설정
+        isSubmitting = false;
+        
+        // 버튼 재활성화
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = '가입하기';
+        }
     }
-});
+  });
+  
+  console.log('회원가입 폼 이벤트 핸들러 설정 완료');
+}
 
 
     // 예약 폼 제출
