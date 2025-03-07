@@ -2615,6 +2615,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
 });
 
+// 첨부파일 다운로드 링크 수정을 위한 주기적 확인
+setInterval(function() {
+    const fileLinks = document.querySelectorAll('#independentModalFileLink, #noticeDetailModalFileLink');
+    fileLinks.forEach(link => {
+        if (link && link.href && link.href.includes('r2.dev')) {
+            const originalUrl = link.href;
+            const downloadUrl = getDownloadUrl(originalUrl);
+            link.href = downloadUrl;
+            link.setAttribute('download', link.textContent.trim());
+        }
+    });
+}, 1000);
+
 // 수정 폼 제출 이벤트 리스너
 document.getElementById('noticeEditForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -2972,6 +2985,13 @@ function showAlert(message, type = 'info', duration = 3000) {
 
 function hideAlert() {
     document.getElementById('alert').classList.add('hidden');
+}
+
+// 첨부파일 URL을 다운로드 URL로 변환하는 함수
+function getDownloadUrl(attachmentUrl) {
+    if (!attachmentUrl) return '';
+    const fileName = attachmentUrl.split('/').pop();
+    return `https://sports-box-api.parkkwangmin9209.workers.dev/api/attachments/${fileName}`;
 }
 
 // 이벤트 리스너 정리 함수
