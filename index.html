@@ -6942,15 +6942,15 @@ async function loadMyInquiries() {
         const response = await apiRequest('/api/my-inquiries');
         if (response.success) {
             inquiriesData = response.data;
-            renderInquiriesList(inquiriesData);
-            
-            // 사용자 대시보드의 내 문의사항 목록도 업데이트
             renderUserInquiriesList(inquiriesData);
         }
     } catch (error) {
         console.error('내 문의사항 로드 오류:', error);
-        document.getElementById('inquiriesList').innerHTML = 
-            '<div class="text-center text-gray-500 py-6">문의사항을 불러오는 중 오류가 발생했습니다.</div>';
+        const userInquiriesList = document.getElementById('userInquiriesList');
+        if (userInquiriesList) {  // 요소가 존재하는지 확인
+            userInquiriesList.innerHTML = 
+                '<div class="text-center text-gray-500 py-6">문의사항을 불러오는 중 오류가 발생했습니다.</div>';
+        }
     }
 }
 
