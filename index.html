@@ -6880,6 +6880,17 @@ function closeInquiryDetail() {
     currentInquiryId = null;
 }
 
+function closeInquiriesBoard() {
+    const modal = document.getElementById('inquiriesBoardModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // 배경 스크롤 복원
+        }, 300);
+    }
+}
+
 function showInquiryEditModal(inquiry) {
     document.getElementById('editInquiryTitle').value = inquiry.title;
     document.getElementById('editInquiryContent').value = inquiry.content;
