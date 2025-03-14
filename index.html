@@ -490,7 +490,7 @@
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
                             <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
-                            <a href="#inquiries" class="text-gray-700 hover:text-primary py-2">문의사항</a>
+                            <a href="javascript:void(0)" onclick="showInquiriesBoard()" class="text-gray-700 hover:text-primary py-2">문의사항</a>
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -520,7 +520,6 @@
     </div>
 </section>
 
-                <!-- 사업소개 및 공지사항 섹션 -->
                 <!-- 사업소개 및 공지사항 섹션 -->
 <section id="intro" class="py-20 bg-gray-50">
     <div class="container mx-auto px-6">
@@ -629,47 +628,6 @@
         </form>
     </div>
 </div>
-
-<!-- 문의사항 섹션 -->
-<section id="inquiries" class="py-20 bg-white">
-    <div class="container mx-auto px-6">
-        <h2 class="text-3xl font-bold text-center mb-12">문의사항</h2>
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <div class="flex space-x-4">
-                    <button id="inquiryAllBtn" class="px-4 py-2 bg-primary text-white rounded-lg inquiry-filter-active">전체보기</button>
-                    <button id="inquiryMyBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">내 문의</button>
-                </div>
-                <button onclick="showInquiryWriteModal()" 
-                    class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                    <i class="fas fa-pen"></i>
-                    <span>문의하기</span>
-                </button>
-            </div>
-            
-            <!-- 문의사항 목록 -->
-            <div id="inquiriesList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                <!-- 문의사항이 여기에 동적으로 추가됨 -->
-                <div class="text-center text-gray-500 py-12">
-                    <p>문의사항을 불러오는 중입니다...</p>
-                </div>
-            </div>
-            
-            <!-- 페이지네이션 -->
-            <div class="flex justify-center mt-6">
-                <div class="inline-flex rounded-md shadow-sm">
-                    <button id="prevPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
-                        이전
-                    </button>
-                    <div id="paginationNumbers" class="flex"></div>
-                    <button id="nextPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
-                        다음
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
 <!-- 문의사항 작성 모달 -->
 <div id="inquiryWriteModal" class="modal">
@@ -2852,6 +2810,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 공지사항 로드
     loadHomeNotices();
     checkAdminStatus();
+    // 문의사항 섹션 초기화
+    initInquiriesSection();
     
     // 디버깅 함수 전역으로 노출
     window.diagnoseModalIssue = diagnoseModalIssue;
@@ -5214,6 +5174,108 @@ function closeDateBookingsModal() {
     closeModal('dateBookingsModal');
 }
 
+// 문의사항 보드 표시 함수 추가
+function showInquiriesBoard() {
+    // 로그인 상태 확인
+    const isLoggedIn = !!sessionStorage.getItem('token');
+    
+    // 모달 HTML 생성
+    const modalHTML = `
+    <div id="inquiriesBoardModal" class="modal">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold">문의사항</h2>
+                <button onclick="closeInquiriesBoard()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            ${isLoggedIn ? `
+                <div class="flex justify-between items-center mb-8">
+                    <div class="flex space-x-4">
+                        <button id="inquiryAllBtn" class="px-4 py-2 bg-primary text-white rounded-lg inquiry-filter-active">전체보기</button>
+                        <button id="inquiryMyBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">내 문의</button>
+                    </div>
+                    <button onclick="showInquiryWriteModal()" 
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                        <i class="fas fa-pen"></i>
+                        <span>문의하기</span>
+                    </button>
+                </div>
+                
+                <!-- 문의사항 목록 -->
+                <div id="inquiriesList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                    <div class="text-center text-gray-500 py-12">
+                        <p>문의사항을 불러오는 중입니다...</p>
+                    </div>
+                </div>
+                
+                <!-- 페이지네이션 -->
+                <div class="flex justify-center mt-6">
+                    <div class="inline-flex rounded-md shadow-sm">
+                        <button id="prevPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
+                            이전
+                        </button>
+                        <div id="paginationNumbers" class="flex"></div>
+                        <button id="nextPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
+                            다음
+                        </button>
+                    </div>
+                </div>
+            ` : `
+                <div class="text-center py-12">
+                    <p class="text-gray-600 mb-6">문의사항은 로그인 후 이용 가능합니다.</p>
+                    <button onclick="showLoginScreen()" 
+                        class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition duration-200">
+                        로그인하기
+                    </button>
+                </div>
+            `}
+        </div>
+    </div>`;
+    
+    // 모달 엘리먼트가 이미 있으면 제거 후 추가
+    const existingModal = document.getElementById('inquiriesBoardModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // body에 모달 HTML 추가
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // 모달 표시
+    openModal('inquiriesBoardModal');
+    
+    // 로그인한 경우 문의사항 로드
+    if (isLoggedIn) {
+        loadInquiries(1);
+        
+        // 필터 버튼 이벤트 리스너 추가
+        document.getElementById('inquiryAllBtn').addEventListener('click', function() {
+            document.getElementById('inquiryAllBtn').classList.add('bg-primary', 'text-white');
+            document.getElementById('inquiryAllBtn').classList.remove('bg-gray-200', 'text-gray-700');
+            document.getElementById('inquiryMyBtn').classList.add('bg-gray-200', 'text-gray-700');
+            document.getElementById('inquiryMyBtn').classList.remove('bg-primary', 'text-white');
+            
+            loadInquiries(1);
+        });
+        
+        document.getElementById('inquiryMyBtn').addEventListener('click', function() {
+            document.getElementById('inquiryMyBtn').classList.add('bg-primary', 'text-white');
+            document.getElementById('inquiryMyBtn').classList.remove('bg-gray-200', 'text-gray-700');
+            document.getElementById('inquiryAllBtn').classList.add('bg-gray-200', 'text-gray-700');
+            document.getElementById('inquiryAllBtn').classList.remove('bg-primary', 'text-white');
+            
+            loadMyInquiries();
+        });
+    }
+}
+
+// 문의사항 보드 닫기 함수
+function closeInquiriesBoard() {
+    closeModal('inquiriesBoardModal');
+}
+
 // 캘린더 관련 변수와 함수들
 let currentDate = new Date();
 let adminCurrentDate = new Date();
@@ -6664,6 +6726,21 @@ function closeInquiryEditModal() {
 // 문의사항 로드 함수
 async function loadInquiries(page = 1) {
     try {
+        // 로그인 상태 확인 추가
+        const isLoggedIn = !!sessionStorage.getItem('token');
+        if (!isLoggedIn) {
+            // 로그인 안내 메시지 표시
+            document.getElementById('inquiriesList').innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-gray-600 mb-6">문의사항은 로그인 후 이용 가능합니다.</p>
+                    <button onclick="showLoginScreen()" 
+                        class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition duration-200">
+                        로그인하기
+                    </button>
+                </div>
+            `;
+            return;
+        }
         const response = await apiRequest(`/api/inquiries?page=${page}&limit=${itemsPerPage}`);
         if (response.success) {
             inquiriesData = response.data.items;
@@ -7225,10 +7302,7 @@ document.getElementById('inquiryMyBtn').addEventListener('click', function() {
 
 // 페이지 로드 시 문의사항 목록 로드
 document.addEventListener('DOMContentLoaded', function() {
-    // 문의사항 목록 로드 (홈 화면)
-    if (document.getElementById('inquiriesList')) {
-        loadInquiries(1);
-    }
+
     
     // 로그인 상태 확인 및 관리자 여부에 따라 기능 활성화
     const isLoggedIn = !!sessionStorage.getItem('token');
