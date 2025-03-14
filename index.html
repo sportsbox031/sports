@@ -5294,15 +5294,20 @@ function showInquiriesBoard() {
 // 공개 문의사항 로드 함수 (비로그인용) - 새로 추가
 async function loadPublicInquiries(page = 1) {
     try {
-        const response = await apiRequest(`/api/public/inquiries?page=${page}&limit=${itemsPerPage}`);
-        if (response.success) {
-            inquiriesData = response.data.items;
-            totalPages = Math.ceil(response.data.total / itemsPerPage);
-            currentPage = page;
-            
-            renderModalInquiriesList(inquiriesData, true); // true = 공개 모드 (비로그인)
-            renderModalPagination(false); // false = 비로그인 모드
-        }
+        // API 호출 대신 안내 메시지 직접 표시
+        document.getElementById('modalInquiriesList').innerHTML = `
+            <div class="text-center py-12">
+                <p class="text-gray-600 mb-6">문의사항은 로그인 후 이용 가능합니다.</p>
+                <button onclick="closeInquiriesBoard(); showLoginScreen()" 
+                    class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition duration-200">
+                    로그인하기
+                </button>
+            </div>
+        `;
+        
+        // 페이지네이션 숨기기
+        document.querySelector('#inquiriesBoardModal .flex.justify-center.mt-6').style.display = 'none';
+        
     } catch (error) {
         console.error('공개 문의사항 로드 오류:', error);
         document.getElementById('modalInquiriesList').innerHTML = 
