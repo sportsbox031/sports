@@ -7399,38 +7399,6 @@ document.getElementById('inquiryEditForm').addEventListener('submit', async func
     }
 });
 
-// 페이지네이션 이벤트 리스너
-document.getElementById('prevPageBtn').addEventListener('click', function() {
-    if (currentPage > 1) {
-        loadInquiries(currentPage - 1);
-    }
-});
-
-document.getElementById('nextPageBtn').addEventListener('click', function() {
-    if (currentPage < totalPages) {
-        loadInquiries(currentPage + 1);
-    }
-});
-
-// 필터 버튼 이벤트 리스너
-document.getElementById('inquiryAllBtn').addEventListener('click', function() {
-    document.getElementById('inquiryAllBtn').classList.add('bg-primary', 'text-white');
-    document.getElementById('inquiryAllBtn').classList.remove('bg-gray-200', 'text-gray-700');
-    document.getElementById('inquiryMyBtn').classList.add('bg-gray-200', 'text-gray-700');
-    document.getElementById('inquiryMyBtn').classList.remove('bg-primary', 'text-white');
-    
-    loadInquiries(1);
-});
-
-document.getElementById('inquiryMyBtn').addEventListener('click', function() {
-    document.getElementById('inquiryMyBtn').classList.add('bg-primary', 'text-white');
-    document.getElementById('inquiryMyBtn').classList.remove('bg-gray-200', 'text-gray-700');
-    document.getElementById('inquiryAllBtn').classList.add('bg-gray-200', 'text-gray-700');
-    document.getElementById('inquiryAllBtn').classList.remove('bg-primary', 'text-white');
-    
-    loadMyInquiries();
-});
-
 // 페이지 로드 시 문의사항 목록 로드
 document.addEventListener('DOMContentLoaded', function() {
 
