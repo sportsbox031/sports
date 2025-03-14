@@ -5188,47 +5188,39 @@ function showInquiriesBoard() {
                 </button>
             </div>
             
-            ${isLoggedIn ? `
-                <div class="flex justify-between items-center mb-8">
-                    <div class="flex space-x-4">
-                        <button id="modalInquiryAllBtn" class="px-4 py-2 bg-primary text-white rounded-lg inquiry-filter-active">전체보기</button>
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex space-x-4">
+                    <button id="modalInquiryAllBtn" class="px-4 py-2 bg-primary text-white rounded-lg inquiry-filter-active">전체보기</button>
+                    ${isLoggedIn ? `
                         <button id="modalInquiryMyBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">내 문의</button>
-                    </div>
-                    <button onclick="showInquiryWriteModal()" 
-                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                        <i class="fas fa-pen"></i>
-                        <span>문의하기</span>
+                    ` : ''}
+                </div>
+                <button onclick="${isLoggedIn ? 'showInquiryWriteModal()' : 'closeInquiriesBoard(); showLoginScreen();'}" 
+                    class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-pen"></i>
+                    <span>${isLoggedIn ? '문의하기' : '로그인 후 작성'}</span>
+                </button>
+            </div>
+            
+            <!-- 문의사항 목록 -->
+            <div id="modalInquiriesList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                <div class="text-center text-gray-500 py-12">
+                    <p>문의사항을 불러오는 중입니다...</p>
+                </div>
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <div class="flex justify-center mt-6">
+                <div class="inline-flex rounded-md shadow-sm">
+                    <button id="modalPrevPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
+                        이전
+                    </button>
+                    <div id="modalPaginationNumbers" class="flex"></div>
+                    <button id="modalNextPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
+                        다음
                     </button>
                 </div>
-                
-                <!-- 문의사항 목록 -->
-                <div id="modalInquiriesList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    <div class="text-center text-gray-500 py-12">
-                        <p>문의사항을 불러오는 중입니다...</p>
-                    </div>
-                </div>
-                
-                <!-- 페이지네이션 -->
-                <div class="flex justify-center mt-6">
-                    <div class="inline-flex rounded-md shadow-sm">
-                        <button id="modalPrevPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
-                            이전
-                        </button>
-                        <div id="modalPaginationNumbers" class="flex"></div>
-                        <button id="modalNextPageBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
-                            다음
-                        </button>
-                    </div>
-                </div>
-            ` : `
-                <div class="text-center py-12">
-                    <p class="text-gray-600 mb-6">문의사항은 로그인 후 이용 가능합니다.</p>
-                    <button onclick="closeInquiriesBoard(); showLoginScreen();" 
-                        class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition duration-200">
-                        로그인하기
-                    </button>
-                </div>
-            `}
+            </div>
         </div>
     </div>`;
     
@@ -5244,20 +5236,24 @@ function showInquiriesBoard() {
     // 모달 표시
     openModal('inquiriesBoardModal');
     
-    // 로그인한 경우 문의사항 로드 (모달용 함수 사용)
-    if (isLoggedIn) {
-        loadModalInquiries(1);
+    // 비로그인 상태에서도 공개 문의사항 로드
+    loadPublicInquiries(1);
+    
+    // 필터 버튼 이벤트 리스너 추가
+    document.getElementById('modalInquiryAllBtn').addEventListener('click', function() {
+        document.getElementById('modalInquiryAllBtn').classList.add('bg-primary', 'text-white');
+        document.getElementById('modalInquiryAllBtn').classList.remove('bg-gray-200', 'text-gray-700');
         
-        // 필터 버튼 이벤트 리스너 추가
-        document.getElementById('modalInquiryAllBtn').addEventListener('click', function() {
-            document.getElementById('modalInquiryAllBtn').classList.add('bg-primary', 'text-white');
-            document.getElementById('modalInquiryAllBtn').classList.remove('bg-gray-200', 'text-gray-700');
+        if (isLoggedIn) {
             document.getElementById('modalInquiryMyBtn').classList.add('bg-gray-200', 'text-gray-700');
             document.getElementById('modalInquiryMyBtn').classList.remove('bg-primary', 'text-white');
-            
-            loadModalInquiries(1);
-        });
+        }
         
+        loadPublicInquiries(1);
+    });
+    
+    // 로그인한 경우에만 내 문의 버튼 이벤트 리스너 추가
+    if (isLoggedIn) {
         document.getElementById('modalInquiryMyBtn').addEventListener('click', function() {
             document.getElementById('modalInquiryMyBtn').classList.add('bg-primary', 'text-white');
             document.getElementById('modalInquiryMyBtn').classList.remove('bg-gray-200', 'text-gray-700');
@@ -5266,20 +5262,20 @@ function showInquiriesBoard() {
             
             loadModalMyInquiries();
         });
-        
-        // 페이지네이션 버튼 이벤트 리스너 추가
-        document.getElementById('modalPrevPageBtn').addEventListener('click', function() {
-            if (currentPage > 1) {
-                loadModalInquiries(currentPage - 1);
-            }
-        });
-        
-        document.getElementById('modalNextPageBtn').addEventListener('click', function() {
-            if (currentPage < totalPages) {
-                loadModalInquiries(currentPage + 1);
-            }
-        });
     }
+    
+    // 페이지네이션 버튼 이벤트 리스너 추가
+    document.getElementById('modalPrevPageBtn').addEventListener('click', function() {
+        if (currentPage > 1) {
+            loadPublicInquiries(currentPage - 1);
+        }
+    });
+    
+    document.getElementById('modalNextPageBtn').addEventListener('click', function() {
+        if (currentPage < totalPages) {
+            loadPublicInquiries(currentPage + 1);
+        }
+    });
 }
 
 // 문의사항 보드 닫기 함수
@@ -5287,16 +5283,20 @@ function closeInquiriesBoard() {
     closeModal('inquiriesBoardModal');
 }
 
-// 모달용 문의사항 로드 함수 (기존 loadInquiries 함수 기반)
-async function loadModalInquiries(page = 1) {
+// 공개 문의사항 로드 함수 추가
+async function loadPublicInquiries(page = 1) {
     try {
-        const response = await apiRequest(`/api/inquiries?page=${page}&limit=${itemsPerPage}`);
+        // 로그인 상태에 따라 다른 API 호출
+        const isLoggedIn = !!sessionStorage.getItem('token');
+        let endpoint = `/api/inquiries?page=${page}&limit=${itemsPerPage}`;
+        
+        const response = await apiRequest(endpoint);
         if (response.success) {
             inquiriesData = response.data.items;
             totalPages = Math.ceil(response.data.total / itemsPerPage);
             currentPage = page;
             
-            renderModalInquiriesList(inquiriesData);
+            renderModalInquiriesList(inquiriesData, !isLoggedIn);
             renderModalPagination();
         }
     } catch (error) {
@@ -5324,8 +5324,8 @@ async function loadModalMyInquiries() {
     }
 }
 
-// 모달용 문의사항 목록 렌더링 함수
-function renderModalInquiriesList(inquiries) {
+// 문의사항 목록 렌더링 함수 수정 (비로그인 모드 파라미터 추가)
+function renderModalInquiriesList(inquiries, publicModeOnly = false) {
     const container = document.getElementById('modalInquiriesList');
     
     if (!inquiries || inquiries.length === 0) {
@@ -5339,8 +5339,8 @@ function renderModalInquiriesList(inquiries) {
         
         // 비밀글 처리
         const isPrivate = inquiry.is_private === 1;
-        const isOwner = inquiry.user_id === parseInt(sessionStorage.getItem('userId'));
-        const isAdmin = sessionStorage.getItem('role') === 'admin';
+        const isOwner = !publicModeOnly && inquiry.user_id === parseInt(sessionStorage.getItem('userId'));
+        const isAdmin = !publicModeOnly && sessionStorage.getItem('role') === 'admin';
         const canView = !isPrivate || isOwner || isAdmin;
         
         const titleText = canView ? inquiry.title : '비밀글입니다.';
@@ -5399,7 +5399,7 @@ function renderModalPagination() {
         const button = document.createElement('button');
         button.textContent = i;
         button.className = `pagination-button ${i === currentPage ? 'active' : ''}`;
-        button.onclick = () => loadModalInquiries(i);
+        button.onclick = () => loadPublicInquiries(i);
         container.appendChild(button);
     }
     
@@ -6915,8 +6915,13 @@ async function loadAllInquiries() {
         }
     } catch (error) {
         console.error('관리자 문의사항 로드 오류:', error);
-        document.getElementById('adminInquiriesList').innerHTML = 
-            '<tr><td colspan="5" class="px-6 py-4 text-center">문의사항을 불러오는 중 오류가 발생했습니다.</td></tr>';
+        // 오류 메시지 개선
+        const adminInquiriesList = document.getElementById('adminInquiriesList');
+        if (adminInquiriesList) {
+            adminInquiriesList.innerHTML = 
+                '<tr><td colspan="5" class="px-6 py-4 text-center">문의사항 기능을 일시적으로 사용할 수 없습니다.</td></tr>';
+        }
+        // 오류가 발생해도 초기화 과정 중단되지 않도록 error를 다시 던지지 않음
     }
 }
 
