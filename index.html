@@ -416,7 +416,8 @@
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
-                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>  <!-- 추가 -->
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>
+                            <a href="javascript:showInquiryPage()" class="text-gray-700 hover:text-primary py-2">문의사항</a>
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -651,42 +652,132 @@
                     </div>
                 </section>
 
-                <!-- 푸터 -->
-                <footer class="bg-gray-900 text-white py-12">
-                    <div class="container mx-auto px-6">
-                        <div class="grid md:grid-cols-4 gap-8">
-                            <div>
-                                <h3 class="text-lg font-bold mb-4">스포츠박스</h3>
-                                <p class="text-gray-400">경기도체육회</p>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-4">연락처</h3>
-                                <p class="text-gray-400">전화: 031-250-0474~7</p>
-                                <p class="text-gray-400">이메일: <a href="mailto:hoseok0119@ggsc.or.kr" class="hover:text-white">hoseok0119@ggsc.or.kr</a></p>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-4">운영시간</h3>
-                                <p class="text-gray-400">평일: 09:00 - 18:00</p>
-                                <p class="text-gray-400">주말 및 공휴일 휴무</p>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-4">SNS</h3>
-                                <div class="flex space-x-4">
-                                    <a href="https://www.youtube.com/@%EC%8A%A4%ED%8F%AC%EC%B8%A0%EB%B0%95%EC%8A%A4-l7e" 
-                                        target="_blank" class="text-gray-400 hover:text-white">
-                                        <i class="ri-youtube-fill text-xl"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                            <p>&copy; 2025 경기도체육회 스포츠박스. All rights reserved.</p>
-                        </div>
-                    </div>
-                </footer>
-            </main>
+<!-- 문의사항 페이지 -->
+<div id="inquiryPage" class="hidden">
+    <header class="fixed w-full bg-white shadow-sm z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <img src="https://static.readdy.ai/image/416007a89256a2717806f7776e859886/110ce5261818cd69133e46ef8c6b097a.png" 
+                         alt="경기도체육회 로고" class="h-10">
+                    <div class="text-2xl font-bold text-primary">스포츠박스</div>
+                </div>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="javascript:showHomeScreen()" class="text-gray-700 hover:text-primary py-2">홈</a>
+                    <a href="javascript:showInquiryPage()" class="text-primary font-semibold py-2 border-b-2 border-primary">문의사항</a>
+                    <button id="inquiryLoginButton" onclick="showLoginScreen()" 
+                        class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
+                        회원가입/로그인
+                    </button>
+                    <div id="inquiryLoggedInNav" class="hidden space-x-4"></div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-16 container mx-auto px-6">
+        <div class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">문의사항</h1>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-red-500 rounded-full inline-block mr-1"></span>
+                    <span class="text-sm text-gray-600">비밀글</span>
+                </div>
+                <div id="inquiryWriteButtonContainer" class="hidden">
+                    <button onclick="showInquiryWriteModal()" 
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                        <i class="fas fa-pen"></i>
+                        <span>문의하기</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
+        <!-- 검색 및 필터 -->
+        <div class="mb-6 flex justify-between">
+            <div class="relative w-64">
+                <input type="text" id="inquirySearch" placeholder="검색어를 입력하세요" 
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+            <select id="inquiryCategory" class="pl-4 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="all">전체 카테고리</option>
+                <option value="program">프로그램 문의</option>
+                <option value="reservation">예약 문의</option>
+                <option value="other">기타 문의</option>
+            </select>
+        </div>
+
+        <!-- 문의사항 목록 테이블 -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">번호</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카테고리</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성자</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                    </tr>
+                </thead>
+                <tbody id="inquiryList" class="bg-white divide-y divide-gray-200">
+                    <!-- 문의사항 목록이 동적으로 삽입됩니다 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="mt-6 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left text-gray-500"></i>
+                </button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">2</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">3</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">
+                    <i class="fas fa-chevron-right text-gray-500"></i>
+                </button>
+            </nav>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">스포츠박스</h3>
+                    <p class="text-gray-400">경기도체육회</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">연락처</h3>
+                    <p class="text-gray-400">전화: 031-250-0474~7</p>
+                    <p class="text-gray-400">이메일: <a href="mailto:hoseok0119@ggsc.or.kr" class="hover:text-white">hoseok0119@ggsc.or.kr</a></p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">운영시간</h3>
+                    <p class="text-gray-400">평일: 09:00 - 18:00</p>
+                    <p class="text-gray-400">주말 및 공휴일 휴무</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">SNS</h3>
+                    <div class="flex space-x-4">
+                        <a href="https://www.youtube.com/@%EC%8A%A4%ED%8F%AC%EC%B8%A0%EB%B0%95%EC%8A%A4-l7e" 
+                            target="_blank" class="text-gray-400 hover:text-white">
+                            <i class="ri-youtube-fill text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 경기도체육회 스포츠박스. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+        
         <!-- 로그인/예약시스템 컨테이너 -->
         <div id="loginAndReservationSystem" class="hidden">
             <!-- 로그인 화면 -->
@@ -732,7 +823,7 @@
                     </button>
                 </div>
             </div>
-
+            
 <!-- 공지사항 상세보기 모달 -->
 <div id="noticeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
@@ -966,6 +1057,34 @@
         <!-- 공지사항이 여기에 동적으로 추가됨 -->
     </div>
 </div>
+</div>
+
+<!-- 사용자 대시보드 내에 문의사항 섹션 추가 -->
+<div class="mt-8 bg-white rounded-2xl shadow-xl p-8 col-span-2">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">내 문의사항</h2>
+        <button onclick="showInquiryWriteModal()" 
+            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+            <i class="fas fa-pen"></i>
+            <span>문의하기</span>
+        </button>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카테고리</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                </tr>
+            </thead>
+            <tbody id="userInquiriesList" class="bg-white divide-y divide-gray-200">
+                <!-- 사용자 문의사항 목록이 동적으로 추가됩니다 -->
+            </tbody>
+        </table>
+    </div>
 </div>
 </main>
 </div>
@@ -1257,6 +1376,67 @@
     </div>
 </div>
 
+<!-- 관리자 대시보드에 문의사항 관리 섹션 추가 -->
+<div class="mt-8 bg-white rounded-2xl shadow-xl p-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-question-circle text-indigo-600 mr-2"></i>
+        문의사항 관리
+    </h2>
+    <div class="mb-4 flex justify-between items-center">
+        <div class="flex space-x-4">
+            <select id="adminInquiryStatusFilter" class="pl-4 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="all">전체 상태</option>
+                <option value="waiting">답변 대기</option>
+                <option value="answered">답변 완료</option>
+            </select>
+            <select id="adminInquiryCategoryFilter" class="pl-4 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="all">전체 카테고리</option>
+                <option value="program">프로그램 문의</option>
+                <option value="reservation">예약 문의</option>
+                <option value="other">기타 문의</option>
+            </select>
+        </div>
+        <div class="relative w-64">
+            <input type="text" id="adminInquirySearch" placeholder="검색어를 입력하세요" 
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">번호</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카테고리</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성자</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작성일</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                </tr>
+            </thead>
+            <tbody id="adminInquiriesList" class="bg-white divide-y divide-gray-200">
+                <!-- 관리자용 문의사항 목록이 동적으로 추가됩니다 -->
+            </tbody>
+        </table>
+    </div>
+    <!-- 페이지네이션 -->
+    <div class="mt-6 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">
+                <i class="fas fa-chevron-left text-gray-500"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">2</button>
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">3</button>
+            <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50">
+                <i class="fas fa-chevron-right text-gray-500"></i>
+            </button>
+        </nav>
+    </div>
+</div>
+
+
 <!-- 날짜별 예약 내역 모달 -->
 <div id="dateBookingsModal" class="modal">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] flex flex-col overflow-hidden">
@@ -1357,6 +1537,137 @@
             <p class="text-gray-600">전화: 031-250-0474~7</p>
             <p class="text-gray-600">이메일: hoseok0119@ggsc.or.kr</p>
             <p class="text-gray-600">운영시간: 평일 09:00 - 18:00</p>
+        </div>
+    </div>
+</div>
+
+<!-- 문의사항 작성 모달 -->
+<div id="inquiryWriteModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">문의하기</h2>
+            <button onclick="closeInquiryWriteModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="inquiryWriteForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">카테고리</label>
+                <select id="writeInquiryCategory" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="">카테고리 선택</option>
+                    <option value="program">프로그램 문의</option>
+                    <option value="reservation">예약 문의</option>
+                    <option value="other">기타 문의</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">제목</label>
+                <input type="text" id="inquiryTitle" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                <textarea id="inquiryContent" required rows="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
+                <div class="flex items-center space-x-2">
+                    <input type="file" id="inquiryFile" class="hidden" 
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.jpg,.jpeg,.png,.gif">
+                    <button type="button" onclick="document.getElementById('inquiryFile').click()" 
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                        파일 선택
+                    </button>
+                    <span id="inquirySelectedFileName" class="text-sm text-gray-600">선택된 파일 없음</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">최대 파일 크기: 10MB</p>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="inquiryIsPrivate" class="w-4 h-4 text-blue-600 rounded">
+                <label for="inquiryIsPrivate" class="ml-2 text-gray-700 text-sm font-bold">비밀글로 작성</label>
+            </div>
+            <button type="submit" 
+                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition duration-200">
+                문의하기
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 문의사항 상세 보기 모달 -->
+<div id="inquiryDetailModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="detailInquiryTitle" class="text-2xl font-bold">문의사항 제목</h2>
+            <button onclick="closeInquiryDetailModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex justify-between text-sm text-gray-500 mb-4">
+            <div class="flex space-x-4">
+                <span id="detailInquiryCategory" class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full"></span>
+                <span id="detailInquiryAuthor"></span>
+            </div>
+            <span id="detailInquiryDate"></span>
+        </div>
+        <div class="border-t border-b py-6">
+            <p id="detailInquiryContent" class="text-gray-700 whitespace-pre-line"></p>
+            
+            <!-- 첨부파일 영역 -->
+            <div id="detailInquiryAttachment" class="mt-4 hidden">
+                <p class="text-sm font-medium text-gray-600 mb-2">첨부파일</p>
+                <a id="detailInquiryFileLink" href="#" target="_blank" download
+                   class="flex items-center space-x-2 text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-paperclip"></i>
+                    <span id="detailInquiryFileName"></span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- 답변 영역 -->
+        <div id="inquiryAnswerSection" class="mt-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">답변</h3>
+            <div id="inquiryNoAnswer" class="p-4 bg-gray-100 rounded-lg">
+                <p class="text-gray-500">아직 답변이 등록되지 않았습니다.</p>
+            </div>
+            <div id="inquiryAnswerContent" class="hidden">
+                <div class="flex justify-between text-sm text-gray-500 mb-2">
+                    <span id="answerAuthor">관리자</span>
+                    <span id="answerDate"></span>
+                </div>
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p id="answerContent" class="text-gray-700 whitespace-pre-line"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 관리자용 답변 입력 영역 -->
+        <div id="adminAnswerSection" class="mt-6 hidden">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">답변 작성</h3>
+            <form id="inquiryAnswerForm" class="space-y-4">
+                <textarea id="adminAnswerContent" rows="4" placeholder="답변을 작성해주세요"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                <div class="flex justify-end">
+                    <button type="submit" 
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition duration-200">
+                        답변 등록
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 작성자용 문의 수정/삭제 버튼 -->
+        <div id="inquiryOwnerActions" class="mt-6 flex justify-end space-x-2 hidden">
+            <button onclick="showEditInquiryModal()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                수정
+            </button>
+            <button onclick="deleteInquiry()" 
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                삭제
+            </button>
         </div>
     </div>
 </div>
@@ -2574,6 +2885,118 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
     
+    // 문의사항 관련 이벤트 리스너
+    document.getElementById('inquiryWriteForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            showLoading();
+            
+            const formData = new FormData();
+            formData.append('category', document.getElementById('writeInquiryCategory').value);
+            formData.append('title', document.getElementById('inquiryTitle').value);
+            formData.append('content', document.getElementById('inquiryContent').value);
+            formData.append('is_private', document.getElementById('inquiryIsPrivate').checked ? '1' : '0');
+            
+            // 첨부파일이 있는 경우 추가
+            const fileInput = document.getElementById('inquiryFile');
+            if (fileInput.files.length > 0) {
+                formData.append('attachment', fileInput.files[0]);
+            }
+            
+            // API 요청
+            const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('문의사항이 등록되었습니다.', 'success');
+                closeInquiryWriteModal();
+                
+                // 현재 페이지에 따라 새로고침
+                if (document.getElementById('inquiryPage').classList.contains('hidden')) {
+                    // 대시보드에서 작성한 경우
+                    loadUserInquiries();
+                } else {
+                    // 문의사항 페이지에서 작성한 경우
+                    loadInquiries();
+                }
+            } else {
+                throw new Error(data.message || '문의사항 등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Inquiry creation error:', error);
+            showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+    
+    document.getElementById('inquiryFile')?.addEventListener('change', function() {
+        const fileNameSpan = document.getElementById('inquirySelectedFileName');
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // MB 단위
+            fileNameSpan.textContent = `${fileName} (${fileSize}MB)`;
+            fileNameSpan.classList.remove('text-gray-600');
+            fileNameSpan.classList.add('text-blue-600');
+        } else {
+            fileNameSpan.textContent = '선택된 파일 없음';
+            fileNameSpan.classList.remove('text-blue-600');
+            fileNameSpan.classList.add('text-gray-600');
+        }
+    });
+    
+    document.getElementById('inquiryAnswerForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!currentInquiryId) {
+            showAlert('문의사항 정보를 찾을 수 없습니다.', 'error');
+            return;
+        }
+        
+        const answerContent = document.getElementById('adminAnswerContent').value.trim();
+        if (!answerContent) {
+            showAlert('답변 내용을 입력해주세요.', 'error');
+            return;
+        }
+        
+        try {
+            showLoading();
+            
+            const response = await apiRequest(`/api/admin/inquiries/${currentInquiryId}/answer`, {
+                method: 'POST',
+                body: JSON.stringify({ answer: answerContent })
+            });
+            
+            if (response.success) {
+                showAlert('답변이 등록되었습니다.', 'success');
+                closeInquiryDetailModal();
+                
+                // 관리자 대시보드인 경우 목록 새로고침
+                if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
+                    loadAdminInquiries();
+                } else {
+                    // 문의사항 페이지인 경우
+                    loadInquiries();
+                }
+            } else {
+                throw new Error(response.message || '답변 등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Inquiry answer error:', error);
+            showAlert(error.message || '답변 등록 중 오류가 발생했습니다.', 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
     // 디버깅 함수 전역으로 노출
     window.diagnoseModalIssue = diagnoseModalIssue;
     
@@ -6345,6 +6768,589 @@ window.addEventListener('beforeunload', function() {
         console.log('Page unloading, cleaning up...');
     }
 });
+
+// 문의사항 관련 전역 변수
+let currentInquiryId = null;
+let inquiryData = [];
+let userInquiries = [];
+let adminInquiries = [];
+let inquiryPage = 1;
+let inquiryLimit = 10;
+
+// 문의사항 페이지 표시 함수
+function showInquiryPage() {
+    document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
+    document.getElementById('inquiryPage').classList.remove('hidden');
+    document.getElementById('loginAndReservationSystem').classList.add('hidden');
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('userDashboard').classList.add('hidden');
+    document.getElementById('adminDashboard').classList.add('hidden');
+    
+    // 로그인 상태 확인
+    const token = sessionStorage.getItem('token');
+    const username = sessionStorage.getItem('username');
+    
+    if (token && username) {
+        // 로그인 상태일 때
+        document.getElementById('inquiryLoginButton').classList.add('hidden');
+        document.getElementById('inquiryLoggedInNav').classList.remove('hidden');
+        document.getElementById('inquiryLoggedInNav').innerHTML = `
+            <span class="text-gray-700 font-medium">${username}</span>
+            <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
+                class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
+                대시보드
+            </button>
+            <button onclick="logout()" 
+                class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
+                로그아웃
+            </button>
+        `;
+        document.getElementById('inquiryWriteButtonContainer').classList.remove('hidden');
+    } else {
+        // 비로그인 상태일 때
+        document.getElementById('inquiryLoginButton').classList.remove('hidden');
+        document.getElementById('inquiryLoggedInNav').classList.add('hidden');
+        document.getElementById('inquiryWriteButtonContainer').classList.add('hidden');
+    }
+    
+    // 문의사항 목록 로드
+    loadInquiries();
+}
+
+// 문의사항 목록 로드
+async function loadInquiries() {
+    try {
+        showLoading();
+        
+        // 로그인 상태에 따라 API 엔드포인트 결정
+        const token = sessionStorage.getItem('token');
+        let endpoint = '/api/public/inquiries';
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            inquiryData = data.data || [];
+            renderInquiryList();
+        } else {
+            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('Inquiries loading error:', error);
+        showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 문의사항 목록 렌더링
+function renderInquiryList() {
+    const tbody = document.getElementById('inquiryList');
+    if (!tbody) return;
+    
+    if (!inquiryData || inquiryData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                    문의사항이 없습니다.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // 현재 로그인한 사용자 ID
+    const userId = parseInt(sessionStorage.getItem('userId')) || 0;
+    const isAdmin = sessionStorage.getItem('role') === 'admin';
+    
+    tbody.innerHTML = inquiryData.map((inquiry, index) => {
+        // 비밀글 접근 권한 확인
+        const canAccess = !inquiry.is_private || inquiry.user_id === userId || isAdmin;
+        
+        return `
+            <tr class="${canAccess ? 'cursor-pointer hover:bg-gray-50' : ''}" 
+                ${canAccess ? `onclick="viewInquiry(${inquiry.id})"` : ''}>
+                <td class="px-6 py-4 whitespace-nowrap">${inquiry.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${getCategoryClass(inquiry.category)}">
+                        ${getCategoryText(inquiry.category)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${inquiry.is_private ? 
+                        '<span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>' : 
+                        ''}
+                    ${canAccess ? 
+                        inquiry.title : 
+                        '<span class="text-gray-400">비밀글입니다</span>'}
+                    ${inquiry.has_answer ? 
+                        '<span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">답변완료</span>' : 
+                        ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">${inquiry.author || '익명'}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(inquiry.created_at)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${inquiry.has_answer ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                        ${inquiry.has_answer ? '답변완료' : '답변대기'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 문의사항 상세 보기
+async function viewInquiry(inquiryId) {
+    try {
+        showLoading();
+        
+        // 문의사항 상세 정보 가져오기
+        const response = await apiRequest(`/api/inquiries/${inquiryId}`);
+        
+        if (response.success) {
+            const inquiry = response.data;
+            currentInquiryId = inquiry.id;
+            
+            // 모달에 데이터 채우기
+            document.getElementById('detailInquiryTitle').textContent = inquiry.title;
+            document.getElementById('detailInquiryCategory').textContent = getCategoryText(inquiry.category);
+            document.getElementById('detailInquiryCategory').className = `px-2 py-1 rounded-full text-xs font-medium ${getCategoryClass(inquiry.category, true)}`;
+            document.getElementById('detailInquiryAuthor').textContent = inquiry.author || '익명';
+            document.getElementById('detailInquiryDate').textContent = formatDate(inquiry.created_at);
+            document.getElementById('detailInquiryContent').textContent = inquiry.content;
+            
+            // 첨부파일 표시
+            const attachmentSection = document.getElementById('detailInquiryAttachment');
+            if (inquiry.attachment_url) {
+                document.getElementById('detailInquiryFileName').textContent = inquiry.attachment_name || '첨부파일';
+                document.getElementById('detailInquiryFileLink').href = inquiry.attachment_url;
+                attachmentSection.classList.remove('hidden');
+            } else {
+                attachmentSection.classList.add('hidden');
+            }
+            
+            // 답변 표시
+            if (inquiry.answer) {
+                document.getElementById('inquiryNoAnswer').classList.add('hidden');
+                document.getElementById('inquiryAnswerContent').classList.remove('hidden');
+                document.getElementById('answerAuthor').textContent = inquiry.answer_author || '관리자';
+                document.getElementById('answerDate').textContent = formatDate(inquiry.answer_date);
+                document.getElementById('answerContent').textContent = inquiry.answer;
+            } else {
+                document.getElementById('inquiryNoAnswer').classList.remove('hidden');
+                document.getElementById('inquiryAnswerContent').classList.add('hidden');
+            }
+            
+            // 관리자인 경우 답변 입력 영역 표시
+            const isAdmin = sessionStorage.getItem('role') === 'admin';
+            document.getElementById('adminAnswerSection').classList.toggle('hidden', !isAdmin || inquiry.has_answer);
+            
+            // 작성자인 경우 수정/삭제 버튼 표시
+            const userId = parseInt(sessionStorage.getItem('userId')) || 0;
+            const isOwner = inquiry.user_id === userId;
+            document.getElementById('inquiryOwnerActions').classList.toggle('hidden', !isOwner);
+            
+            // 모달 표시
+            openModal('inquiryDetailModal');
+        } else {
+            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('Inquiry detail loading error:', error);
+        showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 카테고리 클래스 및 텍스트
+function getCategoryClass(category, isDetail = false) {
+    const baseClass = isDetail ? '' : 'bg-opacity-50 ';
+    switch (category) {
+        case 'program':
+            return baseClass + 'bg-blue-100 text-blue-800';
+        case 'reservation':
+            return baseClass + 'bg-green-100 text-green-800';
+        case 'other':
+            return baseClass + 'bg-purple-100 text-purple-800';
+        default:
+            return baseClass + 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getCategoryText(category) {
+    switch (category) {
+        case 'program':
+            return '프로그램 문의';
+        case 'reservation':
+            return '예약 문의';
+        case 'other':
+            return '기타 문의';
+        default:
+            return '기타';
+    }
+}
+
+// 문의사항 작성 모달 표시
+function showInquiryWriteModal() {
+    // 로그인 확인
+    if (!sessionStorage.getItem('token')) {
+        showAlert('문의사항 작성은 로그인 후 이용 가능합니다.', 'error');
+        return;
+    }
+    
+    // 폼 초기화
+    document.getElementById('inquiryWriteForm').reset();
+    document.getElementById('inquirySelectedFileName').textContent = '선택된 파일 없음';
+    document.getElementById('inquirySelectedFileName').className = 'text-sm text-gray-600';
+    
+    // 모달 표시
+    openModal('inquiryWriteModal');
+}
+
+// 문의사항 작성 모달 닫기
+function closeInquiryWriteModal() {
+    closeModal('inquiryWriteModal');
+}
+
+// 문의사항 상세 모달 닫기
+function closeInquiryDetailModal() {
+    closeModal('inquiryDetailModal');
+}
+
+// 문의사항 작성 폼 제출
+document.getElementById('inquiryWriteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        showLoading();
+        
+        const formData = new FormData();
+        formData.append('category', document.getElementById('writeInquiryCategory').value);
+        formData.append('title', document.getElementById('inquiryTitle').value);
+        formData.append('content', document.getElementById('inquiryContent').value);
+        formData.append('is_private', document.getElementById('inquiryIsPrivate').checked ? '1' : '0');
+        
+        // 첨부파일이 있는 경우 추가
+        const fileInput = document.getElementById('inquiryFile');
+        if (fileInput.files.length > 0) {
+            formData.append('attachment', fileInput.files[0]);
+        }
+        
+        // API 요청
+        const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('문의사항이 등록되었습니다.', 'success');
+            closeInquiryWriteModal();
+            
+            // 현재 페이지에 따라 새로고침
+            if (document.getElementById('inquiryPage').classList.contains('hidden')) {
+                // 대시보드에서 작성한 경우
+                loadUserInquiries();
+            } else {
+                // 문의사항 페이지에서 작성한 경우
+                loadInquiries();
+            }
+        } else {
+            throw new Error(data.message || '문의사항 등록에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Inquiry creation error:', error);
+        showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
+
+// 파일 선택 시 파일명 표시
+document.getElementById('inquiryFile').addEventListener('change', function() {
+    const fileNameSpan = document.getElementById('inquirySelectedFileName');
+    if (this.files.length > 0) {
+        const fileName = this.files[0].name;
+        const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // MB 단위
+        fileNameSpan.textContent = `${fileName} (${fileSize}MB)`;
+        fileNameSpan.classList.remove('text-gray-600');
+        fileNameSpan.classList.add('text-blue-600');
+    } else {
+        fileNameSpan.textContent = '선택된 파일 없음';
+        fileNameSpan.classList.remove('text-blue-600');
+        fileNameSpan.classList.add('text-gray-600');
+    }
+});
+
+// 관리자 답변 폼 제출
+document.getElementById('inquiryAnswerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!currentInquiryId) {
+        showAlert('문의사항 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    const answerContent = document.getElementById('adminAnswerContent').value.trim();
+    if (!answerContent) {
+        showAlert('답변 내용을 입력해주세요.', 'error');
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        const response = await apiRequest(`/api/admin/inquiries/${currentInquiryId}/answer`, {
+            method: 'POST',
+            body: JSON.stringify({ answer: answerContent })
+        });
+        
+        if (response.success) {
+            showAlert('답변이 등록되었습니다.', 'success');
+            closeInquiryDetailModal();
+            
+            // 관리자 대시보드인 경우 목록 새로고침
+            if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
+                loadAdminInquiries();
+            } else {
+                // 문의사항 페이지인 경우
+                loadInquiries();
+            }
+        } else {
+            throw new Error(response.message || '답변 등록에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Inquiry answer error:', error);
+        showAlert(error.message || '답변 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+});
+
+// 문의사항 삭제
+async function deleteInquiry() {
+    if (!currentInquiryId) {
+        showAlert('문의사항 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    if (!confirm('정말 이 문의사항을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        const response = await apiRequest(`/api/inquiries/${currentInquiryId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.success) {
+            showAlert('문의사항이 삭제되었습니다.', 'success');
+            closeInquiryDetailModal();
+            
+            // 현재 페이지에 따라 새로고침
+            if (!document.getElementById('userDashboard').classList.contains('hidden')) {
+                // 사용자 대시보드인 경우
+                loadUserInquiries();
+            } else if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
+                // 관리자 대시보드인 경우
+                loadAdminInquiries();
+            } else {
+                // 문의사항 페이지인 경우
+                loadInquiries();
+            }
+        } else {
+            throw new Error(response.message || '문의사항 삭제에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Inquiry deletion error:', error);
+        showAlert(error.message || '문의사항 삭제 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 사용자 대시보드: 내 문의사항 목록 로드
+async function loadUserInquiries() {
+    try {
+        const response = await apiRequest('/api/user/inquiries');
+        
+        if (response.success) {
+            userInquiries = response.data || [];
+            
+            const tbody = document.getElementById('userInquiriesList');
+            if (!tbody) return;
+            
+            if (userInquiries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                            작성한 문의사항이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = userInquiries.map(inquiry => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${getCategoryClass(inquiry.category)}">
+                            ${getCategoryText(inquiry.category)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${inquiry.is_private ? 
+                            '<span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>' : 
+                            ''}
+                        <a href="javascript:viewInquiry(${inquiry.id})" class="text-indigo-600 hover:text-indigo-900">
+                            ${inquiry.title}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(inquiry.created_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${inquiry.has_answer ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${inquiry.has_answer ? '답변완료' : '답변대기'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="viewInquiry(${inquiry.id})" 
+                            class="text-indigo-600 hover:text-indigo-900 mr-3">
+                            보기
+                        </button>
+                        <button onclick="deleteUserInquiry(${inquiry.id})" 
+                            class="text-red-600 hover:text-red-900">
+                            삭제
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('User inquiries loading error:', error);
+        document.getElementById('userInquiriesList').innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                    문의사항을 불러오는데 실패했습니다.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// 관리자 대시보드: 모든 문의사항 목록 로드
+async function loadAdminInquiries() {
+    try {
+        // 필터 값 가져오기
+        const statusFilter = document.getElementById('adminInquiryStatusFilter').value;
+        const categoryFilter = document.getElementById('adminInquiryCategoryFilter').value;
+        const searchTerm = document.getElementById('adminInquirySearch').value;
+        
+        const response = await apiRequest('/api/admin/inquiries', {
+            method: 'POST',
+            body: JSON.stringify({
+                status: statusFilter,
+                category: categoryFilter,
+                search: searchTerm
+            })
+        });
+        
+        if (response.success) {
+            adminInquiries = response.data || [];
+            
+            const tbody = document.getElementById('adminInquiriesList');
+            if (!tbody) return;
+            
+            if (adminInquiries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                            등록된 문의사항이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = adminInquiries.map(inquiry => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">${inquiry.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${getCategoryClass(inquiry.category)}">
+                            ${getCategoryText(inquiry.category)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${inquiry.is_private ? 
+                            '<span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>' : 
+                            ''}
+                        <a href="javascript:viewInquiry(${inquiry.id})" class="text-indigo-600 hover:text-indigo-900">
+                            ${inquiry.title}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${inquiry.author || '익명'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(inquiry.created_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${inquiry.has_answer ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${inquiry.has_answer ? '답변완료' : '답변대기'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="viewInquiry(${inquiry.id})" 
+                            class="text-indigo-600 hover:text-indigo-900 mr-3">
+                            ${inquiry.has_answer ? '상세보기' : '답변하기'}
+                        </button>
+                        <button onclick="deleteAdminInquiry(${inquiry.id})" 
+                            class="text-red-600 hover:text-red-900">
+                            삭제
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        console.error('Admin inquiries loading error:', error);
+        document.getElementById('adminInquiriesList').innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                    문의사항을 불러오는데 실패했습니다.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// 사용자 & 관리자 대시보드 초기화 함수에 문의사항 로드 추가
+const originalInitUserDashboard = window.initializeUserDashboard;
+window.initializeUserDashboard = async function() {
+    await originalInitUserDashboard.apply(this, arguments);
+    // 사용자 문의사항 로드
+    await loadUserInquiries();
+};
+
+const originalInitAdminDashboard = window.initializeAdminDashboard;
+window.initializeAdminDashboard = async function() {
+    await originalInitAdminDashboard.apply(this, arguments);
+    // 관리자 문의사항 로드
+    await loadAdminInquiries();
+};
+
 </script>
 </body>
 </html>
