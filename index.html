@@ -7287,9 +7287,9 @@ async function loadUserInquiries() {
 async function loadAdminInquiries() {
     try {
         // 필터 값 가져오기
-        const statusFilter = document.getElementById('adminInquiryStatusFilter').value;
-        const categoryFilter = document.getElementById('adminInquiryCategoryFilter').value;
-        const searchTerm = document.getElementById('adminInquirySearch').value;
+        const statusFilter = document.getElementById('adminInquiryStatusFilter').value || 'all';
+        const categoryFilter = document.getElementById('adminInquiryCategoryFilter').value || 'all';
+        const searchTerm = document.getElementById('adminInquirySearch').value || '';
         
         const response = await apiRequest('/api/admin/inquiries', {
             method: 'POST',
