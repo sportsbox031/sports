@@ -6812,42 +6812,58 @@ let inquiryLimit = 10;
 
 // 문의사항 페이지 표시 함수
 function showInquiryPage() {
-    document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-    document.getElementById('inquiryPage').classList.remove('hidden');
-    document.getElementById('loginAndReservationSystem').classList.add('hidden');
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('userDashboard').classList.add('hidden');
-    document.getElementById('adminDashboard').classList.add('hidden');
-    
-    // 로그인 상태 확인
-    const token = sessionStorage.getItem('token');
-    const username = sessionStorage.getItem('username');
-    
-    if (token && username) {
-        // 로그인 상태일 때
-        document.getElementById('inquiryLoginButton').classList.add('hidden');
-        document.getElementById('inquiryLoggedInNav').classList.remove('hidden');
-        document.getElementById('inquiryLoggedInNav').innerHTML = `
-            <span class="text-gray-700 font-medium">${username}</span>
-            <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
-                class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
-                대시보드
-            </button>
-            <button onclick="logout()" 
-                class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
-                로그아웃
-            </button>
-        `;
-        document.getElementById('inquiryWriteButtonContainer').classList.remove('hidden');
-    } else {
-        // 비로그인 상태일 때
-        document.getElementById('inquiryLoginButton').classList.remove('hidden');
-        document.getElementById('inquiryLoggedInNav').classList.add('hidden');
-        document.getElementById('inquiryWriteButtonContainer').classList.add('hidden');
+    console.log('문의사항 페이지 열기 시작');
+    try {
+        // 페이지 표시
+        document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
+        document.getElementById('inquiryPage').classList.remove('hidden');
+        document.getElementById('loginAndReservationSystem').classList.add('hidden');
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('userDashboard').classList.add('hidden');
+        document.getElementById('adminDashboard').classList.add('hidden');
+        
+        console.log('문의사항 페이지 요소 표시 완료');
+        
+        // 로그인 상태 확인
+        const token = sessionStorage.getItem('token');
+        const username = sessionStorage.getItem('username');
+        
+        console.log('로그인 상태:', !!token);
+        
+        if (token && username) {
+            // 로그인 상태일 때
+            document.getElementById('inquiryLoginButton').classList.add('hidden');
+            document.getElementById('inquiryLoggedInNav').classList.remove('hidden');
+            document.getElementById('inquiryLoggedInNav').innerHTML = `
+                <span class="text-gray-700 font-medium">${username}</span>
+                <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
+                    class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
+                    대시보드
+                </button>
+                <button onclick="logout()" 
+                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
+                    로그아웃
+                </button>
+            `;
+            document.getElementById('inquiryWriteButtonContainer').classList.remove('hidden');
+        } else {
+            // 비로그인 상태일 때
+            document.getElementById('inquiryLoginButton').classList.remove('hidden');
+            document.getElementById('inquiryLoggedInNav').classList.add('hidden');
+            document.getElementById('inquiryWriteButtonContainer').classList.add('hidden');
+        }
+        
+        // 문의사항 목록 로드
+        console.log('문의사항 목록 로드 시작');
+        loadInquiries();
+        
+    } catch (error) {
+        console.error('문의사항 페이지 표시 오류:', error);
+        alert('문의사항 페이지를 불러오는데 실패했습니다.');
+        
+        // 오류 시 홈화면으로 복귀
+        showHomeScreen();
     }
-    
-    // 문의사항 목록 로드
-    loadInquiries();
 }
 
 // 문의사항 목록 로드
@@ -6866,11 +6882,39 @@ async function loadInquiries() {
             inquiryData = data.data || [];
             renderInquiryList();
         } else {
-            showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+            // 오류 메시지 표시, 빈 화면이 아닌 메시지
+            document.getElementById('inquiryList').innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-10 text-center">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-lg font-medium text-red-500">문의사항을 불러오는데 실패했습니다</p>
+                            <p class="text-gray-500 mt-2">${data.message || '서버 오류가 발생했습니다'}</p>
+                            <button onclick="loadInquiries()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                다시 시도
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         }
     } catch (error) {
         console.error('Inquiries loading error:', error);
-        showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+        // 오류 메시지 표시, 빈 화면이 아닌 메시지
+        document.getElementById('inquiryList').innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-10 text-center">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                        <p class="text-lg font-medium text-red-500">문의사항을 불러오는데 실패했습니다</p>
+                        <p class="text-gray-500 mt-2">${error.message || '네트워크 오류가 발생했습니다'}</p>
+                        <button onclick="loadInquiries()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            다시 시도
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
     } finally {
         hideLoading();
     }
@@ -7054,9 +7098,14 @@ function closeInquiryDetailModal() {
 }
 
 // 문의사항 작성 폼 제출
+let isSubmittingInquiry = false; // 플래그 추가
 document.getElementById('inquiryWriteForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    // 이중 제출 방지
+    if (isSubmittingInquiry) return;
+    isSubmittingInquiry = true;
+
     try {
         showLoading();
         
@@ -7102,6 +7151,7 @@ document.getElementById('inquiryWriteForm').addEventListener('submit', async fun
         console.error('Inquiry creation error:', error);
         showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
     } finally {
+        isSubmittingInquiry = false; // 플래그 초기화
         hideLoading();
     }
 });
@@ -7208,6 +7258,13 @@ async function deleteInquiry() {
         showAlert(error.message || '문의사항 삭제 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+function deleteUserInquiry(inquiryId) {
+    if (confirm('정말 이 문의사항을 삭제하시겠습니까?')) {
+        currentInquiryId = inquiryId; // 현재 선택된 ID를 설정
+        deleteInquiry(); // 기존의 deleteInquiry 함수 호출
     }
 }
 
