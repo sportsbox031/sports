@@ -2917,6 +2917,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 공지사항 로드
     loadHomeNotices();
     checkAdminStatus();
+    initializeInquirySystem();
     
     // 문의사항 관련 이벤트 리스너
     document.getElementById('inquiryWriteForm')?.addEventListener('submit', async function(e) {
@@ -7090,6 +7091,17 @@ function showInquiryWriteModal() {
 
 // 문의사항 작성 모달 닫기
 function closeInquiryWriteModal() {
+    console.log('문의사항 작성 모달 닫기');
+    
+    // 폼 초기화
+    document.getElementById('inquiryWriteForm').reset();
+    document.getElementById('inquirySelectedFileName').textContent = '선택된 파일 없음';
+    document.getElementById('inquirySelectedFileName').className = 'text-sm text-gray-600';
+    
+    // 제출 플래그 초기화 (중요!)
+    isSubmittingInquiry = false;
+    
+    // 모달 닫기
     closeModal('inquiryWriteModal');
 }
 
@@ -7099,66 +7111,104 @@ function closeInquiryDetailModal() {
 }
 
 // 문의사항 작성 폼 제출
-document.getElementById('inquiryWriteForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+function initializeInquirySystem() {
+    console.log('문의사항 시스템 초기화');
     
-    // 중복 제출 방지 (이 부분 추가)
-    if (isSubmittingInquiry) {
-        console.log('이미 제출 중입니다');
-        return;
-    }
-    isSubmittingInquiry = true;
-    
-    try {
-        showLoading();
+    // 기존 이벤트 핸들러 제거를 위해 폼 복제
+    const inquiryForm = document.getElementById('inquiryWriteForm');
+    if (inquiryForm) {
+        const newForm = inquiryForm.cloneNode(true);
+        inquiryForm.parentNode.replaceChild(newForm, inquiryForm);
         
-        const formData = new FormData();
-        formData.append('category', document.getElementById('writeInquiryCategory').value);
-        formData.append('title', document.getElementById('inquiryTitle').value);
-        formData.append('content', document.getElementById('inquiryContent').value);
-        formData.append('is_private', document.getElementById('inquiryIsPrivate').checked ? '1' : '0');
-        
-        // 첨부파일이 있는 경우 추가
-        const fileInput = document.getElementById('inquiryFile');
-        if (fileInput.files.length > 0) {
-            formData.append('attachment', fileInput.files[0]);
-        }
-        
-        // API 요청
-        const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-            },
-            body: formData
+        // 새 이벤트 핸들러 등록
+        newForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // 이벤트 버블링 방지
+            
+            console.log('문의사항 폼 제출 시작');
+            
+            // 이중 제출 방지
+            if (isSubmittingInquiry) {
+                console.log('이미 제출 중입니다');
+                return;
+            }
+            isSubmittingInquiry = true;
+            
+            // 폼 버튼 비활성화
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = '처리 중...';
+            }
+            
+            try {
+                showLoading();
+                
+                const formData = new FormData();
+                formData.append('category', document.getElementById('writeInquiryCategory').value);
+                formData.append('title', document.getElementById('inquiryTitle').value);
+                formData.append('content', document.getElementById('inquiryContent').value);
+                formData.append('is_private', document.getElementById('inquiryIsPrivate').checked ? '1' : '0');
+                
+                // 첨부파일이 있는 경우 추가
+                const fileInput = document.getElementById('inquiryFile');
+                if (fileInput.files.length > 0) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+                
+                console.log('API 요청 전송');
+                
+                // API 요청
+                const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+                
+                console.log('API 응답 수신');
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('문의사항이 등록되었습니다.', 'success');
+                    closeInquiryWriteModal();
+                    
+                    // 현재 페이지에 따라 새로고침
+                    if (document.getElementById('inquiryPage').classList.contains('hidden')) {
+                        // 대시보드에서 작성한 경우
+                        console.log('사용자 대시보드 문의사항 새로고침');
+                        loadUserInquiries();
+                    } else {
+                        // 문의사항 페이지에서 작성한 경우
+                        console.log('문의사항 페이지 목록 새로고침');
+                        loadInquiries();
+                    }
+                } else {
+                    throw new Error(data.message || '문의사항 등록에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Inquiry creation error:', error);
+                showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+                isSubmittingInquiry = false; // 플래그 초기화
+                
+                // 버튼 상태 복원
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = '문의하기';
+                }
+                
+                console.log('문의사항 폼 제출 완료');
+            }
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showAlert('문의사항이 등록되었습니다.', 'success');
-            closeInquiryWriteModal();
-            
-            // 현재 페이지에 따라 새로고침
-            if (document.getElementById('inquiryPage').classList.contains('hidden')) {
-                // 대시보드에서 작성한 경우
-                loadUserInquiries();
-            } else {
-                // 문의사항 페이지에서 작성한 경우
-                loadInquiries();
-            }
-        } else {
-            throw new Error(data.message || '문의사항 등록에 실패했습니다.');
-        }
-    } catch (error) {
-        console.error('Inquiry creation error:', error);
-        showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-        // 플래그 초기화 (이 부분 추가)
-        isSubmittingInquiry = false;
+        console.log('문의사항 폼 이벤트 핸들러 재설정 완료');
     }
-});
+}
 
 // 파일 선택 시 파일명 표시
 document.getElementById('inquiryFile').addEventListener('change', function() {
