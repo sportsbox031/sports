@@ -6819,19 +6819,18 @@ function showInquiryPage() {
 async function loadInquiries() {
     try {
         showLoading();
+        console.log('API 요청 시작: 문의사항 목록');
         
-        // 로그인 상태에 따라 API 엔드포인트 결정
-        const token = sessionStorage.getItem('token');
-        let endpoint = '/api/public/inquiries';
-        
-        const response = await fetch(`${API_BASE_URL}${endpoint}`);
-        const data = await response.json();
+        // 커스텀 API 요청 함수 사용 (fetch 대신)
+        const data = await apiRequest('/api/public/inquiries');
+        console.log('API 응답 수신:', data);
         
         if (data.success) {
             inquiryData = data.data || [];
+            console.log(`문의사항 ${inquiryData.length}개 로드됨`);
             renderInquiryList();
         } else {
-            // 오류 메시지 표시, 빈 화면이 아닌 메시지
+            // 오류 메시지 표시 (기존 코드 유지)
             document.getElementById('inquiryList').innerHTML = `
                 <tr>
                     <td colspan="6" class="px-6 py-10 text-center">
@@ -6849,7 +6848,7 @@ async function loadInquiries() {
         }
     } catch (error) {
         console.error('Inquiries loading error:', error);
-        // 오류 메시지 표시, 빈 화면이 아닌 메시지
+        // 오류 메시지 표시 (기존 코드 유지)
         document.getElementById('inquiryList').innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-10 text-center">
