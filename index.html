@@ -2919,59 +2919,6 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAdminStatus();
     initializeInquirySystem();
     
-    // 문의사항 관련 이벤트 리스너
-    document.getElementById('inquiryWriteForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        try {
-            showLoading();
-            
-            const formData = new FormData();
-            formData.append('category', document.getElementById('writeInquiryCategory').value);
-            formData.append('title', document.getElementById('inquiryTitle').value);
-            formData.append('content', document.getElementById('inquiryContent').value);
-            formData.append('is_private', document.getElementById('inquiryIsPrivate').checked ? '1' : '0');
-            
-            // 첨부파일이 있는 경우 추가
-            const fileInput = document.getElementById('inquiryFile');
-            if (fileInput.files.length > 0) {
-                formData.append('attachment', fileInput.files[0]);
-            }
-            
-            // API 요청
-            const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-                },
-                body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                showAlert('문의사항이 등록되었습니다.', 'success');
-                closeInquiryWriteModal();
-                
-                // 현재 페이지에 따라 새로고침
-                if (document.getElementById('inquiryPage').classList.contains('hidden')) {
-                    // 대시보드에서 작성한 경우
-                    loadUserInquiries();
-                } else {
-                    // 문의사항 페이지에서 작성한 경우
-                    loadInquiries();
-                }
-            } else {
-                throw new Error(data.message || '문의사항 등록에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('Inquiry creation error:', error);
-            showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
-        } finally {
-            hideLoading();
-        }
-    });
-    
     document.getElementById('inquiryFile')?.addEventListener('change', function() {
         const fileNameSpan = document.getElementById('inquirySelectedFileName');
         if (this.files.length > 0) {
