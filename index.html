@@ -858,7 +858,7 @@
         </div>
     </footer>
 </div>
-            
+
 <!-- 공지사항 상세보기 모달 -->
 <div id="noticeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
@@ -6763,51 +6763,46 @@ let inquiryLimit = 10;
 function showInquiryPage() {
     console.log('문의사항 페이지 열기 시작');
     try {
-        // 페이지 표시
-        document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-        document.getElementById('inquiryPage').classList.remove('hidden');
-        document.getElementById('loginAndReservationSystem').classList.add('hidden');
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('userDashboard').classList.add('hidden');
-        document.getElementById('adminDashboard').classList.add('hidden');
+        // 페이지 요소 가져오기
+        const mainContainer = document.getElementById('mainContainer');
+        const homeScreen = mainContainer?.querySelector('#homeScreen');
+        const loginSystem = document.getElementById('loginAndReservationSystem');
+        const loginScreen = document.getElementById('loginScreen');
+        const userDashboard = document.getElementById('userDashboard');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const inquiryPage = document.getElementById('inquiryPage');
         
-        console.log('문의사항 페이지 요소 표시 완료');
+        // 문의사항 페이지 요소 확인
+        if (!inquiryPage) {
+            console.error('inquiryPage 요소를 찾을 수 없습니다');
+            return;
+        }
         
-        // 로그인 상태 확인
+        console.log('요소 확인: inquiryPage 존재함');
+        
+        // 다른 페이지 숨기기
+        if (homeScreen) homeScreen.classList.add('hidden');
+        if (loginSystem) loginSystem.classList.add('hidden');
+        if (loginScreen) loginScreen.classList.add('hidden');
+        if (userDashboard) userDashboard.classList.add('hidden');
+        if (adminDashboard) adminDashboard.classList.add('hidden');
+        
+        // 문의사항 페이지 표시 (여러 방식으로 시도)
+        inquiryPage.classList.remove('hidden');
+        inquiryPage.style.display = 'block'; // 명시적 표시 속성 설정
+        inquiryPage.style.visibility = 'visible';
+        inquiryPage.style.opacity = '1';
+        
+        // 로그인 상태 확인 및 UI 조정
         const token = sessionStorage.getItem('token');
         const username = sessionStorage.getItem('username');
         
-        console.log('로그인 상태:', !!token);
-        
-        if (token && username) {
-            // 로그인 상태일 때
-            document.getElementById('inquiryLoginButton').classList.add('hidden');
-            document.getElementById('inquiryLoggedInNav').classList.remove('hidden');
-            document.getElementById('inquiryLoggedInNav').innerHTML = `
-                <span class="text-gray-700 font-medium">${username}</span>
-                <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
-                    class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
-                    대시보드
-                </button>
-                <button onclick="logout()" 
-                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
-                    로그아웃
-                </button>
-            `;
-            document.getElementById('inquiryWriteButtonContainer').classList.remove('hidden');
-        } else {
-            // 비로그인 상태일 때
-            document.getElementById('inquiryLoginButton').classList.remove('hidden');
-            document.getElementById('inquiryLoggedInNav').classList.add('hidden');
-            document.getElementById('inquiryWriteButtonContainer').classList.add('hidden');
-        }
-        
         // 문의사항 목록 로드
-        console.log('문의사항 목록 로드 시작');
         loadInquiries();
         
     } catch (error) {
         console.error('문의사항 페이지 표시 오류:', error);
+        console.error(error.stack); // 더 자세한 디버깅을 위한 스택 트레이스
         alert('문의사항 페이지를 불러오는데 실패했습니다.');
         
         // 오류 시 홈화면으로 복귀
