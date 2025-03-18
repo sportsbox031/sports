@@ -6764,38 +6764,64 @@ function showInquiryPage() {
     console.log('문의사항 페이지 열기 시작');
     try {
         // 다른 페이지들 숨기기
-        document.getElementById('mainContainer').querySelector('#homeScreen').classList.add('hidden');
-        document.getElementById('loginAndReservationSystem').classList.add('hidden');
+        const mainContainer = document.getElementById('mainContainer');
+        if (mainContainer) {
+            const homeScreen = mainContainer.querySelector('#homeScreen');
+            if (homeScreen) homeScreen.classList.add('hidden');
+        }
         
-        // 문의사항 페이지 표시
+        const loginSystem = document.getElementById('loginAndReservationSystem');
+        if (loginSystem) loginSystem.classList.add('hidden');
+        
+        // 문의사항 페이지 표시 - 강력한 방법으로
         const inquiryPage = document.getElementById('inquiryPage');
-        inquiryPage.classList.remove('hidden');
+        if (inquiryPage) {
+            inquiryPage.classList.remove('hidden');
+            inquiryPage.style.display = 'block';
+            inquiryPage.style.visibility = 'visible';
+            inquiryPage.style.opacity = '1';
+            
+            console.log('inquiryPage 요소 표시 처리 완료');
+            console.log('inquiryPage 스타일:', 
+                window.getComputedStyle(inquiryPage).display, 
+                window.getComputedStyle(inquiryPage).visibility);
+        } else {
+            console.error('inquiryPage 요소를 찾을 수 없음');
+            return; // 요소가 없으면 여기서 종료
+        }
         
         // 로그인 상태 확인
         const token = sessionStorage.getItem('token');
         const username = sessionStorage.getItem('username');
         
+        // 로그인 버튼과 네비게이션 요소 가져오기
+        const loginButton = document.getElementById('inquiryLoginButton');
+        const loggedInNav = document.getElementById('inquiryLoggedInNav');
+        const writeButtonContainer = document.getElementById('inquiryWriteButtonContainer');
+        
         if (token && username) {
             // 로그인 상태일 때
-            document.getElementById('inquiryLoginButton').classList.add('hidden');
-            document.getElementById('inquiryLoggedInNav').classList.remove('hidden');
-            document.getElementById('inquiryLoggedInNav').innerHTML = `
-                <span class="text-gray-700 font-medium">${username}</span>
-                <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
-                    class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
-                    대시보드
-                </button>
-                <button onclick="logout()" 
-                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
-                    로그아웃
-                </button>
-            `;
-            document.getElementById('inquiryWriteButtonContainer').classList.remove('hidden');
+            if (loginButton) loginButton.classList.add('hidden');
+            if (loggedInNav) {
+                loggedInNav.classList.remove('hidden');
+                loggedInNav.innerHTML = `
+                    <span class="text-gray-700 font-medium">${username}</span>
+                    <button onclick="showDashboard('${sessionStorage.getItem('role')}')" 
+                        class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg">
+                        대시보드
+                    </button>
+                    <button onclick="logout()" 
+                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
+                        로그아웃
+                    </button>
+                `;
+            }
+            if (writeButtonContainer) writeButtonContainer.classList.remove('hidden');
         } else {
             // 비로그인 상태일 때
-            document.getElementById('inquiryLoginButton').classList.remove('hidden');
-            document.getElementById('inquiryLoggedInNav').classList.add('hidden');
-            document.getElementById('inquiryWriteButtonContainer').classList.add('hidden');
+            if (loginButton) loginButton.classList.remove('hidden');
+            if (loggedInNav) loggedInNav.classList.add('hidden');
+            if (writeButtonContainer) writeButtonContainer.classList.add('hidden');
         }
         
         // 문의사항 목록 로드
@@ -6803,6 +6829,7 @@ function showInquiryPage() {
         
     } catch (error) {
         console.error('문의사항 페이지 표시 오류:', error);
+        console.error(error.stack); // 스택 트레이스 출력
         alert('문의사항 페이지를 불러오는데 실패했습니다.');
         
         // 오류 시 홈화면으로 복귀
