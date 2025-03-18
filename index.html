@@ -3391,6 +3391,7 @@ let bookingStatus = {};
 let isLoading = false;
 let currentSelectedDate = null;
 let currentNoticeId = null;
+let isSubmittingInquiry = false; // 플래그 추가
 
 // 로딩 인디케이터 제어
 function showLoading() {
@@ -7098,14 +7099,16 @@ function closeInquiryDetailModal() {
 }
 
 // 문의사항 작성 폼 제출
-let isSubmittingInquiry = false; // 플래그 추가
 document.getElementById('inquiryWriteForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // 이중 제출 방지
-    if (isSubmittingInquiry) return;
+    // 중복 제출 방지 (이 부분 추가)
+    if (isSubmittingInquiry) {
+        console.log('이미 제출 중입니다');
+        return;
+    }
     isSubmittingInquiry = true;
-
+    
     try {
         showLoading();
         
@@ -7151,8 +7154,9 @@ document.getElementById('inquiryWriteForm').addEventListener('submit', async fun
         console.error('Inquiry creation error:', error);
         showAlert(error.message || '문의사항 등록 중 오류가 발생했습니다.', 'error');
     } finally {
-        isSubmittingInquiry = false; // 플래그 초기화
         hideLoading();
+        // 플래그 초기화 (이 부분 추가)
+        isSubmittingInquiry = false;
     }
 });
 
@@ -7224,10 +7228,6 @@ async function deleteInquiry() {
         return;
     }
     
-    if (!confirm('정말 이 문의사항을 삭제하시겠습니까?')) {
-        return;
-    }
-    
     try {
         showLoading();
         
@@ -7262,6 +7262,14 @@ async function deleteInquiry() {
 }
 
 function deleteUserInquiry(inquiryId) {
+    if (confirm('정말 이 문의사항을 삭제하시겠습니까?')) {
+        currentInquiryId = inquiryId; // 현재 선택된 ID를 설정
+        deleteInquiry(); // 기존의 deleteInquiry 함수 호출
+    }
+}
+
+// 관리자 문의사항 삭제 함수
+function deleteAdminInquiry(inquiryId) {
     if (confirm('정말 이 문의사항을 삭제하시겠습니까?')) {
         currentInquiryId = inquiryId; // 현재 선택된 ID를 설정
         deleteInquiry(); // 기존의 deleteInquiry 함수 호출
