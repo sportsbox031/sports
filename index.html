@@ -6314,14 +6314,17 @@ modals.forEach(modal => {
         });
     }
     
-    // 모달 바깥 영역 클릭 시 닫기
+    // 모달 바깥 영역 클릭 시 닫기 (회원가입 모달 제외)
     modal.addEventListener('click', function(e) {
+        // 회원가입 모달인 경우 외부 클릭으로 닫히지 않게 함
+        if (this.id === 'signupModal') {
+            return; // 회원가입 모달은 외부 클릭으로 닫히지 않음
+        }
+        
         if (e.target === this) {
             // 모달 ID에 따라 적절한 닫기 함수 호출
             if (this.id === 'noticeDetailModal') {
                 closeNoticeDetail();
-            } else if (this.id === 'signupModal') {
-                document.getElementById('closeSignup').click();
             } else if (this.id === 'noticeWriteModal') {
                 closeNoticeWriteModal();
             } else if (this.id === 'userProfileModal') {
@@ -6342,7 +6345,7 @@ modals.forEach(modal => {
     });
 });
 
-// ESC 키로 모달 닫기
+// ESC 키로 모달 닫기 - 회원가입 모달은 계속 ESC로 닫을 수 있게 유지
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const visibleModal = document.querySelector('.modal.show');
