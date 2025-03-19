@@ -6419,22 +6419,35 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
     }
 
     // 홈화면 스크롤 이벤트
-    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-                const headerOffset = 80;
-                const elementPosition = targetElement.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
-            }
-        });
+document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+        
+        if (targetElement) {
+            // 헤더 높이를 동적으로 계산 (고정 헤더의 실제 높이)
+            const header = document.querySelector('header');
+            const headerHeight = header ? header.offsetHeight : 0;
+            
+            // 추가 여백 (더 깔끔한 위치를 위해)
+            const additionalOffset = 16;
+            
+            // 정확한 위치 계산
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerHeight - additionalOffset;
+            
+            // 스크롤 이동
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+            
+            // 디버깅용 (나중에 삭제 가능)
+            console.log(`Scrolling to ${targetId}: headerHeight=${headerHeight}, finalPos=${offsetPosition}`);
+        }
     });
+});
 
     // 로그인 폼 제출
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
