@@ -1841,37 +1841,7 @@ function setupIndependentNoticeSystem() {
     const newModalHTML = `
         <div id="independentNoticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
             background-color:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center;">
-            <div style="background:white; max-width:800px; width:90%; border-radius:10px; padding:20px; position:relative; max-height:80vh; overflow-y:auto;">
-                <button id="independentModalClose" style="position:absolute; top:10px; right:10px; background:none; border:none; 
-                font-size:24px; cursor:pointer; width:30px; height:30px; line-height:30px; text-align:center;">×</button>
-                <h2 id="independentModalTitle" style="margin-bottom:15px; font-size:22px; font-weight:bold;"></h2>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:#666;">
-                    <span id="independentModalAuthor"></span>
-                    <span id="independentModalDate"></span>
-                </div>
-                <div style="border-top:1px solid #eee; padding-top:15px;">
-                    <p id="independentModalContent" style="white-space:pre-line; line-height:1.5;"></p>
-                </div>
-                <!-- 첨부파일 섹션 -->
-                <div id="independentModalAttachment" style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; display:none;">
-                    <h3 style="font-weight:bold; margin-bottom:10px; font-size:16px;">첨부파일</h3>
-                    <div id="independentModalFile" style="display:flex; align-items:center;">
-                        <a id="independentModalFileLink" href="#" target="_blank" download
-                           style="display:inline-flex; align-items:center; padding:8px 12px; background:#f3f4f6; border-radius:4px; text-decoration:none; color:#374151; font-size:14px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="margin-right:8px;" viewBox="0 0 16 16">
-                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                            </svg>
-                            <span id="independentModalFileName">파일명</span>
-                        </a>
-                    </div>
-                </div>
-                <!-- 관리자 액션 버튼 섹션 -->
-                <div id="independentModalActions" style="display:none; margin-top:20px; padding-top:15px; border-top:1px solid #eee; justify-content:flex-end;">
-                    <button id="editNoticeBtn" style="background:#3B82F6; color:white; padding:8px 16px; border-radius:4px; margin-right:8px; cursor:pointer; border:none;">수정</button>
-                    <button id="deleteNoticeBtn" style="background:#EF4444; color:white; padding:8px 16px; border-radius:4px; cursor:pointer; border:none;">삭제</button>
-                </div>
-            </div>
+            <!-- 모달 내용 -->
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', newModalHTML);
@@ -2441,7 +2411,7 @@ function openModal(modalId) {
     setTimeout(() => {
         modal.classList.add('show');
     }, 10);
-} // openModal 함수 닫기
+}
 
 function closeModal(modalId) { 
     const modal = document.getElementById(modalId); 
@@ -2452,7 +2422,7 @@ function closeModal(modalId) {
         modal.style.display = 'none';
         document.body.style.overflow = '';
     }, 300);
-} // closeModal 함수 닫기
+}
 
 // 홈화면 공지사항 로드
 async function loadHomeNotices() {
@@ -3403,8 +3373,23 @@ function hideLoading() {
 
 // 디버깅 함수
 function debugNotices() {
-    console.log('=== 공지사항 디버깅 ===');
-    console.log('noticesData:', window.noticesData);
+    console.log('===== 공지사항 디버깅 =====');
+    console.log('독립 모달 존재:', !!document.getElementById('independentNoticeModal'));
+    console.log('공지사항 데이터:', window.noticesData);
+    console.log('공지사항 컨테이너:', document.getElementById('noticesListSection'));
+    console.log('loadUserNotices 함수:', typeof window.loadUserNotices);
+    console.log('handleNoticeClick 함수:', typeof window.handleNoticeClick);
+    console.log('로그인 상태:', !!sessionStorage.getItem('token'));
+    console.log('===========================');
+    
+    // 중요: 로그인 상태일 때만 API 호출
+    if (sessionStorage.getItem('token') && 
+        document.getElementById('noticesListSection') && 
+        typeof window.loadUserNotices === 'function') {
+        console.log('공지사항 강제 로드 시도');
+        window.loadUserNotices();
+    }
+}
     
     // 홈화면 공지사항
     const homeNotices = document.getElementById('homeNoticesList');
@@ -3425,7 +3410,6 @@ function debugNotices() {
     }
     
     console.log('======================');
-}
 
 // 전역 스코프에 함수 노출
 window.debugNotices = debugNotices;
