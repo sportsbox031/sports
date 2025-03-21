@@ -3846,11 +3846,40 @@ async function initializeUserDashboard(region, username) {
 }
 
 // 사용자 프로필 관리 관련 함수들
-function showUserProfileModal() {
-    // 현재 사용자 정보 표시
-    document.getElementById('userGroupName').value = sessionStorage.getItem('username');
-    document.getElementById('userManager').value = sessionStorage.getItem('manager');
-    document.getElementById('userContact').value = sessionStorage.getItem('contact');
+async function showUserProfileModal() {
+    try {
+        showLoading(); // 로딩 표시
+        
+        // 사용자 프로필 정보를 API에서 새로 가져옴
+        const response = await apiRequest('/api/user/profile');
+        
+        if (response.success && response.data) {
+            // API 응답으로 모달 필드 업데이트
+            document.getElementById('userGroupName').value = response.data.group_name || sessionStorage.getItem('username');
+            document.getElementById('userManager').value = response.data.manager || sessionStorage.getItem('manager');
+            document.getElementById('userContact').value = response.data.contact || sessionStorage.getItem('contact');
+            
+            // 세션 스토리지도 업데이트
+            sessionStorage.setItem('manager', response.data.manager);
+            sessionStorage.setItem('contact', response.data.contact);
+        } else {
+            // API 실패 시 세션 스토리지 데이터 사용
+            document.getElementById('userGroupName').value = sessionStorage.getItem('username');
+            document.getElementById('userManager').value = sessionStorage.getItem('manager');
+            document.getElementById('userContact').value = sessionStorage.getItem('contact');
+        }
+    } catch (error) {
+        console.error('사용자 프로필 로드 오류:', error);
+        
+        // 오류 발생 시 세션 스토리지 데이터로 폴백
+        document.getElementById('userGroupName').value = sessionStorage.getItem('username');
+        document.getElementById('userManager').value = sessionStorage.getItem('manager');
+        document.getElementById('userContact').value = sessionStorage.getItem('contact');
+        
+        showAlert('프로필 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+        hideLoading(); // 로딩 숨김
+    }
     
     // 비밀번호 필드 초기화
     document.getElementById('userCurrentPassword').value = '';
