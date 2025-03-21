@@ -3785,7 +3785,7 @@ async function initializeUserDashboard(region, username) {
         initializeCalendar();
         initializeTimeSelects();
         await debouncedUpdateCalendarStatus();
-        await loadBookings();
+        loadMonthlyBookings(currentDate.getFullYear(), currentDate.getMonth());
         
         // 공지사항 로드 (함수 존재 여부 확인 후 호출)
         if (typeof window.loadUserNotices === 'function') {
@@ -5634,16 +5634,95 @@ function initializeCalendar() {
         currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
         renderCalendar(currentDate);
         debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
-    });
+        // 추가: 해당 월의 예약만 보여주기
+    loadMonthlyBookings(currentDate.getFullYear(), currentDate.getMonth());
+});
 
     document.getElementById('nextMonth').addEventListener('click', function() {
         // 다음 달로 이동 (한 달씩)
         currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
         renderCalendar(currentDate);
         debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
-    });
+     // 추가: 해당 월의 예약만 보여주기
+    loadMonthlyBookings(currentDate.getFullYear(), currentDate.getMonth());
+});
 
     renderCalendar(currentDate);
+
+// 초기 로딩 시 현재 월의 예약 표시 (이 줄 추가)
+    loadMonthlyBookings(currentDate.getFullYear(), currentDate.getMonth());
+}
+
+// 월별 예약 로딩 함수
+function loadMonthlyBookings(year, month) {
+    try {
+        // 로딩 표시 (선택사항)
+        const bookingsList = document.getElementById('bookingsList');
+        if (bookingsList) bookingsList.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">예약 불러오는 중...</td></tr>';
+        
+        // API 호출
+        apiRequest('/api/bookings').then(data => {
+            if (data.success && data.data) {
+                // 월별 필터링
+                const filteredBookings = data.data.filter(booking => {
+                    const bookingDate = new Date(booking.date);
+                    return bookingDate.getFullYear() === year && 
+                           bookingDate.getMonth() === month &&
+                           booking.status !== 'cancelled';
+                });
+                
+                // 예약 목록 업데이트
+                renderBookingsList(filteredBookings);
+            }
+        });
+    } catch (error) {
+        console.error('월별 예약 로드 오류:', error);
+        showAlert('예약 목록을 불러오는데 실패했습니다.', 'error', 3000);
+    }
+}
+
+// 예약 목록 렌더링 함수
+function renderBookingsList(bookings) {
+    const tbody = document.getElementById('bookingsList');
+    if (!tbody) return;
+    
+    if (!bookings || bookings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">이번 달 예약 내역이 없습니다.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = bookings.map(booking => {
+        const bookingDate = new Date(booking.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const canCancel = bookingDate >= today && 
+            booking.status !== 'cancelled' && 
+            booking.status !== 'rejected';
+
+        return `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${getStatusClass(booking.status)}">
+                        ${getStatusText(booking.status)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${canCancel ? `
+                        <button onclick="cancelBooking(${booking.id})" 
+                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                            취소
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function initializeAdminCalendar() {
@@ -5776,17 +5855,17 @@ function renderCalendar(date) {
     dayElement.title = '지난 날짜';
 } else if (dateStatus?.isFullyBlocked) {
     dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-    dayElement.title = '관리자 전체 마감';  // 메시지 변경
+    dayElement.title = '관리자 전체 마감';
 } else if (dateStatus?.isFull) {
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감 (2건 모두 예약됨)';  // 메시지 변경
+    dayElement.title = '예약 마감 (2건 모두 예약됨)';
 } else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';  // 메시지 변경
+    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
 } else if (dateStatus?.isPartiallyBlocked) {
-    // 새로운 조건 추가
-    dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = '부분 마감 (1개만 예약 가능)';
+    // 부분 마감 색상 제거 - 일반 날짜와 동일한 클래스 사용
+    dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+    dayElement.title = '예약 가능 (1개만)';
     addDateClickHandler(dayElement, year, month, currentDay);
 } else if (dateStatus?.hasBooking) {
     dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
