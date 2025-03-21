@@ -5324,10 +5324,31 @@ async function generateExcelData(year, month) {
     });
 
 // 모달 컨트롤 함수들
-function showDateBookingsModal() {
-    const calendarContainer = document.getElementById('adminCalendar').parentElement;
-    calendarContainer.classList.add('modal-open');
-    openModal('dateBookingsModal');
+function openDateBookingsModal() {
+    try {
+        const modal = document.getElementById('dateBookingsModal');
+        if (!modal) {
+            console.error('모달 요소를 찾을 수 없습니다');
+            return;
+        }
+        
+        // 스타일 직접 설정
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.visibility = 'visible';
+        
+        // show 클래스 추가 (CSS 트랜지션용)
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+        
+        // 배경 스크롤 방지
+        document.body.style.overflow = 'hidden';
+        
+        console.log('모달 표시됨');
+    } catch (error) {
+        console.error('모달 표시 오류:', error);
+    }
 }
 
 function closeDateBookingsModal() {
@@ -5793,9 +5814,14 @@ function renderAdminCalendar(date) {
     }
 
     const adminCalendar = document.getElementById('adminCalendar');
+    if (!adminCalendar) {
+        console.error('adminCalendar 요소를 찾을 수 없습니다');
+        return;
+    }
+
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
     
-    // 1. 중요: 관리자 유형과 선택된 지역 확인 - 명확하게 로깅
+    // 관리자 유형과 선택된 지역 확인
     const adminRegion = sessionStorage.getItem('region');
     let targetRegion = adminRegion;
     
@@ -5806,9 +5832,7 @@ function renderAdminCalendar(date) {
         }
     }
     
-    console.log('[renderAdminCalendar] Rendering for region:', targetRegion);
-    console.log('[renderAdminCalendar] Admin type:', adminRegion === 'all' ? '전체관리자' : '지역관리자');
-    console.log('[renderAdminCalendar] Current booking status:', bookingStatus);
+    console.log('[renderAdminCalendar] 지역:', targetRegion, '관리자 유형:', adminRegion === 'all' ? '전체관리자' : '지역관리자');
 
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -5820,7 +5844,7 @@ function renderAdminCalendar(date) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     
-    // 캘린더 초기화 전에 이전 내용 제거 (중요!)
+    // 달력 초기화
     adminCalendar.innerHTML = '';
 
     // 빈 날짜 칸 추가
@@ -5836,10 +5860,15 @@ function renderAdminCalendar(date) {
         const selectedDateObj = new Date(year, month, currentDay);
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
         
-        // 중요: 날짜 상태 로깅
-        console.log(`[renderAdminCalendar] Date ${dateString} status:`, bookingStatus[dateString]);
+        // 날짜 식별용 데이터 속성 추가
+        dayElement.setAttribute('data-date', dateString);
         
-        const dateStatus = bookingStatus[dateString];
+        // 디버깅: 해당 날짜의 예약 상태 출력
+        if (bookingStatus && bookingStatus[dateString]) {
+            console.log(`날짜 ${dateString} 예약 상태:`, bookingStatus[dateString]);
+        }
+        
+        const dateStatus = bookingStatus ? bookingStatus[dateString] : null;
         const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
 
         // 날짜 상태에 따른 클래스 설정
@@ -5850,7 +5879,6 @@ function renderAdminCalendar(date) {
             dayElement.className = `${baseClass} blocked cursor-pointer`;
             dayElement.title = '전체 마감 (클릭하여 해제)';
         } else if (dateStatus?.isPartiallyBlocked) {
-            // 부분 마감인 경우
             dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
             dayElement.title = '부분 마감 (1개 예약만 가능)';
             dayElement.style.backgroundColor = '#F97316';
@@ -5865,20 +5893,22 @@ function renderAdminCalendar(date) {
             dayElement.title = '클릭하여 마감 설정';
         }
 
-        // 날짜 클릭 이벤트 추가 (개선된 핸들러 사용)
-        if (selectedDateObj >= today) {
-            addAdminDateClickHandler(dayElement, dateString, targetRegion);
-        }
+        // 날짜 요소 위치 설정 강제화
+        dayElement.style.position = 'relative';
+        dayElement.style.overflow = 'visible';
 
-        // 예약 수 배지 추가 (개선된 코드)
-        if (dateStatus?.bookingCount > 0) {
+        // 예약 수 배지 추가 (중요: bookingCount 값이 있는지 확인)
+        if (dateStatus && dateStatus.bookingCount > 0) {
+            console.log(`날짜 ${dateString}에 예약 ${dateStatus.bookingCount}개 있음 - 배지 추가`);
+            
             const countBadge = document.createElement('div');
-            countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-white shadow-sm z-20';
+            // 높은 z-index와 명확한 스타일 적용
+            countBadge.className = 'absolute top-0 right-0 px-2 py-1 rounded-full text-xs font-bold shadow-md z-30';
             
             if (dateStatus.isPartiallyBlocked) {
                 countBadge.textContent = `${dateStatus.bookingCount}/1`;
-                countBadge.style.backgroundColor = '#FEF3C7';
-                countBadge.style.color = '#92400E';
+                countBadge.style.backgroundColor = '#FFEDD5'; 
+                countBadge.style.color = '#9A3412';
             } else {
                 countBadge.textContent = `${dateStatus.bookingCount}`;
                 if (dateStatus.bookingCount >= 2) {
@@ -5890,6 +5920,11 @@ function renderAdminCalendar(date) {
                 }
             }
             
+            // 배지에 테두리 추가
+            countBadge.style.border = '1px solid rgba(0,0,0,0.1)';
+            countBadge.id = `badge-${dateString}`;
+            
+            // 배지를 날짜 요소 시작 부분에 추가
             dayElement.appendChild(countBadge);
         }
 
@@ -5897,7 +5932,38 @@ function renderAdminCalendar(date) {
         const dateText = document.createElement('span');
         dateText.textContent = currentDay;
         dateText.className = 'z-10';
-        dayElement.insertBefore(dateText, dayElement.firstChild);
+        // 배지가 추가된 후에 날짜 텍스트 추가
+        if (dayElement.firstChild) {
+            dayElement.insertBefore(dateText, dayElement.firstChild);
+        } else {
+            dayElement.appendChild(dateText);
+        }
+
+        // 날짜 클릭 이벤트 추가
+        if (selectedDateObj >= today) {
+            // 새로운 방식: 마감 모달 열기
+            dayElement.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log(`날짜 클릭: ${dateString}, 지역: ${targetRegion}`);
+                currentSelectedDate = dateString;
+                
+                try {
+                    // 데이터 로드
+                    await loadDateBookings(dateString);
+                    
+                    // 잠시 후 모달 표시 (비동기 처리를 위한 작은 지연)
+                    setTimeout(() => {
+                        showDateBookingsModal();
+                        setupModalButtons(dateString);
+                    }, 50);
+                } catch (error) {
+                    console.error('날짜 클릭 처리 오류:', error);
+                    showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
+                }
+            });
+        }
 
         // 오늘 날짜 강조
         if (
@@ -6264,13 +6330,6 @@ async function generateExcelData(year, month) {
         console.error('Excel data generation error:', error);
         throw error;
     }
-}
-
-function showDateBookingsModal() {
-    const modal = document.getElementById('dateBookingsModal');
-    const calendarContainer = document.getElementById('adminCalendar').parentElement;
-    modal.classList.add('show');
-    calendarContainer.classList.add('modal-open');
 }
 
 // 여기에 downloadApplication 함수 추가
