@@ -3567,8 +3567,30 @@ function showHomeScreen() {
     // 공지사항 새로고침
     loadHomeNotices();
     
-    // 로그인 상태일 경우 네비게이션 바 수정
+    // 모든 "로그인/예약하기" 버튼 찾기 및 텍스트 변경
+    const loginButtons = homeScreen.querySelectorAll('button[onclick="showLoginScreen()"]');
+    
     if (token && role) {
+        // 로그인 상태: 모든 버튼을 "예약하기"로 변경
+        loginButtons.forEach(button => {
+            // 버튼 내부의 텍스트 노드만 변경 (아이콘 등 유지)
+            const textNode = Array.from(button.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE || 
+                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
+            );
+            
+            if (textNode) {
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.nodeValue = '예약하기';
+                } else {
+                    textNode.textContent = '예약하기';
+                }
+            } else {
+                button.textContent = '예약하기';
+            }
+        });
+        
+        // 네비게이션 바 수정 - 기존 코드 유지
         const homeNav = homeScreen.querySelector('nav');
         if (!homeNav) return; 
 
@@ -3624,6 +3646,25 @@ function showHomeScreen() {
         `;
 
         navButtons.appendChild(newButtons);
+    } else {
+        // 비로그인 상태: 모든 버튼을 "로그인/예약하기"로 변경
+        loginButtons.forEach(button => {
+            // 버튼 내부의 텍스트만 변경 (아이콘 등 유지)
+            const textNode = Array.from(button.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE || 
+                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
+            );
+            
+            if (textNode) {
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.nodeValue = '로그인/예약하기';
+                } else {
+                    textNode.textContent = '로그인/예약하기';
+                }
+            } else {
+                button.textContent = '로그인/예약하기';
+            }
+        });
     }
     
     // 중요: 네비게이션 바 수정 후 관리자 상태 확인
