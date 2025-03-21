@@ -5780,26 +5780,25 @@ function renderAdminCalendar(date) {
 
         // 날짜 상태에 따른 클래스 설정
         if (selectedDateObj < today) {
-            dayElement.className = `${baseClass} past`;
-            dayElement.title = '지난 날짜';
-        } else if (dateStatus?.isFullyBlocked) {
-            dayElement.className = `${baseClass} blocked cursor-pointer`;
-            dayElement.title = '전체 마감 (클릭하여 해제)';
-        } else if (dateStatus?.isPartiallyBlocked) {
-            // 부분 마감인 경우
-            dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
-            dayElement.title = '부분 마감 (1개 예약만 가능)';
-            dayElement.style.backgroundColor = '#F97316';
-        } else if (dateStatus?.isFull) {
-            dayElement.className = `${baseClass} full cursor-pointer`;
-            dayElement.title = '예약 마감';
-        } else if (dateStatus?.hasBooking) {
-            dayElement.className = `${baseClass} booked cursor-pointer`;
-            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-        } else {
-            dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-            dayElement.title = '클릭하여 마감 설정';
-        }
+    dayElement.className = `${baseClass} past`;
+    dayElement.title = '지난 날짜';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = `${baseClass} blocked cursor-pointer`;
+    dayElement.title = '관리자 전체 마감';  // 제목 명확히 변경
+} else if (dateStatus?.isPartiallyBlocked) {
+    dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
+    dayElement.title = '관리자 부분 마감 (1개 예약만 가능)';
+    dayElement.style.backgroundColor = '#F97316';
+} else if (dateStatus?.isFull) {
+    dayElement.className = `${baseClass} full cursor-pointer`;
+    dayElement.title = '예약 마감 (2개 모두 찼음)';  // 제목 명확히 변경
+} else if (dateStatus?.hasBooking) {
+    dayElement.className = `${baseClass} booked cursor-pointer`;
+    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+} else {
+    dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+    dayElement.title = '클릭하여 마감 설정';
+}
 
         // 날짜 클릭 이벤트 추가
         if (selectedDateObj >= today) {
@@ -6346,7 +6345,7 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
             updateBookingStatusUI(regionSettings?.is_active || false);
         }
         
-        // 선택된 지역에 대한 캘린더 상태 즉시 새로고침
+        // 선택된 지역에 대한 캘린더 상태 즉시 새로고침 (디바운스 없이 직접 호출)
         await refreshCalendarStatus(selectedRegion);
         
         // 다른 데이터 새로고침
