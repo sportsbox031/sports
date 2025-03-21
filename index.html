@@ -629,7 +629,7 @@
                                         <button onclick="showLoginScreen()" 
     class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
     <i class="ri-user-add-line"></i>
-    <span>가입하기기</span>
+    <span>가입하기</span>
 </button>
                                     </div>
                                 </div>
@@ -3567,17 +3567,41 @@ function showHomeScreen() {
     // 공지사항 새로고침
     loadHomeNotices();
     
-    // 로그인 상태에 따라 상단 네비게이션 바 변경
+    // 모든 "로그인/예약하기" 버튼 찾기 및 텍스트 변경
+    const loginButtons = homeScreen.querySelectorAll('button[onclick="showLoginScreen()"]');
+    
     if (token && role) {
-        // 로그인된 경우
+        // 로그인 상태: 모든 버튼을 "예약하기"로 변경
+        loginButtons.forEach(button => {
+            // 버튼 내부의 텍스트 노드만 변경 (아이콘 등 유지)
+            const textNode = Array.from(button.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE || 
+                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
+            );
+            
+            if (textNode) {
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.nodeValue = '예약하기';
+                } else {
+                    textNode.textContent = '예약하기';
+                }
+            } else {
+                button.textContent = '예약하기';
+            }
+        });
+        
+        // 네비게이션 바 수정 - 기존 코드 유지
         const homeNav = homeScreen.querySelector('nav');
         if (!homeNav) return; 
 
         const navButtons = homeNav.querySelector('.items-center.space-x-8');
         if (!navButtons) return; 
 
-        // 상단 네비게이션 바의 로그인 버튼만 찾기
-        const loginButton = navButtons.querySelector('button[onclick="showLoginScreen()"]');
+        const username = sessionStorage.getItem('username');
+        const region = sessionStorage.getItem('region');
+
+        // 기존 로그인/회원가입 버튼 찾기
+        const loginButton = navButtons.querySelector('button');
         if (loginButton) {
             loginButton.style.display = 'none';
         }
@@ -3589,8 +3613,8 @@ function showHomeScreen() {
         }
 
         // 새로운 버튼들 추가
-        const username = sessionStorage.getItem('username');
-        const region = sessionStorage.getItem('region');
+        const newButtons = document.createElement('div');
+        newButtons.className = 'flex items-center space-x-4 login-state-buttons';
         
         // 지역 뱃지 스타일 설정
         let regionBadgeStyle = '';
@@ -3602,8 +3626,6 @@ function showHomeScreen() {
             regionBadgeStyle = 'bg-purple-100 text-purple-800';
         }
 
-        const newButtons = document.createElement('div');
-        newButtons.className = 'flex items-center space-x-4 login-state-buttons';
         newButtons.innerHTML = `
             <span class="text-gray-700 font-medium px-3 py-1 bg-gray-100 rounded-full">
                 ${username || '사용자'}
@@ -3624,6 +3646,25 @@ function showHomeScreen() {
         `;
 
         navButtons.appendChild(newButtons);
+    } else {
+        // 비로그인 상태: 모든 버튼을 "로그인/예약하기"로 변경
+        loginButtons.forEach(button => {
+            // 버튼 내부의 텍스트만 변경 (아이콘 등 유지)
+            const textNode = Array.from(button.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE || 
+                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
+            );
+            
+            if (textNode) {
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.nodeValue = '로그인/예약하기';
+                } else {
+                    textNode.textContent = '로그인/예약하기';
+                }
+            } else {
+                button.textContent = '로그인/예약하기';
+            }
+        });
     }
     
     // 중요: 네비게이션 바 수정 후 관리자 상태 확인
