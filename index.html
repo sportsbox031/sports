@@ -629,7 +629,7 @@
                                         <button onclick="showLoginScreen()" 
     class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
     <i class="ri-user-add-line"></i>
-    <span>회원가입하기기</span>
+    <span>회원가입하기</span>
 </button>
                                     </div>
                                 </div>
@@ -3567,95 +3567,98 @@ function showHomeScreen() {
     // 공지사항 새로고침
     loadHomeNotices();
     
-    // 상단 네비게이션 바 찾기
-    const homeNav = homeScreen.querySelector('nav');
-    if (!homeNav) return;
-    
-    const navButtons = homeNav.querySelector('.items-center.space-x-8');
-    if (!navButtons) return;
-    
-    // 상단 네비게이션 바의 버튼만 찾기
-    const navLoginButton = navButtons.querySelector('button[onclick="showLoginScreen()"]');
-    
+    // 로그인 상태 처리
     if (token && role) {
         // 로그인 상태
-        if (navLoginButton) {
-            // 버튼 텍스트를 "예약하기"로 변경
-            navLoginButton.textContent = '예약하기';
+        
+        // 1. 상단 네비게이션 바 처리
+        const navBar = homeScreen.querySelector('header nav');
+        if (navBar) {
+            // 기존 로그인 버튼 제거
+            const loginButton = navBar.querySelector('button[onclick="showLoginScreen()"]');
+            if (loginButton) {
+                loginButton.remove(); // 완전히 제거
+            }
             
-            // 만약 버튼 내부에 span이 있는 경우 처리
-            const span = navLoginButton.querySelector('span');
-            if (span) {
-                span.textContent = '예약하기';
+            // 이미 추가된 로그인 상태 버튼들이 있다면 제거
+            const existingLoginButtons = navBar.querySelector('.login-state-buttons');
+            if (existingLoginButtons) {
+                existingLoginButtons.remove();
+            }
+            
+            // 새 네비게이션 버튼 추가
+            const navButtons = navBar.querySelector('.items-center.space-x-8');
+            if (navButtons) {
+                const username = sessionStorage.getItem('username');
+                const region = sessionStorage.getItem('region');
+                
+                // 지역 뱃지 스타일
+                let regionBadgeStyle = '';
+                if (region === 'south') {
+                    regionBadgeStyle = 'bg-blue-100 text-blue-800';
+                } else if (region === 'north') {
+                    regionBadgeStyle = 'bg-green-100 text-green-800';
+                } else if (region === 'all') {
+                    regionBadgeStyle = 'bg-purple-100 text-purple-800';
+                }
+                
+                // 예약하기 버튼 추가
+                const reservationButton = document.createElement('button');
+                reservationButton.setAttribute('onclick', 'showLoginScreen()');
+                reservationButton.className = 'bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90 mr-4';
+                reservationButton.textContent = '예약하기';
+                
+                // 사용자 정보 컨테이너
+                const userInfoDiv = document.createElement('div');
+                userInfoDiv.className = 'flex items-center space-x-4 login-state-buttons';
+                userInfoDiv.innerHTML = `
+                    <span class="text-gray-700 font-medium px-3 py-1 bg-gray-100 rounded-full">
+                        ${username || '사용자'}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${regionBadgeStyle}">
+                        ${region === 'south' ? '남부' : region === 'north' ? '북부' : '전체'}
+                    </span>
+                    <button onclick="returnToDashboard()" 
+                        class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-all duration-200 flex items-center space-x-2">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>대시보드</span>
+                    </button>
+                    <button onclick="logout()" 
+                        class="bg-gray-500 text-white px-4 py-2 rounded-button hover:bg-gray-600 transition-all duration-200 flex items-center space-x-2">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>로그아웃</span>
+                    </button>
+                `;
+                
+                // 네비게이션에 버튼들 추가
+                navButtons.appendChild(reservationButton);
+                navButtons.appendChild(userInfoDiv);
+                
+                console.log('로그인 상태: 네비게이션 바 업데이트 완료');
             }
         }
-        
-        // 네비게이션 바에 로그인 상태 표시 추가
-        // 기존 로그인/회원가입 버튼 찾기
-        if (navLoginButton) {
-            navLoginButton.style.display = 'none';
-        }
-
-        // 이미 추가된 로그인 상태 버튼들이 있다면 제거
-        const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
-        if (existingLoginButtons) {
-            existingLoginButtons.remove();
-        }
-
-        // 새로운 버튼들 추가
-        const username = sessionStorage.getItem('username');
-        const region = sessionStorage.getItem('region');
-        
-        const newButtons = document.createElement('div');
-        newButtons.className = 'flex items-center space-x-4 login-state-buttons';
-        
-        // 지역 뱃지 스타일 설정
-        let regionBadgeStyle = '';
-        if (region === 'south') {
-            regionBadgeStyle = 'bg-blue-100 text-blue-800';
-        } else if (region === 'north') {
-            regionBadgeStyle = 'bg-green-100 text-green-800';
-        } else if (region === 'all') {
-            regionBadgeStyle = 'bg-purple-100 text-purple-800';
-        }
-
-        newButtons.innerHTML = `
-            <span class="text-gray-700 font-medium px-3 py-1 bg-gray-100 rounded-full">
-                ${username || '사용자'}
-            </span>
-            <span class="px-3 py-1 rounded-full text-sm font-medium ${regionBadgeStyle}">
-                ${region === 'south' ? '남부' : region === 'north' ? '북부' : '전체'}
-            </span>
-            <button onclick="returnToDashboard()" 
-                class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-all duration-200 flex items-center space-x-2">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>대시보드</span>
-            </button>
-            <button onclick="logout()" 
-                class="bg-gray-500 text-white px-4 py-2 rounded-button hover:bg-gray-600 transition-all duration-200 flex items-center space-x-2">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>로그아웃</span>
-            </button>
-        `;
-
-        navButtons.appendChild(newButtons);
     } else {
-        // 비로그인 상태
-        if (navLoginButton) {
-            // 버튼 텍스트를 "로그인/회원가입"으로 확실히 설정
-            navLoginButton.textContent = '로그인/회원가입';
-            
-            // 만약 버튼 내부에 span이 있는 경우 처리
-            const span = navLoginButton.querySelector('span');
-            if (span) {
-                span.textContent = '로그인/회원가입';
+        // 비로그인 상태 - 기본 홈화면 유지
+        // 이미 추가된 로그인 상태 버튼들이 있다면 제거하고 원래 버튼 복원
+        const navBar = homeScreen.querySelector('header nav');
+        if (navBar) {
+            const navButtons = navBar.querySelector('.items-center.space-x-8');
+            if (navButtons) {
+                // 기존 로그인 상태 버튼들 제거
+                const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
+                if (existingLoginButtons) {
+                    existingLoginButtons.remove();
+                }
+                
+                // 로그인 버튼이 없으면 추가
+                if (!navButtons.querySelector('button[onclick="showLoginScreen()"]')) {
+                    const loginButton = document.createElement('button');
+                    loginButton.setAttribute('onclick', 'showLoginScreen()');
+                    loginButton.className = 'bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90';
+                    loginButton.textContent = '회원가입/로그인';
+                    navButtons.appendChild(loginButton);
+                }
             }
-        }
-        
-        // 이미 추가된 로그인 상태 버튼들이 있다면 제거
-        const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
-        if (existingLoginButtons) {
-            existingLoginButtons.remove();
         }
     }
     
