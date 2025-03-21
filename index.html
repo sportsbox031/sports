@@ -629,7 +629,7 @@
                                         <button onclick="showLoginScreen()" 
     class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
     <i class="ri-user-add-line"></i>
-    <span></span>
+    <span>회원가입하기기</span>
 </button>
                                     </div>
                                 </div>
@@ -641,7 +641,7 @@
                                         <button onclick="showLoginScreen()" 
     class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
     <i class="ri-calendar-check-line"></i>
-    <span></span>
+    <span>예약하기</span>
 </button>
                                     </div>
                                 </div>
@@ -3567,43 +3567,33 @@ function showHomeScreen() {
     // 공지사항 새로고침
     loadHomeNotices();
     
-    // 모든 "로그인/예약하기" 버튼 찾기 및 텍스트 변경
-    const loginButtons = homeScreen.querySelectorAll('button[onclick="showLoginScreen()"]');
+    // 상단 네비게이션 바 찾기
+    const homeNav = homeScreen.querySelector('nav');
+    if (!homeNav) return;
+    
+    const navButtons = homeNav.querySelector('.items-center.space-x-8');
+    if (!navButtons) return;
+    
+    // 상단 네비게이션 바의 버튼만 찾기
+    const navLoginButton = navButtons.querySelector('button[onclick="showLoginScreen()"]');
     
     if (token && role) {
-        // 로그인 상태: 모든 버튼을 "예약하기"로 변경
-        loginButtons.forEach(button => {
-            // 버튼 내부의 텍스트 노드만 변경 (아이콘 등 유지)
-            const textNode = Array.from(button.childNodes).find(node => 
-                node.nodeType === Node.TEXT_NODE || 
-                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
-            );
+        // 로그인 상태
+        if (navLoginButton) {
+            // 버튼 텍스트를 "예약하기"로 변경
+            navLoginButton.textContent = '예약하기';
             
-            if (textNode) {
-                if (textNode.nodeType === Node.TEXT_NODE) {
-                    textNode.nodeValue = '예약하기';
-                } else {
-                    textNode.textContent = '예약하기';
-                }
-            } else {
-                button.textContent = '예약하기';
+            // 만약 버튼 내부에 span이 있는 경우 처리
+            const span = navLoginButton.querySelector('span');
+            if (span) {
+                span.textContent = '예약하기';
             }
-        });
+        }
         
-        // 네비게이션 바 수정 - 기존 코드 유지
-        const homeNav = homeScreen.querySelector('nav');
-        if (!homeNav) return; 
-
-        const navButtons = homeNav.querySelector('.items-center.space-x-8');
-        if (!navButtons) return; 
-
-        const username = sessionStorage.getItem('username');
-        const region = sessionStorage.getItem('region');
-
+        // 네비게이션 바에 로그인 상태 표시 추가
         // 기존 로그인/회원가입 버튼 찾기
-        const loginButton = navButtons.querySelector('button');
-        if (loginButton) {
-            loginButton.style.display = 'none';
+        if (navLoginButton) {
+            navLoginButton.style.display = 'none';
         }
 
         // 이미 추가된 로그인 상태 버튼들이 있다면 제거
@@ -3613,6 +3603,9 @@ function showHomeScreen() {
         }
 
         // 새로운 버튼들 추가
+        const username = sessionStorage.getItem('username');
+        const region = sessionStorage.getItem('region');
+        
         const newButtons = document.createElement('div');
         newButtons.className = 'flex items-center space-x-4 login-state-buttons';
         
@@ -3647,24 +3640,23 @@ function showHomeScreen() {
 
         navButtons.appendChild(newButtons);
     } else {
-        // 비로그인 상태: 모든 버튼을 "로그인/예약하기"로 변경
-        loginButtons.forEach(button => {
-            // 버튼 내부의 텍스트만 변경 (아이콘 등 유지)
-            const textNode = Array.from(button.childNodes).find(node => 
-                node.nodeType === Node.TEXT_NODE || 
-                (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN')
-            );
+        // 비로그인 상태
+        if (navLoginButton) {
+            // 버튼 텍스트를 "로그인/회원가입"으로 확실히 설정
+            navLoginButton.textContent = '로그인/회원가입';
             
-            if (textNode) {
-                if (textNode.nodeType === Node.TEXT_NODE) {
-                    textNode.nodeValue = '로그인/예약하기';
-                } else {
-                    textNode.textContent = '로그인/예약하기';
-                }
-            } else {
-                button.textContent = '로그인/예약하기';
+            // 만약 버튼 내부에 span이 있는 경우 처리
+            const span = navLoginButton.querySelector('span');
+            if (span) {
+                span.textContent = '로그인/회원가입';
             }
-        });
+        }
+        
+        // 이미 추가된 로그인 상태 버튼들이 있다면 제거
+        const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
+        if (existingLoginButtons) {
+            existingLoginButtons.remove();
+        }
     }
     
     // 중요: 네비게이션 바 수정 후 관리자 상태 확인
