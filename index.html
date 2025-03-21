@@ -2357,26 +2357,6 @@ if (editNoticeBtnDirect) {
         }
     };
 
-// 12. initializeUserDashboard 함수 패치 - 공지사항 로드 추가 (함수 외부로 이동)
-const originalInitUserDashboard = window.initializeUserDashboard;
-if (originalInitUserDashboard && !window.userDashboardPatched) {
-    window.userDashboardPatched = true;
-    window.initializeUserDashboard = async function() {
-        // 원래 함수 호출
-        await originalInitUserDashboard.apply(this, arguments);
-        
-        // 공지사항 로드 추가
-        if (typeof window.loadUserNotices === 'function') {
-            console.log('사용자 대시보드 초기화 후 공지사항 로드 호출');
-            await window.loadUserNotices();
-        }
-    };
-}
-    
-    console.log('독립적인 공지사항 모달 시스템 설정 완료');
-    return true;
-}
-
 // 페이지 로드 후 실행
 window.addEventListener('DOMContentLoaded', setupIndependentNoticeSystem);
 
@@ -4361,17 +4341,18 @@ document.getElementById('closeUserProfile').addEventListener('click', closeUserP
 
 async function initializeAdminDashboard(region, username) {
     try {
-        // 토큰 유효성 먼저 확인
+        // 1. 인증 검증
         const token = sessionStorage.getItem('token');
         if (!token) {
             throw new Error('인증이 필요합니다.');
         }
 
-        // 대시보드 표시 설정
+        // 2. UI 초기화
         document.getElementById('adminDashboard').classList.remove('hidden');
         document.getElementById('userDashboard').classList.add('hidden');
         document.getElementById('adminName').textContent = username;
 
+        // 3. 지역 설정 UI
         const regionFilterContainer = document.getElementById('regionFilterContainer');
         const regionFilter = document.getElementById('regionFilter');
         const adminRegionBadge = document.getElementById('adminRegionBadge');
@@ -4384,7 +4365,7 @@ async function initializeAdminDashboard(region, username) {
             adminRegionBadge.textContent = '전체 관리자';
             adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
 
-            // 지역 필터 초기값 설정 및 상태 로드
+            // 지역 필터 초기값 설정
             const selectedRegion = regionFilter.value;
             const settings = await loadAdminBookingSettings();
             updateBookingStatusUI(settings?.is_active || false);
@@ -4392,27 +4373,27 @@ async function initializeAdminDashboard(region, username) {
             // 지역 필터 변경 이벤트 리스너
             regionFilter.removeEventListener('change', refreshAdminDashboard);
             regionFilter.addEventListener('change', async function(e) {
-    try {
-        const selectedRegion = e.target.value;
-        
-        // 예약 설정 상태 로드
-        const response = await apiRequest('/api/admin/booking-settings');
-        if (response.success) {
-            const settings = response.data;
-            const regionSettings = settings[selectedRegion];
-            updateBookingStatusUI(regionSettings?.is_active || false);
-        }
+                try {
+                    const selectedRegion = e.target.value;
+                    
+                    // 예약 설정 상태 로드
+                    const response = await apiRequest('/api/admin/booking-settings');
+                    if (response.success) {
+                        const settings = response.data;
+                        const regionSettings = settings[selectedRegion];
+                        updateBookingStatusUI(regionSettings?.is_active || false);
+                    }
 
-        // 데이터 새로고침
-        await Promise.all([
-            loadRegionStatistics(),
-            debouncedUpdateCalendarStatus(), // 달력 상태 갱신
-            loadPendingBookings()
-        ]);
-        
-        // 달력 다시 렌더링
-        renderAdminCalendar(adminCurrentDate);
-    } catch (error) {
+                    // 데이터 새로고침
+                    await Promise.all([
+                        loadRegionStatistics(),
+                        debouncedUpdateCalendarStatus(),
+                        loadPendingBookings()
+                    ]);
+                    
+                    // 달력 다시 렌더링
+                    renderAdminCalendar(adminCurrentDate);
+                } catch (error) {
                     console.error('Region filter change error:', error);
                     if (error.message.includes('인증')) {
                         logout();
@@ -4422,7 +4403,6 @@ async function initializeAdminDashboard(region, username) {
                     }
                 }
             });
-
         } else {
             // 지역 관리자 설정
             const regionText = region === 'south' ? '남부' : '북부';
@@ -4438,14 +4418,28 @@ async function initializeAdminDashboard(region, username) {
             updateBookingStatusUI(settings?.is_active || false);
         }
 
-        // 공통 초기화 작업
+        // 4. 데이터 로드 및 초기화
         await Promise.all([
             loadRegionStatistics(),
             initializeAdminCalendar(),
             debouncedUpdateCalendarStatus(),
             loadPendingUsers(),
-            loadPendingBookings()
+            loadPendingBookings(),
+            loadAllUsers()  // 첫 번째 함수에서 추가된 부분
         ]);
+
+        // 5. 이벤트 리스너 설정
+        const toggleButton = document.getElementById('toggleBookingStatus');
+        if (toggleButton) {
+            toggleButton.removeEventListener('click', toggleBookingStatus);
+            toggleButton.addEventListener('click', toggleBookingStatus);
+        }
+
+        // 6. 비밀번호 변경 모달 이벤트 리스너 설정
+        const closeChangePasswordButton = document.getElementById('closeChangePassword');
+        if (closeChangePasswordButton) {
+            closeChangePasswordButton.addEventListener('click', closeChangePasswordModal);
+        }
 
     } catch (error) {
         console.error('Admin dashboard initialization error:', error);
@@ -6633,46 +6627,6 @@ function initializeTimeSelects() {
     });
 }
 
-// 관리자 대시보드 초기화 함수
-async function initializeAdminDashboard(region, username) {
-    try {
-        // 예약 설정 로드
-        await loadAdminBookingSettings();
-        
-        // 관리자 캘린더 초기화
-        initializeAdminCalendar();
-        
-        // 예약 상태 업데이트
-        await debouncedUpdateCalendarStatus();  
-
-        // 통계 로드
-        await loadRegionStatistics();
-        
-        // 사용자 목록 로드 (두 목록 모두 병렬로 로드)
-        await Promise.all([
-            loadPendingUsers(),  // 승인 대기 목록
-            loadAllUsers(),      // 전체 회원 목록
-        ]);
-        
-        // 예약 승인 대기 목록 로드
-        await loadPendingBookings();
-
-        // 예약 상태 토글 버튼 이벤트 리스너 추가
-        const toggleButton = document.getElementById('toggleBookingStatus');
-        if (toggleButton) {
-            toggleButton.removeEventListener('click', toggleBookingStatus);
-            toggleButton.addEventListener('click', toggleBookingStatus);
-        }
-
-        // 비밀번호 변경 모달 이벤트 리스너 설정
-        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
-        
-    } catch (error) {
-        console.error('Admin dashboard initialization error:', error);
-        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
-    }
-}
-
 // 비밀번호 변경 관련 함수들
 function showChangePasswordModal() {
     openModal('changePasswordModal');
@@ -8043,21 +7997,6 @@ async function loadAdminInquiries() {
         `;
     }
 }
-
-// 사용자 & 관리자 대시보드 초기화 함수에 문의사항 로드 추가
-const originalInitUserDashboard = window.initializeUserDashboard;
-window.initializeUserDashboard = async function() {
-    await originalInitUserDashboard.apply(this, arguments);
-    // 사용자 문의사항 로드
-    await loadUserInquiries();
-};
-
-const originalInitAdminDashboard = window.initializeAdminDashboard;
-window.initializeAdminDashboard = async function() {
-    await originalInitAdminDashboard.apply(this, arguments);
-    // 관리자 문의사항 로드
-    await loadAdminInquiries();
-};
 
 </script>
 </body>
