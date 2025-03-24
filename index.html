@@ -1166,9 +1166,10 @@
                         </span>
                     </div>
                     <button type="button" id="toggleIntegratedBooking" 
-                        class="px-6 py-3 rounded-xl font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200">
-                        통합 예약 시작하기
-                    </button>
+    onclick="window.toggleIntegratedBooking()" 
+    class="px-6 py-3 rounded-xl font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200">
+    통합 예약 시작하기
+</button>
                 </div>
 
                     <!-- 캘린더 섹션 -->
@@ -3904,35 +3905,34 @@ document.getElementById('closeUserProfile').addEventListener('click', closeUserP
 
 async function initializeAdminDashboard(region, username) {
     try {
-        // 토큰 유효성 먼저 확인
+        // 토큰 유효성 확인
         const token = sessionStorage.getItem('token');
         if (!token) {
             throw new Error('인증이 필요합니다.');
         }
 
-        // 대시보드 표시 설정
         document.getElementById('adminDashboard').classList.remove('hidden');
         document.getElementById('userDashboard').classList.add('hidden');
         document.getElementById('adminName').textContent = username;
 
         const regionFilterContainer = document.getElementById('regionFilterContainer');
-        const regionFilter = document.getElementById('regionFilter');
         const adminRegionBadge = document.getElementById('adminRegionBadge');
         const dashboardTitle = document.querySelector('#adminDashboard .dashboard-title');
         const integratedSection = document.getElementById('integratedManagementSection');
 
-        if (region === 'all') {
-            // 전체 관리자 설정
-            dashboardTitle.textContent = '스포츠박스 관리자';
-            regionFilterContainer.classList.remove('hidden');
-            adminRegionBadge.textContent = '전체 관리자';
+        // 이제 region 값이 'all'인 경우 통합 관리자로 처리
+        const isIntegratedAdmin = region === 'all';
+
+        if (isIntegratedAdmin) {
+            // 통합 관리자 설정
+            dashboardTitle.textContent = '스포츠박스 통합 관리자';
+            
+            // 지역 필터는 숨기기 (통합 모드에서는 불필요)
+            regionFilterContainer.classList.add('hidden');
+            
+            adminRegionBadge.textContent = '통합 관리자';
             adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
 
-            // 지역 필터 초기값 설정 및 상태 로드
-            const selectedRegion = regionFilter.value;
-            const settings = await loadAdminBookingSettings();
-            updateBookingStatusUI(settings?.is_active || false);
-            
             // 통합 예약 관리 섹션 표시 및 초기화
             if (integratedSection) {
                 integratedSection.classList.remove('hidden');
@@ -3948,48 +3948,9 @@ async function initializeAdminDashboard(region, username) {
                     const isIntegratedActive = southActive && northActive;
                     updateIntegratedBookingUI(isIntegratedActive);
                 }
-                
-                // 통합 예약 토글 버튼 이벤트 리스너 설정
-                const toggleButton = document.getElementById('toggleIntegratedBooking');
-                if (toggleButton) {
-                    toggleButton.removeEventListener('click', toggleIntegratedBooking);
-                    toggleButton.addEventListener('click', toggleIntegratedBooking);
-                }
             }
-
-            // 지역 필터 변경 이벤트 리스너
-            regionFilter.removeEventListener('change', refreshAdminDashboard);
-            regionFilter.addEventListener('change', async function(e) {
-                try {
-                    const selectedRegion = e.target.value;
-                    
-                    // 예약 설정 상태 로드
-                    const response = await apiRequest('/api/admin/booking-settings');
-                    if (response.success) {
-                        const settings = response.data;
-                        const regionSettings = settings[selectedRegion];
-                        updateBookingStatusUI(regionSettings?.is_active || false);
-                    }
-
-                    // 데이터 새로고침
-                    await Promise.all([
-                        loadRegionStatistics(),
-                        debouncedUpdateCalendarStatus(),
-                        loadPendingBookings()
-                    ]);
-                } catch (error) {
-                    console.error('Region filter change error:', error);
-                    if (error.message.includes('인증')) {
-                        logout();
-                        showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
-                    } else {
-                        showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
-                    }
-                }
-            });
-
         } else {
-            // 지역 관리자 설정
+            // 지역 관리자 설정 (기존 코드 유지)
             const regionText = region === 'south' ? '남부' : '북부';
             dashboardTitle.textContent = `${regionText} 스포츠박스`;
             regionFilterContainer.classList.add('hidden');
@@ -4012,24 +3973,28 @@ async function initializeAdminDashboard(region, username) {
         await Promise.all([
             loadRegionStatistics(),
             initializeAdminCalendar(),
-            debouncedUpdateCalendarStatus(),
+            updateCalendarStatus(), // 디바운스 없이 직접 호출
             loadPendingUsers(),
             loadPendingBookings(),
             loadAllUsers()
         ]);
 
-        // 예약 상태 토글 버튼 이벤트 리스너 추가
+        // 이벤트 리스너 설정 - 통합 예약 버튼
+        const toggleIntegratedBtn = document.getElementById('toggleIntegratedBooking');
+        if (toggleIntegratedBtn) {
+            toggleIntegratedBtn.removeEventListener('click', window.toggleIntegratedBooking);
+            toggleIntegratedBtn.addEventListener('click', window.toggleIntegratedBooking);
+            console.log('통합 예약 버튼 이벤트 핸들러 설정됨');
+        }
+        
+        // 예약 상태 토글 버튼 이벤트 리스너
         const toggleButton = document.getElementById('toggleBookingStatus');
         if (toggleButton) {
             toggleButton.removeEventListener('click', toggleBookingStatus);
             toggleButton.addEventListener('click', toggleBookingStatus);
         }
-
-        // 비밀번호 변경 모달 이벤트 리스너 설정
-        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
-        
     } catch (error) {
-        console.error('Admin dashboard initialization error:', error);
+        console.error('관리자 대시보드 초기화 오류:', error);
         showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
     }
 }
@@ -4053,14 +4018,16 @@ function updateIntegratedBookingUI(isActive) {
 }
 
 // 통합 예약 토글 함수
-async function toggleIntegratedBooking() {
+window.toggleIntegratedBooking = async function() {
     try {
+        console.log('통합 예약 토글 시작');
         const toggleButton = document.getElementById('toggleIntegratedBooking');
         const isCurrentlyActive = toggleButton.textContent.includes('중지');
         
         showLoading();
         
         // 남부 지역 설정 업데이트
+        console.log('남부 지역 설정 업데이트 중...');
         await apiRequest('/api/admin/booking-settings', {
             method: 'POST',
             body: JSON.stringify({
@@ -4070,6 +4037,7 @@ async function toggleIntegratedBooking() {
         });
         
         // 북부 지역 설정 업데이트
+        console.log('북부 지역 설정 업데이트 중...');
         await apiRequest('/api/admin/booking-settings', {
             method: 'POST',
             body: JSON.stringify({
@@ -4078,34 +4046,30 @@ async function toggleIntegratedBooking() {
             })
         });
         
+        console.log('통합 예약 상태 변경 완료');
         showAlert(
             isCurrentlyActive ? '남부/북부 통합 예약이 중지되었습니다.' : '남부/북부 통합 예약이 시작되었습니다.',
             'success'
         );
         updateIntegratedBookingUI(!isCurrentlyActive);
         
-        // 지역별 설정 상태도 함께 업데이트 (UI 일관성 유지)
-        const regionFilter = document.getElementById('regionFilter');
-        if (regionFilter) {
-            // 현재 선택된 지역 설정 UI 업데이트
-            const currentRegion = regionFilter.value;
-            updateBookingStatusUI(!isCurrentlyActive);
-        }
+        // 통합 상태에 맞게 개별 UI도 업데이트
+        updateBookingStatusUI(!isCurrentlyActive);
         
-        // 통계 및 예약 목록 새로고침
+        // 데이터 새로고침
         await Promise.all([
             loadRegionStatistics(),
             loadPendingBookings(),
-            debouncedUpdateCalendarStatus()
+            updateCalendarStatus() // 디바운스 없이 즉시 업데이트
         ]);
         
     } catch (error) {
-        console.error('Toggle integrated booking status error:', error);
+        console.error('통합 예약 상태 변경 오류:', error);
         showAlert(error.message || '통합 예약 설정 변경 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
     }
-}
+};
 
 // 통계 섹션 HTML을 동적으로 처리하는 함수 추가
 function updateStatisticsUI(region) {
@@ -5000,10 +4964,10 @@ async function rejectBookingCancel(bookingId) {
     }
 }
 
-async function forceCancel(bookingId, dateString) {
+async function forceCancel(bookingId, dateString, region) {
     try {
-        if (!dateString) {
-            showAlert('날짜 정보가 없습니다.', 'error');
+        if (!bookingId) {
+            showAlert('예약 정보가 없습니다.', 'error');
             return;
         }
 
@@ -5013,14 +4977,32 @@ async function forceCancel(bookingId, dateString) {
 
         showLoading();
 
-        const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
+        // region 파라미터를 추가하여 해당 지역의 API 엔드포인트 호출
+        const endpoint = region ? 
+            `/api/admin/bookings/${bookingId}/force-cancel?region=${region}` : 
+            `/api/admin/bookings/${bookingId}/force-cancel`;
+            
+        const response = await apiRequest(endpoint, {
             method: 'PUT'
         });
 
         if (response.success) {
             showAlert('예약이 강제 취소되었습니다.', 'success');
-            await loadDateBookings(dateString);  // 날짜별 예약 목록 새로고침
-            await refreshSingleDateStatus(dateString);  // 캘린더 상태 업데이트
+            
+            // 관리자 유형 확인
+            const adminRegion = sessionStorage.getItem('region');
+            const isIntegratedAdmin = adminRegion === 'all';
+            
+            // 통합 관리자인 경우 통합 예약 정보 로드
+            if (isIntegratedAdmin) {
+                await loadDateBookingsIntegrated(dateString);
+            } else {
+                // 지역 관리자인 경우 해당 지역 예약 정보만 로드
+                await loadDateBookings(dateString);
+            }
+            
+            // 캘린더 상태 업데이트
+            await updateCalendarStatus();
         }
     } catch (error) {
         console.error('강제 취소 오류:', error);
@@ -5962,18 +5944,11 @@ function renderAdminCalendar(date) {
 
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
     
-    // 관리자 유형과 선택된 지역 확인
+    // 관리자 유형 확인
     const adminRegion = sessionStorage.getItem('region');
-    let targetRegion = adminRegion;
+    const isIntegratedAdmin = adminRegion === 'all';
     
-    if (adminRegion === 'all') {
-        const regionFilter = document.getElementById('regionFilter');
-        if (regionFilter) {
-            targetRegion = regionFilter.value;
-        }
-    }
-    
-    console.log('[renderAdminCalendar] 지역:', targetRegion, '관리자 유형:', adminRegion === 'all' ? '전체관리자' : '지역관리자');
+    console.log('[renderAdminCalendar] 관리자 유형:', isIntegratedAdmin ? '통합 관리자' : '지역 관리자');
 
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -6004,106 +5979,367 @@ function renderAdminCalendar(date) {
         // 날짜 식별용 데이터 속성 추가
         dayElement.setAttribute('data-date', dateString);
         
-        // 디버깅: 해당 날짜의 예약 상태 출력
-        if (bookingStatus && bookingStatus[dateString]) {
-            console.log(`날짜 ${dateString} 예약 상태:`, bookingStatus[dateString]);
-        }
-        
-        const dateStatus = bookingStatus ? bookingStatus[dateString] : null;
-        const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
-
-        // 날짜 상태에 따른 클래스 설정
-        if (selectedDateObj < today) {
-    dayElement.className = `${baseClass} past`;
-    dayElement.title = '지난 날짜';
-} 
-// 관리자가 직접 마감한 경우 (예약이 없을 때만)
-else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
-    dayElement.className = `${baseClass} blocked cursor-pointer`;
-    dayElement.title = '관리자 전체 마감';
-} 
-// 예약이 2개 이상이면 예약 마감
-else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
-    dayElement.className = `${baseClass} full cursor-pointer`;
-    dayElement.title = '예약 마감 (2건 모두 예약됨)';
-} 
-else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-    dayElement.className = `${baseClass} full cursor-pointer`;
-    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
-} 
-else if (dateStatus?.isPartiallyBlocked) {
-    dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
-    dayElement.title = '부분 마감 (1개 예약만 가능)';
-    dayElement.style.backgroundColor = '#F97316';
-} 
-else if (dateStatus?.hasBooking) {
-    dayElement.className = `${baseClass} booked cursor-pointer`;
-    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-} 
-else {
-    dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-    dayElement.title = '클릭하여 마감 설정';
-}
-
-        // 날짜 요소 위치 설정 강제화
-        dayElement.style.position = 'relative';
-        dayElement.style.overflow = 'visible';
-
-        // 예약 수 배지 추가 (중요: bookingCount 값이 있는지 확인)
-        if (dateStatus?.bookingCount > 0) {
-    addBookingCountBadge(dayElement, dateStatus);
-}
-
-        // 날짜 텍스트 추가
-        const dateText = document.createElement('span');
-        dateText.textContent = currentDay;
-        dateText.className = 'z-10';
-        // 배지가 추가된 후에 날짜 텍스트 추가
-        if (dayElement.firstChild) {
-            dayElement.insertBefore(dateText, dayElement.firstChild);
+        // 통합 관리자인 경우 남부/북부 모두의 상태 표시
+        if (isIntegratedAdmin) {
+            renderIntegratedCalendarDay(dayElement, selectedDateObj, dateString, currentDay, today);
         } else {
-            dayElement.appendChild(dateText);
-        }
-
-        // 날짜 클릭 이벤트 추가
-        if (selectedDateObj >= today) {
-            // 새로운 방식: 마감 모달 열기
-            dayElement.addEventListener('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log(`날짜 클릭: ${dateString}, 지역: ${targetRegion}`);
-                currentSelectedDate = dateString;
-                
-                try {
-                    // 데이터 로드
-                    await loadDateBookings(dateString);
-                    
-                    // 잠시 후 모달 표시 (비동기 처리를 위한 작은 지연)
-                    setTimeout(() => {
-                        showDateBookingsModal();
-                        setupModalButtons(dateString);
-                    }, 50);
-                } catch (error) {
-                    console.error('날짜 클릭 처리 오류:', error);
-                    showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
-                }
-            });
-        }
-
-        // 오늘 날짜 강조
-        if (
-            currentDay === today.getDate() &&
-            month === today.getMonth() &&
-            year === today.getFullYear()
-        ) {
-            dayElement.classList.add('font-bold');
+            // 기존 방식: 특정 지역만 표시
+            renderRegionalCalendarDay(dayElement, selectedDateObj, dateString, currentDay, today, adminRegion);
         }
 
         adminCalendar.appendChild(dayElement);
     }
     
     console.log('[renderAdminCalendar] 캘린더 렌더링 완료');
+}
+
+// 통합 캘린더 일자 렌더링 함수 (새로 추가)
+function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay, today) {
+    const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
+    
+    // 통합 날짜 상태 - 남부와 북부 모두 고려
+    const southStatus = bookingStatus?.south?.[dateString];
+    const northStatus = bookingStatus?.north?.[dateString];
+    
+    // 지난 날짜 처리
+    if (dateObj < today) {
+        dayElement.className = `${baseClass} past`;
+        dayElement.title = '지난 날짜';
+        dayElement.textContent = currentDay;
+        return;
+    }
+    
+    // 통합 상태 결정 (남부/북부 모두 마감된 경우만 전체 마감으로 표시)
+    const isFullyBlocked = (southStatus?.isFullyBlocked && northStatus?.isFullyBlocked);
+    const isPartiallyBlocked = (southStatus?.isPartiallyBlocked || northStatus?.isPartiallyBlocked) && !isFullyBlocked;
+    const hasBooking = (southStatus?.hasBooking || northStatus?.hasBooking);
+    
+    // 남부/북부 예약 수 계산
+    const southBookings = southStatus?.bookingCount || 0;
+    const northBookings = northStatus?.bookingCount || 0;
+    const totalBookings = southBookings + northBookings;
+    
+    // 상태에 따른 클래스와 타이틀 설정
+    let className, title, bgColor;
+    
+    if (isFullyBlocked) {
+        className = `${baseClass} blocked cursor-pointer`;
+        title = '전체 마감 (남부/북부 모두 마감)';
+    } else if (isPartiallyBlocked) {
+        className = `${baseClass} partially-blocked cursor-pointer`;
+        title = '부분 마감 (남부 또는 북부 부분 마감)';
+        bgColor = '#F97316';
+    } else if (totalBookings >= 4) { // 남부와 북부 각각 2개씩 가능, 총 4개
+        className = `${baseClass} full cursor-pointer`;
+        title = '예약 마감 (남부/북부 모두 예약 꽉참)';
+    } else if (hasBooking) {
+        className = `${baseClass} booked cursor-pointer`;
+        title = `남부: ${southBookings}개, 북부: ${northBookings}개 예약됨`;
+    } else {
+        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+        title = '예약 가능 (남부/북부 모두)';
+    }
+    
+    // 클래스 및 스타일 적용
+    dayElement.className = className;
+    dayElement.title = title;
+    if (bgColor) dayElement.style.backgroundColor = bgColor;
+    
+    // 날짜 텍스트 추가
+    const dateText = document.createElement('span');
+    dateText.textContent = currentDay;
+    dateText.className = 'z-10';
+    dayElement.appendChild(dateText);
+    
+    // 통합 예약 상태 배지 추가 (남부/북부 구분해서 표시)
+    if (totalBookings > 0) {
+        const countBadge = document.createElement('div');
+        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+        countBadge.textContent = `${southBookings}/${northBookings}`;
+        
+        if (isPartiallyBlocked) {
+            countBadge.style.backgroundColor = '#FEF3C7';
+            countBadge.style.color = '#92400E';
+        } else if (totalBookings >= 4) {
+            countBadge.style.backgroundColor = '#FEE2E2';
+            countBadge.style.color = '#B91C1C';
+        } else {
+            countBadge.style.backgroundColor = '#DBEAFE';
+            countBadge.style.color = '#1E40AF';
+        }
+        
+        dayElement.appendChild(countBadge);
+    }
+    
+    // 날짜 클릭 이벤트 - 통합 상태 모달 표시
+    dayElement.addEventListener('click', async function() {
+        currentSelectedDate = dateString;
+        try {
+            await loadDateBookingsIntegrated(dateString);
+            showDateBookingsModal();
+            setupIntegratedModalButtons(dateString);
+        } catch (error) {
+            console.error('날짜 클릭 처리 오류:', error);
+            showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
+        }
+    });
+    
+    // 오늘 날짜 강조
+    if (dateObj.getDate() === today.getDate() &&
+        dateObj.getMonth() === today.getMonth() &&
+        dateObj.getFullYear() === today.getFullYear()) {
+        dayElement.classList.add('font-bold');
+    }
+}
+
+// 통합 날짜별 예약 조회 함수 (새로 추가)
+async function loadDateBookingsIntegrated(dateString) {
+    try {
+        if (!dateString) {
+            console.error('날짜 정보가 없습니다');
+            showAlert('날짜 정보가 없습니다.', 'error');
+            return;
+        }
+
+        console.log('통합 예약 정보 로드 중:', dateString);
+        
+        // 남부/북부 동시 조회
+        const [southData, northData] = await Promise.all([
+            apiRequest(`/api/admin/bookings/date/${dateString}?region=south`),
+            apiRequest(`/api/admin/bookings/date/${dateString}?region=north`)
+        ]);
+        
+        console.log('남부 예약:', southData, '북부 예약:', northData);
+
+        const tbody = document.getElementById('dateBookingsList');
+        const modalDate = document.getElementById('modalDate');
+        
+        modalDate.textContent = `${formatDate(dateString)} (통합)`;
+        currentSelectedDate = dateString;
+
+        // 모달 버튼 상태 설정
+        setupIntegratedModalButtons(dateString);
+
+        if (southData.success && northData.success) {
+            // 남부/북부 데이터 통합
+            const southBookings = southData.data || [];
+            const northBookings = northData.data || [];
+            
+            // 유효한 예약만 필터링 (취소/거부/취소대기 제외)
+            const activeBookings = [
+                ...southBookings.map(booking => ({...booking, regionText: '남부'})),
+                ...northBookings.map(booking => ({...booking, regionText: '북부'}))
+            ].filter(booking => 
+                booking.status !== 'cancelled' && 
+                booking.status !== 'rejected' &&
+                booking.status !== 'cancel_pending'
+            );
+
+            tbody.innerHTML = activeBookings.length > 0 
+                ? activeBookings.map(booking => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.group_name}
+                            <span class="ml-2 px-2 py-1 rounded-full text-xs 
+                                ${booking.regionText === '남부' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                ${booking.regionText}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${getStatusClass(booking.status)}">
+                                ${getStatusText(booking.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${booking.status === 'approved' ? `
+                                <button onclick="forceCancel(${booking.id}, '${dateString}', '${booking.regionText === '남부' ? 'south' : 'north'}')" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                                    강제취소
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+        }
+    } catch (error) {
+        console.error('통합 예약 정보 로드 오류:', error);
+        showAlert('예약 내역을 불러오는데 실패했습니다.', 'error');
+    }
+}
+
+// 통합 모달 버튼 설정
+function setupIntegratedModalButtons(dateString) {
+    // 남부/북부 각각의 상태 확인
+    const southStatus = bookingStatus?.south?.[dateString];
+    const northStatus = bookingStatus?.north?.[dateString];
+    
+    // 모달 버튼 참조
+    const partialBlockBtn = document.getElementById('partialBlockDateBtn');
+    const fullBlockBtn = document.getElementById('fullBlockDateBtn');
+    const unblockBtn = document.getElementById('unblockDateBtn');
+    
+    // 통합 상태 확인 (남부/북부 모두 마감/부분마감인 경우)
+    const isFullyBlocked = (southStatus?.isFullyBlocked && northStatus?.isFullyBlocked);
+    const isPartiallyBlocked = (southStatus?.isPartiallyBlocked || northStatus?.isPartiallyBlocked) && !isFullyBlocked;
+    
+    // 버튼 라벨 업데이트
+    partialBlockBtn.textContent = '통합 부분 마감';
+    fullBlockBtn.textContent = '통합 전체 마감';
+    unblockBtn.textContent = '통합 마감 해제';
+    
+    // 버튼 표시 설정
+    if (isFullyBlocked || isPartiallyBlocked) {
+        partialBlockBtn.classList.add('hidden');
+        fullBlockBtn.classList.add('hidden');
+        unblockBtn.classList.remove('hidden');
+    } else {
+        partialBlockBtn.classList.remove('hidden');
+        fullBlockBtn.classList.remove('hidden');
+        unblockBtn.classList.add('hidden');
+    }
+    
+    // 통합 마감 이벤트 핸들러 설정
+    partialBlockBtn.onclick = async () => {
+        if (confirm('남부/북부 모두 부분 마감 처리하시겠습니까? (각 지역에 1개씩만 예약 가능)')) {
+            await blockIntegratedDate(dateString, 'partial');
+            closeDateBookingsModal();
+        }
+    };
+    
+    fullBlockBtn.onclick = async () => {
+        if (confirm('남부/북부 모두 전체 마감 처리하시겠습니까?')) {
+            await blockIntegratedDate(dateString, 'full');
+            closeDateBookingsModal();
+        }
+    };
+    
+    unblockBtn.onclick = async () => {
+        if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
+            await unblockIntegratedDate(dateString);
+            closeDateBookingsModal();
+        }
+    };
+}
+
+// 통합 날짜 마감 함수
+async function blockIntegratedDate(date, blockType) {
+    try {
+        console.log(`통합 날짜 마감: ${date}, 유형: ${blockType}`);
+        showLoading();
+        
+        // 남부/북부 동시 마감
+        await Promise.all([
+            apiRequest('/api/admin/dates/block', {
+                method: 'POST',
+                body: JSON.stringify({
+                    date: date,
+                    region: 'south',
+                    blockType: blockType
+                })
+            }),
+            apiRequest('/api/admin/dates/block', {
+                method: 'POST',
+                body: JSON.stringify({
+                    date: date,
+                    region: 'north',
+                    blockType: blockType
+                })
+            })
+        ]);
+        
+        showAlert(
+            blockType === 'full' ? '남부/북부 날짜가 전체 마감되었습니다.' : '남부/북부 날짜가 부분 마감되었습니다.', 
+            'success'
+        );
+        
+        // 캘린더 상태 새로고침
+        await updateCalendarStatus();
+    } catch (error) {
+        console.error('통합 날짜 마감 오류:', error);
+        showAlert(error.message || '날짜 마감 처리 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 통합 날짜 마감 해제 함수
+async function unblockIntegratedDate(date) {
+    try {
+        console.log(`통합 날짜 마감 해제: ${date}`);
+        showLoading();
+        
+        // 남부/북부 동시 마감 해제
+        await Promise.all([
+            apiRequest('/api/admin/dates/unblock', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    date,
+                    region: 'south'
+                })
+            }),
+            apiRequest('/api/admin/dates/unblock', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    date,
+                    region: 'north'
+                })
+            })
+        ]);
+        
+        showAlert('남부/북부 날짜 마감이 해제되었습니다.', 'success');
+        
+        // 캘린더 상태 업데이트
+        await updateCalendarStatus();
+    } catch (error) {
+        console.error('통합 날짜 마감 해제 오류:', error);
+        showAlert(error.message || '날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 캘린더 상태를 가져오는 함수 수정 (남부/북부 데이터 모두 가져오도록)
+async function updateCalendarStatus() {
+    try {
+        showLoading();
+        console.log('캘린더 상태 업데이트 중...');
+        
+        const adminRegion = sessionStorage.getItem('region');
+        const isIntegratedAdmin = adminRegion === 'all';
+        
+        // 통합 관리자인 경우 남부/북부 모두 가져오기
+        if (isIntegratedAdmin) {
+            const [southResponse, northResponse] = await Promise.all([
+                apiRequest('/api/bookings/status?region=south'),
+                apiRequest('/api/bookings/status?region=north')
+            ]);
+            
+            // 데이터 구조 변경: 지역별로 분리하여 저장
+            bookingStatus = {
+                south: southResponse.data || {},
+                north: northResponse.data || {}
+            };
+        } else {
+            // 지역 관리자인 경우 해당 지역만 가져오기
+            const response = await apiRequest(`/api/bookings/status?region=${adminRegion}`);
+            bookingStatus = response.data || {};
+        }
+        
+        // 달력 다시 렌더링
+        renderAdminCalendar(adminCurrentDate);
+        
+        console.log('캘린더 상태 업데이트 완료');
+    } catch (error) {
+        console.error('캘린더 상태 업데이트 오류:', error);
+        showAlert('캘린더 정보를 업데이트하는데 실패했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
 // 날짜 상태에 따른 설정 반환
