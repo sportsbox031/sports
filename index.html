@@ -1157,6 +1157,21 @@
                         </div>
                     </div>
 
+                <!-- 새로 추가: 통합 관리 UI (전체 관리자만 표시) -->
+    <div id="integratedManagementSection" class="flex items-center justify-between p-6 bg-blue-50 rounded-xl">
+        <div class="flex flex-col">
+            <span class="text-lg font-semibold text-blue-700">통합 예약 관리</span>
+            <span id="integratedStatusText" class="text-sm text-blue-500">
+                남부/북부 지역 예약을 한 번에 관리합니다
+            </span>
+        </div>
+        <button type="button" id="toggleIntegratedBooking" 
+            class="px-6 py-3 rounded-xl font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200">
+            통합 예약 시작하기
+        </button>
+    </div>
+</div>
+
                     <!-- 캘린더 섹션 -->
                     <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
                         <div class="flex justify-between items-center mb-8">
@@ -3905,6 +3920,7 @@ async function initializeAdminDashboard(region, username) {
         const regionFilter = document.getElementById('regionFilter');
         const adminRegionBadge = document.getElementById('adminRegionBadge');
         const dashboardTitle = document.querySelector('#adminDashboard .dashboard-title');
+        const integratedSection = document.getElementById('integratedManagementSection');
 
         if (region === 'all') {
             // 전체 관리자 설정
@@ -3917,6 +3933,30 @@ async function initializeAdminDashboard(region, username) {
             const selectedRegion = regionFilter.value;
             const settings = await loadAdminBookingSettings();
             updateBookingStatusUI(settings?.is_active || false);
+            
+            // 통합 예약 관리 섹션 표시 및 초기화
+            if (integratedSection) {
+                integratedSection.classList.remove('hidden');
+                
+                // 남부/북부 지역 설정 조회
+                const response = await apiRequest('/api/admin/booking-settings');
+                if (response.success) {
+                    const settings = response.data;
+                    const southActive = settings.south?.is_active || false;
+                    const northActive = settings.north?.is_active || false;
+                    
+                    // 둘 다 활성화된 경우만 통합 활성화로 표시
+                    const isIntegratedActive = southActive && northActive;
+                    updateIntegratedBookingUI(isIntegratedActive);
+                }
+                
+                // 통합 예약 토글 버튼 이벤트 리스너 설정
+                const toggleButton = document.getElementById('toggleIntegratedBooking');
+                if (toggleButton) {
+                    toggleButton.removeEventListener('click', toggleIntegratedBooking);
+                    toggleButton.addEventListener('click', toggleIntegratedBooking);
+                }
+            }
 
             // 지역 필터 변경 이벤트 리스너
             regionFilter.removeEventListener('change', refreshAdminDashboard);
@@ -3959,6 +3999,11 @@ async function initializeAdminDashboard(region, username) {
                 region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
             }`;
 
+            // 통합 예약 관리 섹션 숨기기
+            if (integratedSection) {
+                integratedSection.classList.add('hidden');
+            }
+
             // 지역 관리자용 설정 로드
             const settings = await loadAdminBookingSettings();
             updateBookingStatusUI(settings?.is_active || false);
@@ -3970,17 +4015,96 @@ async function initializeAdminDashboard(region, username) {
             initializeAdminCalendar(),
             debouncedUpdateCalendarStatus(),
             loadPendingUsers(),
-            loadPendingBookings()
+            loadPendingBookings(),
+            loadAllUsers()
         ]);
 
+        // 예약 상태 토글 버튼 이벤트 리스너 추가
+        const toggleButton = document.getElementById('toggleBookingStatus');
+        if (toggleButton) {
+            toggleButton.removeEventListener('click', toggleBookingStatus);
+            toggleButton.addEventListener('click', toggleBookingStatus);
+        }
+
+        // 비밀번호 변경 모달 이벤트 리스너 설정
+        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
+        
     } catch (error) {
         console.error('Admin dashboard initialization error:', error);
-        if (error.message.includes('인증')) {
-            logout();
-            showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
-        } else {
-            showAlert('관리자 대시보드 초기화 중 오류가 발생했습니다.', 'error');
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 통합 예약 상태 UI 업데이트 함수
+function updateIntegratedBookingUI(isActive) {
+    const toggleButton = document.getElementById('toggleIntegratedBooking');
+    const statusText = document.getElementById('integratedStatusText');
+    
+    if (isActive) {
+        toggleButton.textContent = `통합 예약 중지하기`;
+        toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-red-500 text-white hover:bg-red-600 transition-all duration-200';
+        statusText.textContent = `현재 남부/북부 모두 예약을 받고 있습니다`;
+        statusText.className = 'text-sm text-green-600';
+    } else {
+        toggleButton.textContent = `통합 예약 시작하기`;
+        toggleButton.className = 'px-6 py-3 rounded-xl font-medium bg-green-500 text-white hover:bg-green-600 transition-all duration-200';
+        statusText.textContent = `현재 남부/북부 모두 예약을 받고 있지 않습니다`;
+        statusText.className = 'text-sm text-red-600';
+    }
+}
+
+// 통합 예약 토글 함수
+async function toggleIntegratedBooking() {
+    try {
+        const toggleButton = document.getElementById('toggleIntegratedBooking');
+        const isCurrentlyActive = toggleButton.textContent.includes('중지');
+        
+        showLoading();
+        
+        // 남부 지역 설정 업데이트
+        await apiRequest('/api/admin/booking-settings', {
+            method: 'POST',
+            body: JSON.stringify({
+                region: 'south',
+                is_active: !isCurrentlyActive
+            })
+        });
+        
+        // 북부 지역 설정 업데이트
+        await apiRequest('/api/admin/booking-settings', {
+            method: 'POST',
+            body: JSON.stringify({
+                region: 'north',
+                is_active: !isCurrentlyActive
+            })
+        });
+        
+        showAlert(
+            isCurrentlyActive ? '남부/북부 통합 예약이 중지되었습니다.' : '남부/북부 통합 예약이 시작되었습니다.',
+            'success'
+        );
+        updateIntegratedBookingUI(!isCurrentlyActive);
+        
+        // 지역별 설정 상태도 함께 업데이트 (UI 일관성 유지)
+        const regionFilter = document.getElementById('regionFilter');
+        if (regionFilter) {
+            // 현재 선택된 지역 설정 UI 업데이트
+            const currentRegion = regionFilter.value;
+            updateBookingStatusUI(!isCurrentlyActive);
         }
+        
+        // 통계 및 예약 목록 새로고침
+        await Promise.all([
+            loadRegionStatistics(),
+            loadPendingBookings(),
+            debouncedUpdateCalendarStatus()
+        ]);
+        
+    } catch (error) {
+        console.error('Toggle integrated booking status error:', error);
+        showAlert(error.message || '통합 예약 설정 변경 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -5775,30 +5899,38 @@ function renderCalendar(date) {
         const dateStatus = bookingStatus[dateString];
 
         if (selectedDateObj < today) {
-            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-            dayElement.title = '지난 날짜';
-        } else if (dateStatus?.isFullyBlocked) {
-            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-            dayElement.title = '관리자 전체 마감';
-        } else if (dateStatus?.isFull) {
-            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감 (2건 모두 예약됨)';
-        } else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
-        } else if (dateStatus?.isPartiallyBlocked) {
-            dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
-            dayElement.title = '부분 마감 (1개만 예약 가능)';
-            addDateClickHandler(dayElement, year, month, currentDay);
-        } else if (dateStatus?.hasBooking) {
-            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-            addDateClickHandler(dayElement, year, month, currentDay);
-        } else {
-            dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-            dayElement.title = '예약 가능';
-            addDateClickHandler(dayElement, year, month, currentDay);
-        }
+    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+    dayElement.title = '지난 날짜';
+} 
+// 관리자가 직접 마감한 경우 (예약이 없는 상태)
+else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
+    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+    dayElement.title = '관리자 전체 마감';
+} 
+// 예약이 2개 이상이면 예약 마감
+else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
+    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+    dayElement.title = '예약 마감 (2건 모두 예약됨)';
+} 
+else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
+    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+} 
+else if (dateStatus?.isPartiallyBlocked) {
+    dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+    dayElement.title = '부분 마감 (1개만 예약 가능)';
+    addDateClickHandler(dayElement, year, month, currentDay);
+} 
+else if (dateStatus?.hasBooking) {
+    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+    addDateClickHandler(dayElement, year, month, currentDay);
+} 
+else {
+    dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+    dayElement.title = '예약 가능';
+    addDateClickHandler(dayElement, year, month, currentDay);
+}
 
         dayElement.textContent = currentDay;
 
@@ -5885,24 +6017,31 @@ function renderAdminCalendar(date) {
         if (selectedDateObj < today) {
     dayElement.className = `${baseClass} past`;
     dayElement.title = '지난 날짜';
-} else if (dateStatus?.isFullyBlocked) {
+} 
+// 관리자가 직접 마감한 경우 (예약이 없을 때만)
+else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
     dayElement.className = `${baseClass} blocked cursor-pointer`;
     dayElement.title = '관리자 전체 마감';
-} else if (dateStatus?.isFull) {
+} 
+// 예약이 2개 이상이면 예약 마감
+else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
     dayElement.className = `${baseClass} full cursor-pointer`;
     dayElement.title = '예약 마감 (2건 모두 예약됨)';
-} else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-    // 여기가 핵심 변경사항: 부분 마감 + 예약 1개 이상 = 예약 마감
+} 
+else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
     dayElement.className = `${baseClass} full cursor-pointer`;
     dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
-} else if (dateStatus?.isPartiallyBlocked) {
+} 
+else if (dateStatus?.isPartiallyBlocked) {
     dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
     dayElement.title = '부분 마감 (1개 예약만 가능)';
     dayElement.style.backgroundColor = '#F97316';
-} else if (dateStatus?.hasBooking) {
+} 
+else if (dateStatus?.hasBooking) {
     dayElement.className = `${baseClass} booked cursor-pointer`;
     dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-} else {
+} 
+else {
     dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
     dayElement.title = '클릭하여 마감 설정';
 }
