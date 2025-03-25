@@ -6114,25 +6114,50 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     
     // 통합 예약 상태 배지 추가 - 중요: 수정된 부분
     if (totalBookings > 0) {
-        const countBadge = document.createElement('div');
-        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-        
-        // 중요: 예약 건수를 최대 2개 중 사용된 수로 표시
-        countBadge.textContent = `${totalBookings}/2`;
-        
-        if (isPartiallyBlocked) {
-            countBadge.style.backgroundColor = '#FEF3C7';
-            countBadge.style.color = '#92400E';
-        } else if (totalBookings >= 2) {
-            countBadge.style.backgroundColor = '#FEE2E2';
-            countBadge.style.color = '#B91C1C';
-        } else {
-            countBadge.style.backgroundColor = '#DBEAFE';
-            countBadge.style.color = '#1E40AF';
-        }
-        
-        dayElement.appendChild(countBadge);
+    const countBadge = document.createElement('div');
+    countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+    
+    // 각 지역의 고유 단체명 카운트
+    const southGroupNames = new Set();
+    const northGroupNames = new Set();
+    
+    // 남부/북부 예약 데이터가 있을 경우 단체명 수집
+    if (southStatus) {
+        Object.values(southStatus).forEach(booking => {
+            if (booking && booking.group_name) {
+                southGroupNames.add(booking.group_name);
+            }
+        });
     }
+    
+    if (northStatus) {
+        Object.values(northStatus).forEach(booking => {
+            if (booking && booking.group_name) {
+                northGroupNames.add(booking.group_name);
+            }
+        });
+    }
+    
+    // 모든 고유 단체명 개수
+    const uniqueGroupCount = new Set([...southGroupNames, ...northGroupNames]).size;
+    
+    // 실제 예약 수는 고유 단체명 개수로 표시
+    countBadge.textContent = `${uniqueGroupCount}/2`;
+    
+    // 배지 스타일 설정
+    if (isPartiallyBlocked) {
+        countBadge.style.backgroundColor = '#FEF3C7';
+        countBadge.style.color = '#92400E';
+    } else if (uniqueGroupCount >= 2) {
+        countBadge.style.backgroundColor = '#FEE2E2';
+        countBadge.style.color = '#B91C1C';
+    } else {
+        countBadge.style.backgroundColor = '#DBEAFE';
+        countBadge.style.color = '#1E40AF';
+    }
+    
+    dayElement.appendChild(countBadge);
+}
     
     // 날짜 클릭 이벤트 처리
     dayElement.addEventListener('click', async function() {
@@ -6187,28 +6212,39 @@ async function loadDateBookingsIntegrated(dateString) {
             const southBookings = southData.data || [];
             const northBookings = northData.data || [];
             
-            // 중요: 수정된 부분 - 유효한 예약만 필터링하되 지역 정보는 내부적으로만 유지
-            const activeBookings = [
+            // 유효한 예약만 필터링 (취소/거부/취소대기 제외)
+            const allBookings = [
                 ...southBookings.map(booking => ({
                     ...booking,
-                    _region: 'south' // 내부 처리용 필드로 변경
+                    _region: 'south' // 내부 처리용 필드
                 })),
                 ...northBookings.map(booking => ({
                     ...booking,
-                    _region: 'north' // 내부 처리용 필드로 변경
+                    _region: 'north' // 내부 처리용 필드
                 }))
             ].filter(booking => 
                 booking.status !== 'cancelled' && 
                 booking.status !== 'rejected' &&
                 booking.status !== 'cancel_pending'
             );
+            
+            // 중요: 중복 제거 로직 추가 - 단체명 기준으로 중복 제거
+            const uniqueGroupNames = new Set();
+            const activeBookings = allBookings.filter(booking => {
+                // 이미 추가된 단체명인지 확인
+                if (uniqueGroupNames.has(booking.group_name)) {
+                    return false; // 중복이면 제외
+                }
+                // 새로운 단체명이면 추가
+                uniqueGroupNames.add(booking.group_name);
+                return true;
+            });
 
             tbody.innerHTML = activeBookings.length > 0 
                 ? activeBookings.map(booking => `
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.group_name}
-                            <!-- 지역 표시 완전히 제거 -->
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
