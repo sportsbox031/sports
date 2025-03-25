@@ -5131,48 +5131,73 @@ async function unblockDate(date) {
 // 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
 async function updateCalendarStatus() {
     try {
-        console.log('[updateCalendarStatus] Updating calendar status immediately...');
+        showLoading();
+        console.log('[updateCalendarStatus] 캘린더 상태 업데이트 중...');
         
-        // 1. 관리자 정보와 선택된 지역 확인
         const role = sessionStorage.getItem('role');
         const adminRegion = sessionStorage.getItem('region');
-        let targetRegion = adminRegion;
+        const isIntegratedAdmin = adminRegion === 'all';
         
-        // 2. 전체 관리자인 경우 선택된 지역 필터 사용
-        if (role === 'admin' && adminRegion === 'all') {
+        // 통합 관리자인 경우 처리
+        if (role === 'admin' && isIntegratedAdmin) {
+            // 전체 관리자인 경우 지역 필터 확인
             const regionFilter = document.getElementById('regionFilter');
-            if (regionFilter) {
-                targetRegion = regionFilter.value;
+            const selectedFilter = regionFilter ? regionFilter.value : 'south';
+            
+            // 필터가 'all'인 경우 남부/북부 모두 가져오기
+            if (selectedFilter === 'all') {
+                console.log('[updateCalendarStatus] 통합 관리자: 모든 지역 데이터 로드');
+                const [southResponse, northResponse] = await Promise.all([
+                    apiRequest('/api/bookings/status?region=south'),
+                    apiRequest('/api/bookings/status?region=north')
+                ]);
+                
+                // 지역별로 분리하여 저장
+                bookingStatus = {
+                    south: southResponse.data || {},
+                    north: northResponse.data || {}
+                };
+            } else {
+                // 선택된 지역만 가져오기
+                console.log(`[updateCalendarStatus] 통합 관리자: ${selectedFilter} 지역 데이터 로드`);
+                const response = await apiRequest(`/api/bookings/status?region=${selectedFilter}`);
+                
+                // 선택된 지역에 대한 데이터만 저장
+                if (selectedFilter === 'south') {
+                    bookingStatus = { south: response.data || {} };
+                } else {
+                    bookingStatus = { north: response.data || {} };
+                }
+            }
+        } else {
+            // 일반 사용자 또는 지역 관리자
+            const userRegion = adminRegion || 'south'; // 기본값 제공
+            console.log(`[updateCalendarStatus] 지역 사용자/관리자: ${userRegion} 데이터 로드`);
+            
+            const response = await apiRequest(`/api/bookings/status?region=${userRegion}`);
+            bookingStatus = response.data || {};
+            
+            // 남은 예약 횟수 업데이트
+            if (response.remainingBookings !== undefined && role !== 'admin') {
+                updateRemainingBookingsDisplay(response.remainingBookings);
             }
         }
         
-        console.log('[updateCalendarStatus] Target region:', targetRegion);
-        
-        // 3. 지역 정보를 쿼리 파라미터로 명시적 전달
-        const url = `/api/bookings/status?region=${targetRegion}`;
-        console.log('[updateCalendarStatus] Requesting URL:', url);
-        
-        const data = await apiRequest(url);
-        console.log('[updateCalendarStatus] Received data:', data);
-        
-        // 4. 받아온 데이터 저장
-        bookingStatus = data.data;
-        
-        // 5. 관리자/사용자에 따라 다른 캘린더 업데이트
+        // 역할에 따라 적절한 캘린더 렌더링
         if (role === 'admin') {
+            console.log('[updateCalendarStatus] 관리자 캘린더 렌더링');
             renderAdminCalendar(adminCurrentDate);
         } else {
+            console.log('[updateCalendarStatus] 사용자 캘린더 렌더링');
             renderCalendar(currentDate);
         }
         
-        // 6. 남은 예약 횟수 업데이트 (필요한 경우)
-        if (data.remainingBookings !== undefined) {
-            updateRemainingBookingsDisplay(data.remainingBookings);
-        }
-        
-        console.log('[updateCalendarStatus] Calendar status updated successfully');
+        console.log('[updateCalendarStatus] 캘린더 상태 업데이트 완료');
     } catch (error) {
-        console.error('[updateCalendarStatus] Error:', error);
+        console.error('[updateCalendarStatus] 오류:', error);
+        showAlert('캘린더 정보를 업데이트하는데 실패했습니다.', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -5364,7 +5389,14 @@ function debounce(func, wait) {
 // 엑셀 다운로드 관련 함수들
 async function generateExcelData(year, month) {
     try {
-        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`);
+        // POST 메소드로 변경하고 region 정보 추가
+        const adminRegion = sessionStorage.getItem('region') || 'all';
+        
+        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`, {
+            method: 'POST',
+            body: JSON.stringify({ region: adminRegion })
+        });
+        
         if (!response.success) {
             throw new Error('데이터 조회 실패');
         }
@@ -6128,32 +6160,65 @@ async function loadDateBookingsIntegrated(dateString) {
 
         console.log('통합 예약 정보 로드 중:', dateString);
         
-        // 남부/북부 동시 조회
-        const [southData, northData] = await Promise.all([
-            apiRequest(`/api/admin/bookings/date/${dateString}?region=south`),
-            apiRequest(`/api/admin/bookings/date/${dateString}?region=north`)
-        ]);
+        // 관리자 지역 정보 확인
+        const adminRegion = sessionStorage.getItem('region');
+        
+        // 남부/북부 동시 조회 또는 지역별 조회
+        let southData, northData;
+        
+        if (adminRegion === 'all') {
+            // 전체 관리자는 모든 지역 조회
+            [southData, northData] = await Promise.all([
+                apiRequest(`/api/admin/bookings/date/${dateString}?region=south`),
+                apiRequest(`/api/admin/bookings/date/${dateString}?region=north`)
+            ]);
+        } else {
+            // 지역 관리자는 해당 지역만 조회
+            const regionData = await apiRequest(`/api/admin/bookings/date/${dateString}?region=${adminRegion}`);
+            if (adminRegion === 'south') {
+                southData = regionData;
+                northData = { success: true, data: [] };
+            } else {
+                southData = { success: true, data: [] };
+                northData = regionData;
+            }
+        }
         
         console.log('남부 예약:', southData, '북부 예약:', northData);
 
         const tbody = document.getElementById('dateBookingsList');
         const modalDate = document.getElementById('modalDate');
         
-        modalDate.textContent = `${formatDate(dateString)} (통합)`;
+        modalDate.textContent = adminRegion === 'all' ? 
+            `${formatDate(dateString)} (통합)` : 
+            `${formatDate(dateString)} (${adminRegion === 'south' ? '남부' : '북부'})`;
+            
         currentSelectedDate = dateString;
 
         // 모달 버튼 상태 설정
         setupIntegratedModalButtons(dateString);
 
         if (southData.success && northData.success) {
-            // 남부/북부 데이터 통합
-            const southBookings = southData.data || [];
-            const northBookings = northData.data || [];
+            // 남부/북부 데이터 통합 또는 필터링
+            let southBookings = southData.data || [];
+            let northBookings = northData.data || [];
             
             // 유효한 예약만 필터링 (취소/거부/취소대기 제외)
             const activeBookings = [
-                ...southBookings.map(booking => ({...booking, regionText: '남부'})),
-                ...northBookings.map(booking => ({...booking, regionText: '북부'}))
+                ...southBookings.map(booking => ({
+                    ...booking, 
+                    // 단체명에 지역 표시 (전체 관리자만)
+                    group_name: adminRegion === 'all' ? 
+                        `${booking.group_name} (남부)` : booking.group_name,
+                    regionText: '남부'
+                })),
+                ...northBookings.map(booking => ({
+                    ...booking, 
+                    // 단체명에 지역 표시 (전체 관리자만)
+                    group_name: adminRegion === 'all' ? 
+                        `${booking.group_name} (북부)` : booking.group_name,
+                    regionText: '북부'
+                }))
             ].filter(booking => 
                 booking.status !== 'cancelled' && 
                 booking.status !== 'rejected' &&
@@ -6165,10 +6230,12 @@ async function loadDateBookingsIntegrated(dateString) {
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.group_name}
-                            <span class="ml-2 px-2 py-1 rounded-full text-xs 
-                                ${booking.regionText === '남부' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                ${booking.regionText}
-                            </span>
+                            ${adminRegion === 'all' ? 
+                                `<span class="ml-2 px-2 py-1 rounded-full text-xs 
+                                    ${booking.regionText === '남부' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                    ${booking.regionText}
+                                </span>` : ''
+                            }
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
@@ -6323,45 +6390,6 @@ async function unblockIntegratedDate(date) {
     } catch (error) {
         console.error('통합 날짜 마감 해제 오류:', error);
         showAlert(error.message || '날짜 마감 해제 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// 캘린더 상태를 가져오는 함수 수정 (남부/북부 데이터 모두 가져오도록)
-async function updateCalendarStatus() {
-    try {
-        showLoading();
-        console.log('캘린더 상태 업데이트 중...');
-        
-        const adminRegion = sessionStorage.getItem('region');
-        const isIntegratedAdmin = adminRegion === 'all';
-        
-        // 통합 관리자인 경우 남부/북부 모두 가져오기
-        if (isIntegratedAdmin) {
-            const [southResponse, northResponse] = await Promise.all([
-                apiRequest('/api/bookings/status?region=south'),
-                apiRequest('/api/bookings/status?region=north')
-            ]);
-            
-            // 데이터 구조 변경: 지역별로 분리하여 저장
-            bookingStatus = {
-                south: southResponse.data || {},
-                north: northResponse.data || {}
-            };
-        } else {
-            // 지역 관리자인 경우 해당 지역만 가져오기
-            const response = await apiRequest(`/api/bookings/status?region=${adminRegion}`);
-            bookingStatus = response.data || {};
-        }
-        
-        // 달력 다시 렌더링
-        renderAdminCalendar(adminCurrentDate);
-        
-        console.log('캘린더 상태 업데이트 완료');
-    } catch (error) {
-        console.error('캘린더 상태 업데이트 오류:', error);
-        showAlert('캘린더 정보를 업데이트하는데 실패했습니다.', 'error');
     } finally {
         hideLoading();
     }
@@ -6642,7 +6670,7 @@ async function initializeAdminDashboard(region, username) {
         initializeAdminCalendar();
         
         // 예약 상태 업데이트
-        await debouncedUpdateCalendarStatus();  
+        await updateCalendarStatus();  
 
         // 통계 로드
         await loadRegionStatistics();
@@ -6732,46 +6760,6 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
 function formatDate(dateStr) {
     const date = new Date(dateStr);
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-}
-
-// 엑셀 데이터 생성 함수
-async function generateExcelData(year, month) {
-    try {
-        const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`);
-        if (!response.success) {
-            throw new Error('데이터 조회 실패');
-        }
-
-        const bookings = response.data;
-        const ws = XLSX.utils.aoa_to_sheet([
-            ['날짜', '단체명', '시간', '장소'] // 헤더 행
-        ]);
-
-        const data = Object.entries(bookings).flatMap(([date, dayBookings]) =>
-            dayBookings.map(booking => [
-                formatDate(date),
-                booking.group_name,
-                `${booking.start_time} - ${booking.end_time}`,
-                booking.place
-            ])
-        );
-
-        XLSX.utils.sheet_add_aoa(ws, data, { origin: -1 });
-        
-        // 열 너비 자동 조정
-        const wscols = [
-            { wch: 15 }, // 날짜
-            { wch: 20 }, // 단체명
-            { wch: 15 }, // 시간
-            { wch: 20 }  // 장소
-        ];
-        ws['!cols'] = wscols;
-
-        return ws;
-    } catch (error) {
-        console.error('Excel data generation error:', error);
-        throw error;
-    }
 }
 
 // 여기에 downloadApplication 함수 추가
