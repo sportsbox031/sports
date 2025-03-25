@@ -3566,92 +3566,115 @@ async function apiRequest(endpoint, options = {}) {
 
 // 화면 전환 함수들
 function showHomeScreen() {
+    console.log('홈화면 표시 시작, 로그인 상태:', !!sessionStorage.getItem('token'));
+    
     // 현재 로그인 상태 확인
     const token = sessionStorage.getItem('token');
     const role = sessionStorage.getItem('role');
 
     // 모든 화면 숨기기
     const homeScreen = document.getElementById('mainContainer')?.querySelector('#homeScreen');
-    if (!homeScreen) return; 
+    if (!homeScreen) {
+        console.error('홈화면 요소를 찾을 수 없습니다');
+        return; 
+    }
 
     homeScreen.classList.remove('hidden');
     document.getElementById('loginAndReservationSystem')?.classList.add('hidden');
     document.getElementById('loginScreen')?.classList.add('hidden');
     document.getElementById('userDashboard')?.classList.add('hidden');
     document.getElementById('adminDashboard')?.classList.add('hidden');
-
-    // 공지사항 새로고침
-    loadHomeNotices();
     
-    // 로그인 상태일 경우 네비게이션 바 수정
-    if (token && role) {
-        const homeNav = homeScreen.querySelector('nav');
-        if (!homeNav) return; 
+    // DOM이 완전히 로드된 후 네비게이션 업데이트를 위해 setTimeout 사용
+    setTimeout(() => {
+        // 로그인 상태일 경우 네비게이션 바 수정
+        if (token && role) {
+            console.log('로그인 사용자 네비게이션 업데이트 시작');
+            
+            const homeNav = homeScreen.querySelector('nav');
+            if (!homeNav) {
+                console.error('네비게이션 바 요소를 찾을 수 없습니다');
+                return; 
+            }
 
-        const navButtons = homeNav.querySelector('.items-center.space-x-8');
-        if (!navButtons) return; 
+            const navButtons = homeNav.querySelector('.items-center.space-x-8');
+            if (!navButtons) {
+                console.error('네비게이션 버튼 컨테이너를 찾을 수 없습니다');
+                return; 
+            }
 
-        const username = sessionStorage.getItem('username');
-        const region = sessionStorage.getItem('region');
+            const username = sessionStorage.getItem('username');
+            const region = sessionStorage.getItem('region');
+            
+            console.log('사용자 정보:', {username, region});
 
-        // 기존 로그인/회원가입 버튼 찾기
-        const loginButton = navButtons.querySelector('button');
-        if (loginButton) {
-            loginButton.style.display = 'none';
+            // 기존 로그인/회원가입 버튼 찾기
+            const loginButton = navButtons.querySelector('button');
+            if (loginButton) {
+                loginButton.style.display = 'none';
+            }
+
+            // 이미 추가된 로그인 상태 버튼들이 있다면 제거
+            const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
+            if (existingLoginButtons) {
+                existingLoginButtons.remove();
+            }
+
+            // 새로운 버튼들 추가
+            const newButtons = document.createElement('div');
+            newButtons.className = 'flex items-center space-x-4 login-state-buttons';
+            
+            // 지역 뱃지 스타일 설정
+            let regionBadgeStyle = '';
+            if (region === 'south') {
+                regionBadgeStyle = 'bg-blue-100 text-blue-800';
+            } else if (region === 'north') {
+                regionBadgeStyle = 'bg-green-100 text-green-800';
+            } else if (region === 'all') {
+                regionBadgeStyle = 'bg-purple-100 text-purple-800';
+            }
+
+            newButtons.innerHTML = `
+                <span class="text-gray-700 font-medium px-3 py-1 bg-gray-100 rounded-full">
+                    ${username || '사용자'}
+                </span>
+                <span class="px-3 py-1 rounded-full text-sm font-medium ${regionBadgeStyle}">
+                    ${region === 'south' ? '남부' : region === 'north' ? '북부' : '전체'}
+                </span>
+                <button onclick="returnToDashboard()" 
+                    class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-all duration-200 flex items-center space-x-2">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>대시보드</span>
+                </button>
+                <button onclick="logout()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded-button hover:bg-gray-600 transition-all duration-200 flex items-center space-x-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
+            `;
+
+            navButtons.appendChild(newButtons);
+            console.log('로그인 상태 버튼 추가 완료');
+        } else {
+            console.log('로그인되지 않은 상태, 기본 네비게이션 유지');
         }
-
-        // 이미 추가된 로그인 상태 버튼들이 있다면 제거
-        const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
-        if (existingLoginButtons) {
-            existingLoginButtons.remove();
-        }
-
-        // 새로운 버튼들 추가
-        const newButtons = document.createElement('div');
-        newButtons.className = 'flex items-center space-x-4 login-state-buttons';
         
-        // 지역 뱃지 스타일 설정
-        let regionBadgeStyle = '';
-        if (region === 'south') {
-            regionBadgeStyle = 'bg-blue-100 text-blue-800';
-        } else if (region === 'north') {
-            regionBadgeStyle = 'bg-green-100 text-green-800';
-        } else if (region === 'all') {
-            regionBadgeStyle = 'bg-purple-100 text-purple-800';
-        }
-
-        newButtons.innerHTML = `
-            <span class="text-gray-700 font-medium px-3 py-1 bg-gray-100 rounded-full">
-                ${username || '사용자'}
-            </span>
-            <span class="px-3 py-1 rounded-full text-sm font-medium ${regionBadgeStyle}">
-                ${region === 'south' ? '남부' : region === 'north' ? '북부' : '전체'}
-            </span>
-            <button onclick="returnToDashboard()" 
-                class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-all duration-200 flex items-center space-x-2">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>대시보드</span>
-            </button>
-            <button onclick="logout()" 
-                class="bg-gray-500 text-white px-4 py-2 rounded-button hover:bg-gray-600 transition-all duration-200 flex items-center space-x-2">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>로그아웃</span>
-            </button>
-        `;
-
-        navButtons.appendChild(newButtons);
-    }
-    
-    // 중요: 네비게이션 바 수정 후 관리자 상태 확인
-    checkAdminStatus();
+        // 공지사항 새로고침
+        loadHomeNotices();
+        
+        // 중요: 네비게이션 바 수정 후 관리자 상태 확인
+        checkAdminStatus();
+    }, 100); // 약간의 지연 시간을 두어 DOM이 업데이트될 시간 제공
 }
 
 // 대시보드로 돌아가는 함수
 function returnToDashboard() {
     const role = sessionStorage.getItem('role');
     if (role) {
+        console.log(`대시보드로 복귀: 역할=${role}`);
         showDashboard(role);
     } else {
+        console.error('대시보드 복귀 오류: 역할 정보 없음');
         showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
         logout();
     }
@@ -4213,6 +4236,8 @@ async function refreshAdminDashboard() {
 }
 
 function logout() {
+    console.log('로그아웃 시작');
+    
     // sessionStorage 클리어
     sessionStorage.clear();
     
@@ -4221,6 +4246,10 @@ function logout() {
     document.getElementById('loginAndReservationSystem').classList.remove('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
     
+    // 대시보드 숨기기
+    document.getElementById('userDashboard').classList.add('hidden');
+    document.getElementById('adminDashboard').classList.add('hidden');
+    
     // 폼 초기화
     document.getElementById('loginForm').reset();
     
@@ -4228,6 +4257,8 @@ function logout() {
     checkAdminStatus();
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
+    
+    console.log('로그아웃 완료');
 }
 
 // 일반 사용자용 UI 업데이트
@@ -5933,15 +5964,15 @@ function renderCalendar(date) {
             dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
             dayElement.title = '지난 날짜';
         } 
-        // 관리자가 직접 마감한 경우 (예약이 없는 상태)
-        else if (dateStatus?.isFullyBlocked) {
-            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-            dayElement.title = '관리자 전체 마감';
-        } 
-        // 예약이 2개 이상이면 예약 마감
+        // 조건 순서 변경: 예약 수 먼저 확인
         else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
             dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
             dayElement.title = '예약 마감 (2건 모두 예약됨)';
+        }
+        // 관리자가 직접 마감한 경우 (예약이 0개인 경우만)
+        else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
+            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+            dayElement.title = '관리자 전체 마감';
         } 
         else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
             dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
