@@ -6043,24 +6043,28 @@ function renderCalendar(date) {
 
         // 예약 건수 배지 추가 (관리자 대시보드와 유사한 스타일로)
         if (dateStatus?.bookingCount > 0) {
-            const countBadge = document.createElement('div');
-            countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-            countBadge.textContent = `${Math.min(dateStatus.bookingCount, 2)}/2`; // 최대 2개로 제한
-            
-            if (dateStatus.isPartiallyBlocked) {
-                countBadge.style.backgroundColor = '#FEF3C7';
-                countBadge.style.color = '#92400E';
-            } else if (dateStatus.bookingCount >= 2) {
-                countBadge.style.backgroundColor = '#FEE2E2';
-                countBadge.style.color = '#B91C1C';
-            } else {
-                countBadge.style.backgroundColor = '#DBEAFE';
-                countBadge.style.color = '#1E40AF';
-            }
-            
-            dayElement.style.position = 'relative';
-            dayElement.appendChild(countBadge);
-        }
+    const countBadge = document.createElement('div');
+    countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+    
+    // 여기가 핵심 수정 부분
+    if (dateStatus.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
+        // 부분 마감 + 예약이 1개 이상 → 2/2로 표시
+        countBadge.textContent = `2/2`;
+        countBadge.style.backgroundColor = '#FEE2E2';
+        countBadge.style.color = '#B91C1C';
+    } else if (dateStatus.bookingCount >= 2) {
+        countBadge.textContent = `${Math.min(dateStatus.bookingCount, 2)}/2`;
+        countBadge.style.backgroundColor = '#FEE2E2';
+        countBadge.style.color = '#B91C1C';
+    } else {
+        countBadge.textContent = `${dateStatus.bookingCount}/2`;
+        countBadge.style.backgroundColor = '#DBEAFE';
+        countBadge.style.color = '#1E40AF';
+    }
+    
+    dayElement.style.position = 'relative';
+    dayElement.appendChild(countBadge);
+}
 
         if (
             !dateStatus?.isFullyBlocked && 
@@ -6156,12 +6160,15 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
         return;
     }
     
-    // 남부/북부의 모든 예약을 합쳐서 총 예약 수 계산
+    // 중요: 남부/북부 예약 수 정확히 계산
     const southBookingCount = southStatus?.bookingCount || 0;
     const northBookingCount = northStatus?.bookingCount || 0;
     const actualTotalBookings = southBookingCount + northBookingCount;
     
-    // 관리자 마감 여부 확인 (관리자가 명시적으로 마감한 경우)
+    // 로그 추가 - 디버깅용
+    console.log(`날짜: ${dateString}, 남부예약: ${southBookingCount}, 북부예약: ${northBookingCount}, 총예약: ${actualTotalBookings}`);
+    
+    // 관리자 마감 여부 확인
     const isSouthAdminBlocked = southStatus?.isFullyBlocked && (!southStatus.bookingCount || southStatus.bookingCount === 0);
     const isNorthAdminBlocked = northStatus?.isFullyBlocked && (!northStatus.bookingCount || northStatus.bookingCount === 0);
     const isAdminFullyBlocked = isSouthAdminBlocked && isNorthAdminBlocked;
@@ -6175,24 +6182,19 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     let className, title, bgColor;
 
     if (isAdminFullyBlocked) {
-        // 관리자가 직접 마감한 경우
         className = `${baseClass} blocked cursor-pointer`;
         title = '관리자 마감';
     } else if (actualTotalBookings >= 2) {
-        // 실제 예약이 2개 이상인 경우에만 마감으로 표시
         className = `${baseClass} full cursor-pointer`;
         title = '예약 마감 (2건 예약됨)';
     } else if (isPartiallyBlocked) {
-        // 부분 마감 상태인 경우
         className = `${baseClass} partially-blocked cursor-pointer`;
         title = '부분 마감';
         bgColor = '#F97316';
     } else if (actualTotalBookings > 0) {
-        // 예약 있음
         className = `${baseClass} booked cursor-pointer`;
         title = `${actualTotalBookings}개 예약됨`;
     } else {
-        // 예약 없음
         className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
         title = '예약 가능';
     }
@@ -6208,31 +6210,34 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     dateText.className = 'z-10';
     dayElement.appendChild(dateText);
     
-    // 통합 예약 상태 배지 추가 - 수정된 부분
+    // 중요: 예약 수 배지 표시 부분 수정
     if (actualTotalBookings > 0) {
         const countBadge = document.createElement('div');
         countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
         
-        // 상태에 따른 배지 설정
+        // 정확한 예약 수 표시
         if (isPartiallyBlocked) {
             if (actualTotalBookings >= 1) {
-                // 부분 마감 + 예약 있음 = 2/2로 표시하여 마감 상태 명확히 함
-                countBadge.textContent = `2/2`;  
+                // 부분 마감인 경우 최대 1개만 가능
+                countBadge.textContent = `1/1`;  // 부분 마감은 1/1로 표시
                 countBadge.style.backgroundColor = '#FEE2E2';
                 countBadge.style.color = '#B91C1C';
             } else {
-                countBadge.textContent = `${actualTotalBookings}/1`;
+                countBadge.textContent = `0/1`;
                 countBadge.style.backgroundColor = '#FEF3C7';
                 countBadge.style.color = '#92400E';
             }
-        } else if (actualTotalBookings >= 2) {
-            countBadge.textContent = `${actualTotalBookings}/2`;
-            countBadge.style.backgroundColor = '#FEE2E2';
-            countBadge.style.color = '#B91C1C';
         } else {
-            countBadge.textContent = `${actualTotalBookings}/2`;
-            countBadge.style.backgroundColor = '#DBEAFE';
-            countBadge.style.color = '#1E40AF';
+            // 일반 예약 상태
+            countBadge.textContent = `${Math.min(actualTotalBookings, 2)}/2`;  // 정확한 숫자로 수정
+            
+            if (actualTotalBookings >= 2) {
+                countBadge.style.backgroundColor = '#FEE2E2';
+                countBadge.style.color = '#B91C1C';
+            } else {
+                countBadge.style.backgroundColor = '#DBEAFE';
+                countBadge.style.color = '#1E40AF';
+            }
         }
         
         dayElement.appendChild(countBadge);
