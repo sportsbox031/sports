@@ -1140,6 +1140,24 @@
 
                 <!-- 관리자 메인 컨텐츠 -->
                 <div class="container mx-auto px-4 py-8">
+                    <!-- 예약 시스템 설정 섹션 - 시각적으로만 숨김 -->
+<div class="hidden">
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">예약 시스템 관리</h2>
+        <div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
+            <div class="flex flex-col">
+                <span class="text-lg font-semibold text-gray-700">예약 상태</span>
+                <span id="bookingStatusText" class="text-sm text-gray-500">
+                    현재 예약을 받고 있지 않습니다
+                </span>
+            </div>
+            <button type="button" id="toggleBookingStatus" 
+                class="px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                예약 시작하기
+            </button>
+        </div>
+    </div>
+</div>
                     <!-- 새로 추가: 통합 관리 UI (전체 관리자만 표시) -->
                     <div id="integratedManagementSection" class="flex items-center justify-between p-6 bg-blue-50 rounded-xl mb-8">
                     <div class="flex flex-col">
@@ -6640,10 +6658,13 @@ async function initializeAdminDashboard(region, username) {
 
         // 예약 상태 토글 버튼 이벤트 리스너 추가
         const toggleButton = document.getElementById('toggleBookingStatus');
-        if (toggleButton) {
-            toggleButton.removeEventListener('click', toggleBookingStatus);
-            toggleButton.addEventListener('click', toggleBookingStatus);
-        }
+if (toggleButton) {
+    toggleButton.removeEventListener('click', toggleBookingStatus);
+    toggleButton.addEventListener('click', toggleBookingStatus);
+    console.log('예약 상태 토글 버튼 이벤트 핸들러 설정됨');
+} else {
+    console.log('예약 상태 토글 버튼을 찾을 수 없음 - 계속 진행');
+}
 
         // 비밀번호 변경 모달 이벤트 리스너 설정
         document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
