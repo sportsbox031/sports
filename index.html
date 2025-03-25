@@ -4892,13 +4892,25 @@ async function loadPendingBookings() {
 
 async function approveBooking(bookingId) {
     try {
+        // 현재 선택된 날짜 저장
+        const selectedDate = currentSelectedDate;
+        
         const response = await apiRequest(`/api/admin/bookings/${bookingId}/approve`, {
             method: 'PUT'
         });
+        
         if (response.success) {
             showAlert('예약이 승인되었습니다.', 'success', 3000);
-            loadPendingBookings();
-            debouncedUpdateCalendarStatus();
+            
+            // 비동기 처리를 위해 await 추가
+            await loadPendingBookings();
+            // 디바운스 대신 즉시 업데이트
+            await updateCalendarStatus();
+            
+            // 만약 모달이 열려있다면 현재 날짜의 예약 정보 다시 로드
+            if (selectedDate && document.getElementById('dateBookingsModal').classList.contains('show')) {
+                await loadDateBookingsIntegrated(selectedDate);
+            }
         }
     } catch (error) {
         console.error('Booking approval error:', error);
@@ -6110,23 +6122,25 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     
     // 통합 예약 상태 배지 추가 (남부/북부 구분해서 표시)
     if (totalBookings > 0) {
-        const countBadge = document.createElement('div');
-        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-        countBadge.textContent = `${southBookings}/${northBookings}`;
-        
-        if (isPartiallyBlocked) {
-            countBadge.style.backgroundColor = '#FEF3C7';
-            countBadge.style.color = '#92400E';
-        } else if (totalBookings >= 4) {
-            countBadge.style.backgroundColor = '#FEE2E2';
-            countBadge.style.color = '#B91C1C';
-        } else {
-            countBadge.style.backgroundColor = '#DBEAFE';
-            countBadge.style.color = '#1E40AF';
-        }
-        
-        dayElement.appendChild(countBadge);
+    const countBadge = document.createElement('div');
+    countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+    
+    // 총 2개 예약 가능하도록 수정
+    countBadge.textContent = `${totalBookings}/2`;
+    
+    if (isPartiallyBlocked) {
+        countBadge.style.backgroundColor = '#FEF3C7';
+        countBadge.style.color = '#92400E';
+    } else if (totalBookings >= 2) {
+        countBadge.style.backgroundColor = '#FEE2E2';
+        countBadge.style.color = '#B91C1C';
+    } else {
+        countBadge.style.backgroundColor = '#DBEAFE';
+        countBadge.style.color = '#1E40AF';
     }
+    
+    dayElement.appendChild(countBadge);
+}
     
     // 날짜 클릭 이벤트 - 통합 상태 모달 표시
     dayElement.addEventListener('click', async function() {
@@ -6160,64 +6174,41 @@ async function loadDateBookingsIntegrated(dateString) {
 
         console.log('통합 예약 정보 로드 중:', dateString);
         
-        // 관리자 지역 정보 확인
-        const adminRegion = sessionStorage.getItem('region');
-        
-        // 남부/북부 동시 조회 또는 지역별 조회
-        let southData, northData;
-        
-        if (adminRegion === 'all') {
-            // 전체 관리자는 모든 지역 조회
-            [southData, northData] = await Promise.all([
-                apiRequest(`/api/admin/bookings/date/${dateString}?region=south`),
-                apiRequest(`/api/admin/bookings/date/${dateString}?region=north`)
-            ]);
-        } else {
-            // 지역 관리자는 해당 지역만 조회
-            const regionData = await apiRequest(`/api/admin/bookings/date/${dateString}?region=${adminRegion}`);
-            if (adminRegion === 'south') {
-                southData = regionData;
-                northData = { success: true, data: [] };
-            } else {
-                southData = { success: true, data: [] };
-                northData = regionData;
-            }
-        }
+        // 남부/북부 동시 조회
+        const [southData, northData] = await Promise.all([
+            apiRequest(`/api/admin/bookings/date/${dateString}?region=south`),
+            apiRequest(`/api/admin/bookings/date/${dateString}?region=north`)
+        ]);
         
         console.log('남부 예약:', southData, '북부 예약:', northData);
 
         const tbody = document.getElementById('dateBookingsList');
         const modalDate = document.getElementById('modalDate');
         
-        modalDate.textContent = adminRegion === 'all' ? 
-            `${formatDate(dateString)} (통합)` : 
-            `${formatDate(dateString)} (${adminRegion === 'south' ? '남부' : '북부'})`;
-            
+        // 단순히 날짜만 표시 (통합이라는 표현도 제거)
+        modalDate.textContent = `${formatDate(dateString)}`;
         currentSelectedDate = dateString;
 
         // 모달 버튼 상태 설정
         setupIntegratedModalButtons(dateString);
 
         if (southData.success && northData.success) {
-            // 남부/북부 데이터 통합 또는 필터링
-            let southBookings = southData.data || [];
-            let northBookings = northData.data || [];
+            // 남부/북부 데이터 통합
+            const southBookings = southData.data || [];
+            const northBookings = northData.data || [];
             
             // 유효한 예약만 필터링 (취소/거부/취소대기 제외)
+            // 수정: 지역 표시 제거
             const activeBookings = [
                 ...southBookings.map(booking => ({
                     ...booking, 
-                    // 단체명에 지역 표시 (전체 관리자만)
-                    group_name: adminRegion === 'all' ? 
-                        `${booking.group_name} (남부)` : booking.group_name,
-                    regionText: '남부'
+                    // 지역 표시 제거 - 단체명만 그대로 사용
+                    regionText: 'south' // 내부 처리용으로만 사용
                 })),
                 ...northBookings.map(booking => ({
                     ...booking, 
-                    // 단체명에 지역 표시 (전체 관리자만)
-                    group_name: adminRegion === 'all' ? 
-                        `${booking.group_name} (북부)` : booking.group_name,
-                    regionText: '북부'
+                    // 지역 표시 제거 - 단체명만 그대로 사용
+                    regionText: 'north' // 내부 처리용으로만 사용
                 }))
             ].filter(booking => 
                 booking.status !== 'cancelled' && 
@@ -6230,12 +6221,10 @@ async function loadDateBookingsIntegrated(dateString) {
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.group_name}
-                            ${adminRegion === 'all' ? 
-                                `<span class="ml-2 px-2 py-1 rounded-full text-xs 
-                                    ${booking.regionText === '남부' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                    ${booking.regionText}
-                                </span>` : ''
-                            }
+                            <!-- 지역 뱃지를 숨김 처리 -->
+                            <span class="hidden">
+                                ${booking.regionText}
+                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
@@ -6248,7 +6237,7 @@ async function loadDateBookingsIntegrated(dateString) {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.status === 'approved' ? `
-                                <button onclick="forceCancel(${booking.id}, '${dateString}', '${booking.regionText === '남부' ? 'south' : 'north'}')" 
+                                <button onclick="forceCancel(${booking.id}, '${dateString}', '${booking.regionText}')" 
                                     class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
                                     강제취소
                                 </button>
