@@ -5151,14 +5151,33 @@ async function refreshCalendarStatus(region) {
     try {
         console.log(`[refreshCalendarStatus] 지역: ${region} 상태 새로고침 중`);
         
-        // 지역 정보를 쿼리 파라미터로 명시적 전달
-        const url = `/api/bookings/status?region=${region}`;
+        // 관리자 타입 확인
+        const adminRegion = sessionStorage.getItem('region');
+        const isIntegratedAdmin = adminRegion === 'all';
         
-        const data = await apiRequest(url);
-        console.log('[refreshCalendarStatus] 받은 데이터:', data);
-        
-        // 전역 상태 업데이트
-        bookingStatus = data.data;
+        if (isIntegratedAdmin) {
+            // 통합 관리자는 남부/북부 데이터를 모두 가져와야 함
+            console.log('통합 관리자 감지, 남부/북부 데이터 모두 가져오기');
+            
+            // 두 지역 데이터 모두 가져오기
+            const [southResponse, northResponse] = await Promise.all([
+                apiRequest('/api/bookings/status?region=south'),
+                apiRequest('/api/bookings/status?region=north')
+            ]);
+            
+            // 데이터 구조 유지: 지역별로 분리하여 저장
+            bookingStatus = {
+                south: southResponse.data || {},
+                north: northResponse.data || {}
+            };
+        } else {
+            // 지역 관리자는 기존 로직 유지
+            const url = `/api/bookings/status?region=${region}`;
+            const data = await apiRequest(url);
+            
+            // 전역 상태 업데이트
+            bookingStatus = data.data;
+        }
         
         // 관리자 캘린더 다시 렌더링
         renderAdminCalendar(adminCurrentDate);
@@ -6590,6 +6609,16 @@ function setupModalButtons(dateString) {
     document.getElementById('partialBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
             await blockDate(dateString, 'partial');
+            
+            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
+            if (adminRegion === 'all') {
+                // 전체 캘린더 상태 강제 업데이트 (디바운스 없이 즉시 실행)
+                await updateCalendarStatus(); // 기존 디바운스 함수 대신 직접 호출
+            } else {
+                // 지역 관리자의 경우 해당 지역만 갱신
+                await refreshCalendarStatus(targetRegion);
+            }
+            
             closeDateBookingsModal();
         }
     };
@@ -6597,6 +6626,14 @@ function setupModalButtons(dateString) {
     document.getElementById('fullBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
             await blockDate(dateString, 'full');
+            
+            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
+            if (adminRegion === 'all') {
+                await updateCalendarStatus(); // 디바운스 없이 직접 호출
+            } else {
+                await refreshCalendarStatus(targetRegion);
+            }
+            
             closeDateBookingsModal();
         }
     };
@@ -6604,6 +6641,14 @@ function setupModalButtons(dateString) {
     document.getElementById('unblockDateBtn').onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
             await unblockDate(dateString);
+            
+            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
+            if (adminRegion === 'all') {
+                await updateCalendarStatus(); // 디바운스 없이 직접 호출
+            } else {
+                await refreshCalendarStatus(targetRegion);
+            }
+            
             closeDateBookingsModal();
         }
     };
