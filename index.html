@@ -5930,41 +5930,62 @@ function renderCalendar(date) {
         const dateStatus = bookingStatus[dateString];
 
         if (selectedDateObj < today) {
-    dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
-    dayElement.title = '지난 날짜';
-} 
-// 관리자가 직접 마감한 경우 (예약이 없는 상태)
-else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
-    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-    dayElement.title = '관리자 전체 마감';
-} 
-// 예약이 2개 이상이면 예약 마감
-else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
-    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감 (2건 모두 예약됨)';
-} 
-else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감';
-} 
-else if (dateStatus?.isPartiallyBlocked) {
-    // 부분 마감 상태이지만 일반 예약 가능 날짜와 같은 스타일 적용
-    dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-    dayElement.title = '예약 가능';
-    addDateClickHandler(dayElement, year, month, currentDay);
-} 
-else if (dateStatus?.hasBooking) {
-    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-    addDateClickHandler(dayElement, year, month, currentDay);
-} 
-else {
-    dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
-    dayElement.title = '예약 가능';
-    addDateClickHandler(dayElement, year, month, currentDay);
-}
+            dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
+            dayElement.title = '지난 날짜';
+        } 
+        // 관리자가 직접 마감한 경우 (예약이 없는 상태)
+        else if (dateStatus?.isFullyBlocked) {
+            dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+            dayElement.title = '관리자 전체 마감';
+        } 
+        // 예약이 2개 이상이면 예약 마감
+        else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감 (2건 모두 예약됨)';
+        } 
+        else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감';
+        } 
+        else if (dateStatus?.isPartiallyBlocked) {
+            // 부분 마감 상태이지만 일반 예약 가능 날짜와 같은 스타일 적용
+            dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = '부분 마감 (1개만 예약 가능)';
+            addDateClickHandler(dayElement, year, month, currentDay);
+        } 
+        else if (dateStatus?.hasBooking) {
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            addDateClickHandler(dayElement, year, month, currentDay);
+        } 
+        else {
+            dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
+            dayElement.title = '예약 가능';
+            addDateClickHandler(dayElement, year, month, currentDay);
+        }
 
         dayElement.textContent = currentDay;
+
+        // 예약 건수 배지 추가 (관리자 대시보드와 유사한 스타일로)
+        if (dateStatus?.bookingCount > 0) {
+            const countBadge = document.createElement('div');
+            countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+            countBadge.textContent = `${Math.min(dateStatus.bookingCount, 2)}/2`; // 최대 2개로 제한
+            
+            if (dateStatus.isPartiallyBlocked) {
+                countBadge.style.backgroundColor = '#FEF3C7';
+                countBadge.style.color = '#92400E';
+            } else if (dateStatus.bookingCount >= 2) {
+                countBadge.style.backgroundColor = '#FEE2E2';
+                countBadge.style.color = '#B91C1C';
+            } else {
+                countBadge.style.backgroundColor = '#DBEAFE';
+                countBadge.style.color = '#1E40AF';
+            }
+            
+            dayElement.style.position = 'relative';
+            dayElement.appendChild(countBadge);
+        }
 
         if (
             !dateStatus?.isFullyBlocked && 
