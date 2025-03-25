@@ -3585,41 +3585,36 @@ function showHomeScreen() {
     document.getElementById('userDashboard')?.classList.add('hidden');
     document.getElementById('adminDashboard')?.classList.add('hidden');
     
-    // DOM이 완전히 로드된 후 네비게이션 업데이트를 위해 setTimeout 사용
+    // 약간의 지연 후 네비게이션 업데이트
     setTimeout(() => {
         // 로그인 상태일 경우 네비게이션 바 수정
         if (token && role) {
             console.log('로그인 사용자 네비게이션 업데이트 시작');
             
-            const homeNav = homeScreen.querySelector('nav');
-            if (!homeNav) {
-                console.error('네비게이션 바 요소를 찾을 수 없습니다');
+            // 네비게이션 요소 찾기 (선택자 수정)
+            const nav = homeScreen.querySelector('nav');
+            if (!nav) {
+                console.error('네비게이션 요소를 찾을 수 없습니다');
                 return; 
             }
+            
+            // 기존 로그인/회원가입 버튼 찾기
+            const loginButton = nav.querySelector('button');
+            if (loginButton) {
+                loginButton.style.display = 'none';
+            } else {
+                console.log('로그인 버튼을 찾을 수 없음, 계속 진행');
+            }
 
-            const navButtons = homeNav.querySelector('.items-center.space-x-8');
-            if (!navButtons) {
-                console.error('네비게이션 버튼 컨테이너를 찾을 수 없습니다');
-                return; 
+            // 이미 추가된 로그인 상태 버튼들이 있다면 제거
+            const existingLoginButtons = nav.querySelector('.login-state-buttons');
+            if (existingLoginButtons) {
+                existingLoginButtons.remove();
             }
 
             const username = sessionStorage.getItem('username');
             const region = sessionStorage.getItem('region');
             
-            console.log('사용자 정보:', {username, region});
-
-            // 기존 로그인/회원가입 버튼 찾기
-            const loginButton = navButtons.querySelector('button');
-            if (loginButton) {
-                loginButton.style.display = 'none';
-            }
-
-            // 이미 추가된 로그인 상태 버튼들이 있다면 제거
-            const existingLoginButtons = navButtons.querySelector('.login-state-buttons');
-            if (existingLoginButtons) {
-                existingLoginButtons.remove();
-            }
-
             // 새로운 버튼들 추가
             const newButtons = document.createElement('div');
             newButtons.className = 'flex items-center space-x-4 login-state-buttons';
@@ -3653,7 +3648,8 @@ function showHomeScreen() {
                 </button>
             `;
 
-            navButtons.appendChild(newButtons);
+            // 버튼 추가 위치 수정
+            nav.appendChild(newButtons);
             console.log('로그인 상태 버튼 추가 완료');
         } else {
             console.log('로그인되지 않은 상태, 기본 네비게이션 유지');
@@ -3664,7 +3660,7 @@ function showHomeScreen() {
         
         // 중요: 네비게이션 바 수정 후 관리자 상태 확인
         checkAdminStatus();
-    }, 100); // 약간의 지연 시간을 두어 DOM이 업데이트될 시간 제공
+    }, 100);
 }
 
 // 대시보드로 돌아가는 함수
