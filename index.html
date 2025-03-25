@@ -6127,13 +6127,16 @@ if (isAdminFullyBlocked) {
     const southBookingCount = southStatus?.bookingCount || 0;
     const northBookingCount = northStatus?.bookingCount || 0;
     
-    // 실제 총 예약 수
-    const actualTotalBookings = southBookingCount + northBookingCount;
+    // 실제 총 예약 수 (최대 2개로 제한)
+    const actualTotalBookings = Math.min(southBookingCount + northBookingCount, 2);
     
-    // 수정: 실제 예약 수를 표시
+    // 디버깅 로그 추가
+    console.log(`날짜: ${dateString}, 남부예약: ${southBookingCount}, 북부예약: ${northBookingCount}, 총예약: ${actualTotalBookings}`);
+    
+    // 수정: 실제 예약 수를 표시 (최대 2개)
     countBadge.textContent = `${actualTotalBookings}/2`;
     
-    // 배지 스타일 설정 (기존 코드 유지)
+    // 배지 스타일 설정
     if (isPartiallyBlocked) {
         countBadge.style.backgroundColor = '#FEF3C7';
         countBadge.style.color = '#92400E';
