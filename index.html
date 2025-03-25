@@ -5143,31 +5143,35 @@ async function unblockDate(date) {
 // 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
 async function updateCalendarStatus() {
     try {
-        showLoading();
         console.log('캘린더 상태 업데이트 중...');
         
         const role = sessionStorage.getItem('role');
         const adminRegion = sessionStorage.getItem('region');
-        const isIntegratedAdmin = adminRegion === 'all';
         
-        // 통합 관리자인 경우 처리 - 중요: 수정된 부분
-        if (role === 'admin' && isIntegratedAdmin) {
+        // 전체 관리자인 경우 남부/북부 모두 가져오기
+        if (role === 'admin' && adminRegion === 'all') {
             console.log('통합 관리자용 캘린더 상태 조회');
             
-            // 남부/북부 모두 가져오기
-            const [southResponse, northResponse] = await Promise.all([
-                apiRequest('/api/bookings/status?region=south'),
-                apiRequest('/api/bookings/status?region=north')
-            ]);
-            
-            // 데이터 구조 유지: 지역별로 분리하여 저장
-            bookingStatus = {
-                south: southResponse.data || {},
-                north: northResponse.data || {}
-            };
+            try {
+                // 남부/북부 데이터를 명시적으로 분리해서 저장
+                const [southResponse, northResponse] = await Promise.all([
+                    apiRequest('/api/bookings/status?region=south'),
+                    apiRequest('/api/bookings/status?region=north')
+                ]);
+                
+                // 데이터 구조 유지: 지역별로 분리하여 저장
+                bookingStatus = {
+                    south: southResponse.data || {},
+                    north: northResponse.data || {}
+                };
+                
+                console.log('남부/북부 예약 상태 로드 완료');
+            } catch (error) {
+                console.error('통합 관리자 예약 상태 로드 오류:', error);
+            }
         } else {
             // 일반 사용자 또는 지역 관리자
-            const userRegion = adminRegion || sessionStorage.getItem('region') || 'south';
+            const userRegion = adminRegion || sessionStorage.getItem('region');
             
             const response = await apiRequest(`/api/bookings/status?region=${userRegion}`);
             bookingStatus = response.data || {};
@@ -5188,9 +5192,6 @@ async function updateCalendarStatus() {
         console.log('캘린더 상태 업데이트 완료');
     } catch (error) {
         console.error('캘린더 상태 업데이트 오류:', error);
-        showAlert('캘린더 정보를 업데이트하는데 실패했습니다.', 'error');
-    } finally {
-        hideLoading();
     }
 }
 
@@ -6077,29 +6078,34 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     
     // 수정된 로직: 예약 상태에 따른 클래스와 타이틀 설정
     let className, title, bgColor;
-    
-    if (isAdminFullyBlocked) {
-        // 관리자가 직접 마감한 경우
-        className = `${baseClass} blocked cursor-pointer`;
-        title = '관리자 마감';
-    } else if (totalBookings >= 2) {
-        // 수정: 예약이 2개 이상이면 예약 마감으로 표시
-        className = `${baseClass} full cursor-pointer`;
-        title = '예약 마감 (2건 예약됨)';
-    } else if (isPartiallyBlocked) {
-        // 부분 마감 상태
-        className = `${baseClass} partially-blocked cursor-pointer`;
-        title = '부분 마감';
-        bgColor = '#F97316';
-    } else if (totalBookings > 0) {
-        // 예약 있음
-        className = `${baseClass} booked cursor-pointer`;
-        title = `${totalBookings}개 예약됨`;
-    } else {
-        // 예약 없음
-        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-        title = '예약 가능';
-    }
+
+// 남부/북부 예약 수 직접 가져오기
+const southBookingCount = southStatus?.bookingCount || 0;
+const northBookingCount = northStatus?.bookingCount || 0;
+const actualTotalBookings = southBookingCount + northBookingCount;
+
+if (isAdminFullyBlocked) {
+    // 관리자가 직접 마감한 경우
+    className = `${baseClass} blocked cursor-pointer`;
+    title = '관리자 마감';
+} else if (actualTotalBookings >= 2) {
+    // 실제 예약이 2개 이상인 경우에만 마감으로 표시
+    className = `${baseClass} full cursor-pointer`;
+    title = '예약 마감 (2건 예약됨)';
+} else if (isPartiallyBlocked) {
+    // 부분 마감 상태이지만 예약이 없으면 부분 마감으로 표시
+    className = `${baseClass} partially-blocked cursor-pointer`;
+    title = '부분 마감';
+    bgColor = '#F97316';
+} else if (actualTotalBookings > 0) {
+    // 예약 있음
+    className = `${baseClass} booked cursor-pointer`;
+    title = `${actualTotalBookings}개 예약됨`;
+} else {
+    // 예약 없음
+    className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+    title = '예약 가능';
+}
     
     // 클래스 및 스타일 적용
     dayElement.className = className;
@@ -6117,38 +6123,21 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     const countBadge = document.createElement('div');
     countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
     
-    // 각 지역의 고유 단체명 카운트
-    const southGroupNames = new Set();
-    const northGroupNames = new Set();
+    // 남부/북부 예약 수 직접 사용
+    const southBookingCount = southStatus?.bookingCount || 0;
+    const northBookingCount = northStatus?.bookingCount || 0;
     
-    // 남부/북부 예약 데이터가 있을 경우 단체명 수집
-    if (southStatus) {
-        Object.values(southStatus).forEach(booking => {
-            if (booking && booking.group_name) {
-                southGroupNames.add(booking.group_name);
-            }
-        });
-    }
+    // 실제 총 예약 수
+    const actualTotalBookings = southBookingCount + northBookingCount;
     
-    if (northStatus) {
-        Object.values(northStatus).forEach(booking => {
-            if (booking && booking.group_name) {
-                northGroupNames.add(booking.group_name);
-            }
-        });
-    }
+    // 수정: 실제 예약 수를 표시
+    countBadge.textContent = `${actualTotalBookings}/2`;
     
-    // 모든 고유 단체명 개수
-    const uniqueGroupCount = new Set([...southGroupNames, ...northGroupNames]).size;
-    
-    // 실제 예약 수는 고유 단체명 개수로 표시
-    countBadge.textContent = `${uniqueGroupCount}/2`;
-    
-    // 배지 스타일 설정
+    // 배지 스타일 설정 (기존 코드 유지)
     if (isPartiallyBlocked) {
         countBadge.style.backgroundColor = '#FEF3C7';
         countBadge.style.color = '#92400E';
-    } else if (uniqueGroupCount >= 2) {
+    } else if (actualTotalBookings >= 2) {
         countBadge.style.backgroundColor = '#FEE2E2';
         countBadge.style.color = '#B91C1C';
     } else {
