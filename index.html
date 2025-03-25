@@ -1141,7 +1141,7 @@
                 <!-- 관리자 메인 컨텐츠 -->
                 <div class="container mx-auto px-4 py-8">
                     <!-- 새로 추가: 통합 관리 UI (전체 관리자만 표시) -->
-                <div id="integratedManagementSection" class="flex items-center justify-between p-6 bg-blue-50 rounded-xl">
+                    <div id="integratedManagementSection" class="flex items-center justify-between p-6 bg-blue-50 rounded-xl mb-8">
                     <div class="flex flex-col">
                         <span class="text-lg font-semibold text-blue-700">통합 예약 관리</span>
                         <span id="integratedStatusText" class="text-sm text-blue-500">
@@ -5756,13 +5756,12 @@ function initializeAdminCalendar() {
         adminCurrentDate = new Date();
     }
 
-    // 기존 이벤트 핸들러 제거
+    // 기존 이벤트 핸들러 제거 후 새로 추가
     const newPrevButton = prevButton.cloneNode(true);
     const newNextButton = nextButton.cloneNode(true);
     prevButton.parentNode.replaceChild(newPrevButton, prevButton);
     nextButton.parentNode.replaceChild(newNextButton, nextButton);
 
-    // 새 이벤트 핸들러 등록
     newPrevButton.addEventListener('click', function() {
         adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
                                   adminCurrentDate.getMonth() - 1, 1);
@@ -5777,6 +5776,13 @@ function initializeAdminCalendar() {
 
     // 초기 달력 렌더링
     renderAdminCalendar(adminCurrentDate);
+    
+    // 디버그 로그 - 달력 확인
+    console.log('관리자 달력 초기화 완료:', {
+        달력요소: adminCalendar,
+        날짜: adminCurrentDate,
+        달력_HTML: adminCalendar.innerHTML
+    });
 }
 
 // 일반 사용자용 날짜 클릭 핸들러
