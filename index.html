@@ -5151,7 +5151,7 @@ async function refreshCalendarStatus(region) {
     try {
         console.log(`[refreshCalendarStatus] 지역: ${region} 상태 새로고침 중`);
         
-        // 관리자 타입 확인
+        // 관리자 유형 확인
         const adminRegion = sessionStorage.getItem('region');
         const isIntegratedAdmin = adminRegion === 'all';
         
@@ -5170,6 +5170,8 @@ async function refreshCalendarStatus(region) {
                 south: southResponse.data || {},
                 north: northResponse.data || {}
             };
+            
+            console.log('통합 데이터 구조:', bookingStatus);
         } else {
             // 지역 관리자는 기존 로직 유지
             const url = `/api/bookings/status?region=${region}`;
