@@ -3774,7 +3774,7 @@ async function showDashboard(role) {
             try {
                 // 예약 시스템 상태 확인
                 const settings = await apiRequest('/api/booking-settings');
-                updateUserDashboardState(settings.data?.is_active);
+                updateUserDashboardState(settings.data?.is_active === true);
                 
                 // 사용자 대시보드 초기화
                 await initializeUserDashboard(region, username);
@@ -3815,7 +3815,7 @@ async function initializeUserDashboard(region, username) {
 
     try {
         const settings = await apiRequest('/api/booking-settings');
-        updateUserDashboardState(settings.data?.is_active);
+        updateUserDashboardState(settings.data?.is_active === true);
         
         initializeCalendar();
         initializeTimeSelects();
