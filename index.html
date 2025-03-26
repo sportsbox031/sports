@@ -4015,8 +4015,8 @@ async function initializeAdminDashboard(region, username) {
         // 공통 초기화 작업
         await Promise.all([
             loadRegionStatistics(),
-            initializeAdminCalendar(),
             updateCalendarStatus(), // 디바운스 없이 직접 호출
+            initializeAdminCalendar(),
             loadPendingUsers(),
             loadPendingBookings(),
             loadAllUsers()
@@ -5202,7 +5202,10 @@ async function unblockDate(date) {
 // 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
 async function updateCalendarStatus() {
     try {
-        console.log('캘린더 상태 업데이트 중...');
+        console.log('캘린더 상태 업데이트 중...', {
+            role: sessionStorage.getItem('role'),
+            region: sessionStorage.getItem('region')
+        });
         
         const role = sessionStorage.getItem('role');
         const adminRegion = sessionStorage.getItem('region');
@@ -5218,6 +5221,14 @@ async function updateCalendarStatus() {
                     apiRequest('/api/bookings/status?region=north')
                 ]);
                 
+                // 추가: 응답 성공 여부 확인
+                console.log('통합 데이터 로드 결과:', { 
+                    south: southResponse.success, 
+                    north: northResponse.success,
+                    southData: southResponse.data ? '있음' : '없음',
+                    northData: northResponse.data ? '있음' : '없음'
+                });
+                
                 // 데이터 구조 유지: 지역별로 분리하여 저장
                 bookingStatus = {
                     south: southResponse.data || {},
@@ -5231,6 +5242,7 @@ async function updateCalendarStatus() {
         } else {
             // 일반 사용자 또는 지역 관리자
             const userRegion = adminRegion || sessionStorage.getItem('region');
+            console.log(`${userRegion} 지역 데이터 로드 중...`);
             
             const response = await apiRequest(`/api/bookings/status?region=${userRegion}`);
             bookingStatus = response.data || {};
@@ -5240,6 +5252,8 @@ async function updateCalendarStatus() {
                 updateRemainingBookingsDisplay(response.remainingBookings);
             }
         }
+        
+        console.log('달력 데이터 로드 완료, 렌더링 시작', bookingStatus);
         
         // 역할에 따라 적절한 캘린더 렌더링
         if (role === 'admin') {
