@@ -752,6 +752,8 @@
                         <p class="text-gray-500 mt-2">스포츠박스 예약 시스템에 오신 것을 환영합니다</p>
                     </div>
                     <form id="loginForm" class="space-y-6">
+                        <!-- 오류 메시지 표시 영역 -->
+    <div id="loginErrorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg text-sm hidden"></div>
                         <div>
                             <label class="block text-gray-700 text-sm font-semibold mb-2">아이디</label>
                             <div class="relative">
@@ -3567,49 +3569,15 @@ async function apiRequest(endpoint, options = {}) {
     
     while (attempts < maxAttempts) {
         try {
-            console.log(`API 요청 시도 ${attempts+1}/${maxAttempts}: ${endpoint}`);
-            attempts++;
+            // 기존 try 블록 코드...
             
-            const token = sessionStorage.getItem('token');
-            if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup') 
-                && !endpoint.includes('/public')) {
-                throw new Error('인증이 필요합니다.');
-            }
-
-            const defaultHeaders = {
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            };
-            if (options.body && !(options.body instanceof FormData)) {
-                defaultHeaders['Content-Type'] = 'application/json';
-            }
-            
-            // 타임아웃 설정으로 무한 대기 방지
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-            
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                ...options,
-                headers: {
-                    ...defaultHeaders,
-                    ...options.headers
-                },
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log(`API 응답 (${endpoint}):`, data.success ? '성공' : '실패');
+            // 여기까지 왔다면 요청이 성공한 것
+            hideLoading();
             return data;
         } catch (error) {
             console.error(`API 요청 오류 (시도 ${attempts}/${maxAttempts}):`, error);
             
-            // 네트워크 오류면 재시도
+            // 네트워크 오류는 재시도 가능
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
                 if (attempts < maxAttempts) {
                     console.log(`2초 후 재시도...`);
@@ -3618,17 +3586,14 @@ async function apiRequest(endpoint, options = {}) {
                 }
             }
             
-            // 인증 오류면 로그아웃
+            // 인증 오류 처리
             if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')
                 && !endpoint.includes('/public')) {
                 logout();
             }
             
+            hideLoading();
             throw error;
-        } finally {
-            if (attempts === maxAttempts || !error) {
-                hideLoading();
-            }
         }
     }
     
@@ -5686,9 +5651,24 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
     }
 }, 500);
 
+// 오류 메시지 표시 함수
+function showLoginError(message) {
+    const errorElement = document.getElementById('loginErrorMessage');
+    errorElement.textContent = message;
+    errorElement.classList.remove('hidden');
+    
+    // 3초 후 메시지 숨기기
+    setTimeout(() => {
+        errorElement.classList.add('hidden');
+    }, 5000);
+}
+
 // 로그인 함수도 수정
 async function login(username, password) {
     try {
+        // 오류 메시지 초기화
+        document.getElementById('loginErrorMessage').classList.add('hidden');
+        
         showLoading();
         const response = await apiRequest('/api/login', {
             method: 'POST',
@@ -5723,6 +5703,8 @@ async function login(username, password) {
         }
     } catch (error) {
         console.error('Login error:', error);
+        // 로그인 폼에 오류 메시지 표시
+        showLoginError(error.message || '로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
         showAlert(error.message || '로그인에 실패했습니다.', 'error');
     } finally {
         hideLoading();
