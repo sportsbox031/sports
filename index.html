@@ -6952,12 +6952,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     checkAdminStatus();
 
     // 세션 정보 가져오기 (한 번만 선언)
-    const authtoken = sessionStorage.getItem('token');
-    const userrole = sessionStorage.getItem('role');
-    const region = sessionStorage.getItem('region');
+    const sessionToken = sessionStorage.getItem('token');
+    const sessionRole = sessionStorage.getItem('role');
+    const sessionRegion = sessionStorage.getItem('region');
     
     // 관리자 계정 확인 및 통합 예약 상태 체크
-    if (role === 'admin' && region === 'all') {
+    if (sessionRole === 'admin' && sessionRegion === 'all') {
         try {
             const response = await apiRequest('/api/admin/booking-settings');
             if (response.success) {
@@ -7400,14 +7400,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeTimeSelects();
 
     // 자동 로그인 체크
-    const token = sessionStorage.getItem('token');
-    const role = sessionStorage.getItem('role');
-    
-    if (token && role) {
+    if (sessionToken && sessionRole) {
         try {
             const isValid = await validateStoredToken();
             if (isValid) {
-                showDashboard(role);
+                showDashboard(sessionRole);
             } else {
                 logout();
                 showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info', 3000);
