@@ -6951,10 +6951,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadHomeNotices();
     checkAdminStatus();
 
-// 관리자 계정 확인 및 통합 예약 상태 체크
-const role = sessionStorage.getItem('role');
+    // 세션 정보 가져오기 (한 번만 선언)
+    const authtoken = sessionStorage.getItem('token');
+    const userrole = sessionStorage.getItem('role');
     const region = sessionStorage.getItem('region');
     
+    // 관리자 계정 확인 및 통합 예약 상태 체크
     if (role === 'admin' && region === 'all') {
         try {
             const response = await apiRequest('/api/admin/booking-settings');
@@ -6975,126 +6977,125 @@ const role = sessionStorage.getItem('role');
             console.error('통합 예약 상태 확인 오류:', error);
         }
     }
-});
 
-// 모달 외부 클릭 시 닫기
-document.getElementById('noticeDetailModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeNoticeDetail();
-    }
-});
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('noticeDetailModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeNoticeDetail();
+        }
+    });
 
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !document.getElementById('noticeDetailModal').classList.contains('hidden')) {
-        closeNoticeDetail();
-    }
-});
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('noticeDetailModal').classList.contains('hidden')) {
+            closeNoticeDetail();
+        }
+    });
 
     // 모달 관련 이벤트 리스너 설정
-const modals = document.querySelectorAll('.modal');
-modals.forEach(modal => {
-    // 모달 내부 클릭 시 이벤트 전파 방지
-    const modalContent = modal.querySelector('.bg-white');
-    if (modalContent) {
-        modalContent.addEventListener('click', function(e) {
-            e.stopPropagation();
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        // 모달 내부 클릭 시 이벤트 전파 방지
+        const modalContent = modal.querySelector('.bg-white');
+        if (modalContent) {
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // 모달 바깥 영역 클릭 시 닫기
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                // 모달 ID에 따라 적절한 닫기 함수 호출
+                if (this.id === 'noticeDetailModal') {
+                    closeNoticeDetail();
+                } else if (this.id === 'signupModal') {
+                    document.getElementById('closeSignup').click();
+                } else if (this.id === 'noticeWriteModal') {
+                    closeNoticeWriteModal();
+                } else if (this.id === 'userProfileModal') {
+                    closeUserProfileModal();
+                } else if (this.id === 'changePasswordModal') {
+                    closeChangePasswordModal();
+                } else if (this.id === 'dateBookingsModal') {
+                    closeDateBookingsModal();
+                } else {
+                    // 일반적인 모달 닫기
+                    this.classList.remove('show');
+                    setTimeout(() => {
+                        this.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }, 300);
+                }
+            }
         });
-    }
-    
-    // 모달 바깥 영역 클릭 시 닫기
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            // 모달 ID에 따라 적절한 닫기 함수 호출
-            if (this.id === 'noticeDetailModal') {
-                closeNoticeDetail();
-            } else if (this.id === 'signupModal') {
-                document.getElementById('closeSignup').click();
-            } else if (this.id === 'noticeWriteModal') {
-                closeNoticeWriteModal();
-            } else if (this.id === 'userProfileModal') {
-                closeUserProfileModal();
-            } else if (this.id === 'changePasswordModal') {
-                closeChangePasswordModal();
-            } else if (this.id === 'dateBookingsModal') {
-                closeDateBookingsModal();
-            } else {
-                // 일반적인 모달 닫기
-                this.classList.remove('show');
-                setTimeout(() => {
-                    this.style.display = 'none';
-                    document.body.style.overflow = '';
-                }, 300);
+    });
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const visibleModal = document.querySelector('.modal.show');
+            if (visibleModal) {
+                if (visibleModal.id === 'noticeDetailModal') {
+                    closeNoticeDetail();
+                } else if (visibleModal.id === 'signupModal') {
+                    document.getElementById('closeSignup').click();
+                } else if (visibleModal.id === 'noticeWriteModal') {
+                    closeNoticeWriteModal();
+                } else if (visibleModal.id === 'userProfileModal') {
+                    closeUserProfileModal();
+                } else if (visibleModal.id === 'changePasswordModal') {
+                    closeChangePasswordModal();
+                } else if (visibleModal.id === 'dateBookingsModal') {
+                    closeDateBookingsModal();
+                } else {
+                    // 일반적인 모달 닫기
+                    visibleModal.classList.remove('show');
+                    setTimeout(() => {
+                        visibleModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }, 300);
+                }
             }
         }
     });
-});
 
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const visibleModal = document.querySelector('.modal.show');
-        if (visibleModal) {
-            if (visibleModal.id === 'noticeDetailModal') {
-                closeNoticeDetail();
-            } else if (visibleModal.id === 'signupModal') {
-                document.getElementById('closeSignup').click();
-            } else if (visibleModal.id === 'noticeWriteModal') {
-                closeNoticeWriteModal();
-            } else if (visibleModal.id === 'userProfileModal') {
-                closeUserProfileModal();
-            } else if (visibleModal.id === 'changePasswordModal') {
-                closeChangePasswordModal();
-            } else if (visibleModal.id === 'dateBookingsModal') {
-                closeDateBookingsModal();
-            } else {
-                // 일반적인 모달 닫기
-                visibleModal.classList.remove('show');
-                setTimeout(() => {
-                    visibleModal.style.display = 'none';
-                    document.body.style.overflow = '';
-                }, 300);
-            }
-        }
-    }
-});
+    // 로그인 버튼과 예약 버튼에 명시적인 이벤트 중지 추가
+    document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button => {
+        const originalOnclick = button.onclick;
+        button.onclick = function(e) {
+            e.stopPropagation(); // 이벤트 전파 중지
+            if (originalOnclick) originalOnclick.call(this, e);
+        };
+    });
 
-// 로그인 버튼과 예약 버튼에 명시적인 이벤트 중지 추가
-document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button => {
-    const originalOnclick = button.onclick;
-    button.onclick = function(e) {
-        e.stopPropagation(); // 이벤트 전파 중지
-        if (originalOnclick) originalOnclick.call(this, e);
-    };
-});
-
-    // 여기에 지역 필터 변경 이벤트 리스너 추가
+    // 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
-    try {
-        const selectedRegion = e.target.value;
-        console.log(`[regionFilter] 지역 변경됨: ${selectedRegion}`);
-        
-        // 예약 설정 상태 로드
-        const response = await apiRequest('/api/admin/booking-settings');
-        if (response.success) {
-            const settings = response.data;
-            const regionSettings = settings[selectedRegion];
-            updateBookingStatusUI(regionSettings?.is_active || false);
+        try {
+            const selectedRegion = e.target.value;
+            console.log(`[regionFilter] 지역 변경됨: ${selectedRegion}`);
+            
+            // 예약 설정 상태 로드
+            const response = await apiRequest('/api/admin/booking-settings');
+            if (response.success) {
+                const settings = response.data;
+                const regionSettings = settings[selectedRegion];
+                updateBookingStatusUI(regionSettings?.is_active || false);
+            }
+            
+            // 선택된 지역에 대한 캘린더 상태 즉시 새로고침 (디바운스 없이 직접 호출)
+            await refreshCalendarStatus(selectedRegion);
+            
+            // 다른 데이터 새로고침
+            await Promise.all([
+                loadRegionStatistics(),
+                loadPendingBookings()
+            ]);
+        } catch (error) {
+            console.error('Region filter change error:', error);
+            showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
         }
-        
-        // 선택된 지역에 대한 캘린더 상태 즉시 새로고침 (디바운스 없이 직접 호출)
-        await refreshCalendarStatus(selectedRegion);
-        
-        // 다른 데이터 새로고침
-        await Promise.all([
-            loadRegionStatistics(),
-            loadPendingBookings()
-        ]);
-    } catch (error) {
-        console.error('Region filter change error:', error);
-        showAlert('지역 설정 로드 중 오류가 발생했습니다.', 'error');
-    }
-});
+    });
 
     // 시군 선택에 따른 지역 자동 분류 함수
     function determineRegion(city) {
@@ -7122,28 +7123,28 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
     });
 
     // 로그인 폼 제출
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    try {
-        showLoading();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        await login(username, password);
-    } catch (error) {
-        console.error('Login submission error:', error);
-        showAlert('로그인 처리 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-});
+    document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        try {
+            showLoading();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            await login(username, password);
+        } catch (error) {
+            console.error('Login submission error:', error);
+            showAlert('로그인 처리 중 오류가 발생했습니다.', 'error');
+        } finally {
+            hideLoading();
+        }
+    });
 
     // 회원가입 모달 컨트롤
-    document.getElementById('showSignup').addEventListener('click', function() {
-    document.getElementById('signupModal').classList.add('show');
-    initializeCitySelect(); // 함수 호출 추가
-}); // 닫는 괄호 추가
+    document.getElementById('showSignup')?.addEventListener('click', function() {
+        document.getElementById('signupModal').classList.add('show');
+        initializeCitySelect(); // 함수 호출 추가
+    });
 
-    document.getElementById('closeSignup').addEventListener('click', function() {
+    document.getElementById('closeSignup')?.addEventListener('click', function() {
         document.getElementById('signupModal').classList.remove('show');
         document.getElementById('signupForm').reset();
         document.getElementById('regionInfo').textContent = '';
@@ -7151,220 +7152,201 @@ document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button 
 
     // 시군 선택 이벤트
     document.getElementById('city')?.addEventListener('change', function() {
-    const city = this.value;
-    const regionInfo = document.getElementById('regionInfo');
-    
-    // REGION_MAPPING 정의 (백엔드와 동일하게)
-    const REGION_MAPPING = {
-        south: [
-            '과천시', '광명시', '광주시', '군포시', '김포시', '부천시', '성남시', 
-            '수원시', '시흥시', '안산시', '안성시', '안양시', '양평군', '여주시', '오산시', 
-            '용인시', '의왕시', '이천시', '평택시', '하남시', '화성시'
-        ],
-        north: [
-            '고양시', '구리시', '남양주시', '동두천시', '양주시', '의정부시', 
-            '파주시', '포천시', '가평군', '연천군'
-        ]
-    };
-    
-    // 지역 결정 함수
-    function determineRegion(city) {
-        if (REGION_MAPPING.south.includes(city)) return 'south';
-        if (REGION_MAPPING.north.includes(city)) return 'north';
-        return null;
-    }
-    
-    const region = determineRegion(city);
-    
-    if (region) {
-        regionInfo.textContent = `${region === 'south' ? '남부' : '북부'} 지역`;
-        regionInfo.className = `text-sm font-medium mt-1 ${
-            region === 'south' ? 'text-blue-600' : 'text-green-600'
-        }`;
-    } else {
-        regionInfo.textContent = '';
-    }
-});
+        const city = this.value;
+        const regionInfo = document.getElementById('regionInfo');
+        
+        // REGION_MAPPING 정의는 이미 있으므로 재정의 필요 없음
+        
+        const region = determineRegion(city);
+        
+        if (region) {
+            regionInfo.textContent = `${region === 'south' ? '남부' : '북부'} 지역`;
+            regionInfo.className = `text-sm font-medium mt-1 ${
+                region === 'south' ? 'text-blue-600' : 'text-green-600'
+            }`;
+        } else {
+            regionInfo.textContent = '';
+        }
+    });
 
     // 회원가입 폼 제출
     const signupForm = document.getElementById('signupForm');
-if (signupForm) {
-  console.log('회원가입 폼 이벤트 핸들러 초기화');
-  
-  // 기존 이벤트 핸들러 제거를 위해 폼 복제
-  const newForm = signupForm.cloneNode(true);
-  signupForm.parentNode.replaceChild(newForm, signupForm);
-  
-  // 폼 제출 진행 중인지 추적하는 플래그
-  let isSubmitting = false;
-  
-  // 새 이벤트 핸들러 등록
-  newForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // 중복 제출 방지
-    if (isSubmitting) {
-      console.log('이미 폼 제출이 진행 중입니다');
-      return;
-    }
-    
-    // 모든 필수 필드 값 가져오기
-    const groupName = document.getElementById('groupName').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const manager = document.getElementById('manager').value.trim();
-    const city = document.getElementById('city').value;
-    const contact = document.getElementById('contact').value.trim();
-    const region = determineRegion(city);
-
-    console.log('회원가입 폼 데이터 검증 시작');
-    
-    // 단체명 유효성 검사
-    if (!groupName) {
-        showAlert('단체명을 입력해주세요.', 'error', 3000);
-        document.getElementById('groupName').focus();
-        return;
-    }
-    
-    if (groupName.length < 2) {
-        showAlert('단체명은 2자 이상이어야 합니다.', 'error', 3000);
-        document.getElementById('groupName').focus();
-        return;
-    }
-
-    // 비밀번호 유효성 검사 강화
-    if (!password) {
-        showAlert('비밀번호를 입력해주세요.', 'error', 3000);
-        document.getElementById('signupPassword').focus();
-        return;
-    }
-
-    if (password.length < 6) {
-        showAlert('비밀번호는 6자 이상이어야 합니다.', 'error', 3000);
-        document.getElementById('signupPassword').focus();
-        return;
-    }
-
-    // 특수문자, 숫자 포함 검사 추가
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(password)) {
-        showAlert('비밀번호는 영문과 숫자를 포함해야 합니다.', 'error', 3000);
-        document.getElementById('signupPassword').focus();
-        return;
-    }
-
-    // 담당자명 유효성 검사
-    if (!manager) {
-        showAlert('담당자명을 입력해주세요.', 'error', 3000);
-        document.getElementById('manager').focus();
-        return;
-    }
-
-    if (manager.length < 2) {
-        showAlert('담당자명은 2자 이상이어야 합니다.', 'error', 3000);
-        document.getElementById('manager').focus();
-        return;
-    }
-
-    // 시/군 선택 검사
-    if (!city) {
-        showAlert('시/군을 선택해주세요.', 'error', 3000);
-        document.getElementById('city').focus();
-        return;
-    }
-
-    if (!region) {
-        showAlert('올바른 시/군을 선택해주세요.', 'error', 3000);
-        document.getElementById('city').focus();
-        return;
-    }
-
-    // 연락처 유효성 검사 강화
-    if (!contact) {
-        showAlert('연락처를 입력해주세요.', 'error', 3000);
-        document.getElementById('contact').focus();
-        return;
-    }
-
-    // 연락처 형식 검사 (지역번호 또는 휴대폰 번호)
-    const contactRegex = /^(0[2-6][1-5]|02|010)-[0-9]{3,4}-[0-9]{4}$/;
-    if (!contactRegex.test(contact)) {
-        showAlert('올바른 연락처 형식이 아닙니다. (예: 010-1234-5678 또는 031-123-4567)', 'error', 3000);
-        document.getElementById('contact').focus();
-        return;
-    }
-
-    console.log('회원가입 폼 데이터 검증 완료');
-    
-    try {
-        // 제출 시작 플래그 설정
-        isSubmitting = true;
+    if (signupForm) {
+        console.log('회원가입 폼 이벤트 핸들러 초기화');
         
-        // 폼 버튼 비활성화
-        const submitButton = this.querySelector('button[type="submit"]');
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = '처리 중...';
-        }
+        // 기존 이벤트 핸들러 제거를 위해 폼 복제
+        const newForm = signupForm.cloneNode(true);
+        signupForm.parentNode.replaceChild(newForm, signupForm);
         
-        // 로딩 표시
-        showLoading();
+        // 폼 제출 진행 중인지 추적하는 플래그
+        let isSubmitting = false;
+        
+        // 새 이벤트 핸들러 등록
+        newForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 중복 제출 방지
+            if (isSubmitting) {
+                console.log('이미 폼 제출이 진행 중입니다');
+                return;
+            }
+            
+            // 모든 필수 필드 값 가져오기
+            const groupName = document.getElementById('groupName').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const manager = document.getElementById('manager').value.trim();
+            const city = document.getElementById('city').value;
+            const contact = document.getElementById('contact').value.trim();
+            const region = determineRegion(city);
 
-        const formData = {
-            groupName: groupName,
-            password: password,
-            manager: manager,
-            contact: contact,
-            city: city,
-            region: region
-        };
+            console.log('회원가입 폼 데이터 검증 시작');
+            
+            // 단체명 유효성 검사
+            if (!groupName) {
+                showAlert('단체명을 입력해주세요.', 'error', 3000);
+                document.getElementById('groupName').focus();
+                return;
+            }
+            
+            if (groupName.length < 2) {
+                showAlert('단체명은 2자 이상이어야 합니다.', 'error', 3000);
+                document.getElementById('groupName').focus();
+                return;
+            }
 
-        console.log('회원가입 API 요청 시작:', {
-            ...formData,
-            password: '********' // 비밀번호는 로그에 표시하지 않음
+            // 비밀번호 유효성 검사 강화
+            if (!password) {
+                showAlert('비밀번호를 입력해주세요.', 'error', 3000);
+                document.getElementById('signupPassword').focus();
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('비밀번호는 6자 이상이어야 합니다.', 'error', 3000);
+                document.getElementById('signupPassword').focus();
+                return;
+            }
+
+            // 특수문자, 숫자 포함 검사 추가
+            if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(password)) {
+                showAlert('비밀번호는 영문과 숫자를 포함해야 합니다.', 'error', 3000);
+                document.getElementById('signupPassword').focus();
+                return;
+            }
+
+            // 담당자명 유효성 검사
+            if (!manager) {
+                showAlert('담당자명을 입력해주세요.', 'error', 3000);
+                document.getElementById('manager').focus();
+                return;
+            }
+
+            if (manager.length < 2) {
+                showAlert('담당자명은 2자 이상이어야 합니다.', 'error', 3000);
+                document.getElementById('manager').focus();
+                return;
+            }
+
+            // 시/군 선택 검사
+            if (!city) {
+                showAlert('시/군을 선택해주세요.', 'error', 3000);
+                document.getElementById('city').focus();
+                return;
+            }
+
+            if (!region) {
+                showAlert('올바른 시/군을 선택해주세요.', 'error', 3000);
+                document.getElementById('city').focus();
+                return;
+            }
+
+            // 연락처 유효성 검사 강화
+            if (!contact) {
+                showAlert('연락처를 입력해주세요.', 'error', 3000);
+                document.getElementById('contact').focus();
+                return;
+            }
+
+            // 연락처 형식 검사 (지역번호 또는 휴대폰 번호)
+            const contactRegex = /^(0[2-6][1-5]|02|010)-[0-9]{3,4}-[0-9]{4}$/;
+            if (!contactRegex.test(contact)) {
+                showAlert('올바른 연락처 형식이 아닙니다. (예: 010-1234-5678 또는 031-123-4567)', 'error', 3000);
+                document.getElementById('contact').focus();
+                return;
+            }
+
+            console.log('회원가입 폼 데이터 검증 완료');
+            
+            try {
+                // 제출 시작 플래그 설정
+                isSubmitting = true;
+                
+                // 폼 버튼 비활성화
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = '처리 중...';
+                }
+                
+                // 로딩 표시
+                showLoading();
+
+                const formData = {
+                    groupName: groupName,
+                    password: password,
+                    manager: manager,
+                    contact: contact,
+                    city: city,
+                    region: region
+                };
+
+                console.log('회원가입 API 요청 시작:', {
+                    ...formData,
+                    password: '********' // 비밀번호는 로그에 표시하지 않음
+                });
+
+                // 직접 API 호출 (signup 함수 대신 apiRequest 직접 사용)
+                const response = await apiRequest('/api/signup', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        group_name: formData.groupName,
+                        password: formData.password,
+                        manager: formData.manager,
+                        contact: formData.contact,
+                        city: formData.city
+                    })
+                });
+                
+                console.log('회원가입 API 응답:', response);
+
+                if (response.success) {
+                    showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
+                    document.getElementById('signupModal').classList.remove('show');
+                    newForm.reset();
+                } else {
+                    throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('회원가입 처리 오류:', error);
+                showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
+            } finally {
+                // 로딩 숨기기
+                hideLoading();
+                
+                // 제출 완료 플래그 설정
+                isSubmitting = false;
+                
+                // 버튼 재활성화
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = '가입하기';
+                }
+            }
         });
-
-        // 직접 API 호출 (signup 함수 대신 apiRequest 직접 사용)
-        const response = await apiRequest('/api/signup', {
-            method: 'POST',
-            body: JSON.stringify({
-                group_name: formData.groupName,
-                password: formData.password,
-                manager: formData.manager,
-                contact: formData.contact,
-                city: formData.city
-            })
-        });
         
-        console.log('회원가입 API 응답:', response);
-
-        if (response.success) {
-            showAlert('회원가입 신청이 완료되었습니다. 관리자 승인을 기다려주세요.', 'success');
-            document.getElementById('signupModal').classList.remove('show');
-            newForm.reset();
-        } else {
-            throw new Error(response.message || '회원가입 처리 중 오류가 발생했습니다.');
-        }
-    } catch (error) {
-        console.error('회원가입 처리 오류:', error);
-        showAlert(error.message || '회원가입 처리 중 오류가 발생했습니다.', 'error', 3000);
-    } finally {
-        // 로딩 숨기기
-        hideLoading();
-        
-        // 제출 완료 플래그 설정
-        isSubmitting = false;
-        
-        // 버튼 재활성화
-        const submitButton = this.querySelector('button[type="submit"]');
-        if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = '가입하기';
-        }
+        console.log('회원가입 폼 이벤트 핸들러 설정 완료');
     }
-  });
-  
-  console.log('회원가입 폼 이벤트 핸들러 설정 완료');
-}
-
 
     // 예약 폼 제출
     document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
@@ -7402,7 +7384,7 @@ if (signupForm) {
         }
     });
 
-    // ESC 키로 모달 닫기
+    // ESC 키로 모달 닫기 (추가로 이미 위에 있지만 유지)
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeDateBookingsModal();
@@ -7412,7 +7394,7 @@ if (signupForm) {
     });
 
     // 프로필 모달 이벤트 리스너 초기화
-    document.getElementById('closeUserProfile').addEventListener('click', closeUserProfileModal);
+    document.getElementById('closeUserProfile')?.addEventListener('click', closeUserProfileModal);
 
     // 시간 선택 초기화
     initializeTimeSelects();
