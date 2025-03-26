@@ -413,11 +413,10 @@
                             <div class="text-2xl font-bold text-primary">스포츠박스</div>
                         </div>
                         <nav class="hidden md:flex items-center space-x-8">
-                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>
                             <a href="#intro" class="text-gray-700 hover:text-primary py-2">사업소개</a>
                             <a href="#programs" class="text-gray-700 hover:text-primary py-2">운영프로그램</a>
                             <a href="#process" class="text-gray-700 hover:text-primary py-2">신청절차</a>
-                            <a href="#faq" class="text-gray-700 hover:text-primary py-2">자주 묻는 질문</a>
+                            <a href="#notices" class="text-gray-700 hover:text-primary py-2">공지사항</a>
                             <button onclick="showLoginScreen()" 
                                 class="bg-primary text-white px-4 py-2 !rounded-button hover:bg-primary/90">
                                 회원가입/로그인
@@ -651,53 +650,6 @@
                     </div>
                 </section>
 
-<!-- 자주 묻는 질문 섹션 -->
-<section id="faq" class="py-20 bg-white">
-    <div class="container mx-auto px-6">
-        <h2 class="text-3xl font-bold text-center mb-16">자주 묻는 질문</h2>
-        <div class="max-w-3xl mx-auto">
-            <!-- 질문 1 -->
-            <div class="mb-8 bg-gray-50 rounded-xl overflow-hidden shadow-sm">
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <span class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">Q</span>
-                        요일을 지정해서 정기적으로 운영해주실 수 있나요?
-                    </h3>
-                    <div class="pl-11">
-                        <p class="text-gray-600">정기 운영은 현재 어렵습니다. 저희는 더 많은 아이들에게 공평한 혜택을 제공하기 위해 매월 선착순 접수 방식으로 운영하고 있습니다.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 질문 2 -->
-            <div class="mb-8 bg-gray-50 rounded-xl overflow-hidden shadow-sm">
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <span class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">Q</span>
-                        스포츠체험존은 어떻게 운영되나요?
-                    </h3>
-                    <div class="pl-11">
-                        <p class="text-gray-600">스포츠체험존은 도내 공직유관단체 및 지자체에서 진행하는 행사를 대상으로 운영됩니다. 체험존에서는 한궁체험, 후크볼, 배팅체험, 탁구(스파이더볼) 등 다양한 스포츠 활동을 체험하실 수 있습니다.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 질문 3 -->
-            <div class="mb-8 bg-gray-50 rounded-xl overflow-hidden shadow-sm">
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <span class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">Q</span>
-                        스포츠이벤트는 누구나 신청 가능한가요?
-                    </h3>
-                    <div class="pl-11">
-                        <p class="text-gray-600">스포츠이벤트는 스포츠교실 참여자에 한하여 신청 가능합니다. 계절에 따라 여름에는 수상레저스포츠, 겨울에는 스키교실을 운영하고 있으니 많은 관심 부탁드립니다.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
                 <!-- 푸터 -->
                 <footer class="bg-gray-900 text-white py-12">
                     <div class="container mx-auto px-6">
@@ -752,8 +704,6 @@
                         <p class="text-gray-500 mt-2">스포츠박스 예약 시스템에 오신 것을 환영합니다</p>
                     </div>
                     <form id="loginForm" class="space-y-6">
-                        <!-- 오류 메시지 표시 영역 -->
-    <div id="loginErrorMessage" class="bg-red-100 text-red-700 p-3 rounded-lg text-sm hidden"></div>
                         <div>
                             <label class="block text-gray-700 text-sm font-semibold mb-2">아이디</label>
                             <div class="relative">
@@ -3564,41 +3514,54 @@ function updateRemainingBookingsDisplay(remainingBookings) {
 // API 요청 헬퍼 함수
 async function apiRequest(endpoint, options = {}) {
     showLoading();
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (attempts < maxAttempts) {
-        try {
-            // 기존 try 블록 코드...
-            
-            // 여기까지 왔다면 요청이 성공한 것
-            hideLoading();
-            return data;
-        } catch (error) {
-            console.error(`API 요청 오류 (시도 ${attempts}/${maxAttempts}):`, error);
-            
-            // 네트워크 오류는 재시도 가능
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                if (attempts < maxAttempts) {
-                    console.log(`2초 후 재시도...`);
-                    await new Promise(r => setTimeout(r, 2000));
-                    continue;
-                }
-            }
-            
-            // 인증 오류 처리
-            if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')
-                && !endpoint.includes('/public')) {
-                logout();
-            }
-            
-            hideLoading();
-            throw error;
+    try {
+        const token = sessionStorage.getItem('token');
+        if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup') 
+            && !endpoint.includes('/public')) {
+            throw new Error('인증이 필요합니다.');
         }
+
+        const defaultHeaders = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        if (options.body && !(options.body instanceof FormData)) {
+            defaultHeaders['Content-Type'] = 'application/json';
+        }
+
+        console.log(`[apiRequest] 요청: ${endpoint}`, {
+            method: options.method,
+            headers: { ...defaultHeaders, ...options.headers },
+            body: options.body instanceof FormData ? '[FormData]' : options.body
+        });
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...options.headers
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!endpoint.includes('/login')) {
+            console.log(`[apiRequest] 응답:`, data);
+        }
+        return data;
+    } catch (error) {
+        console.error(`[apiRequest] 오류: ${endpoint}`, error);
+        if (error.message.includes('인증') && !endpoint.includes('/login') && !endpoint.includes('/signup')
+            && !endpoint.includes('/public')) {
+            logout();
+        }
+        throw error;
+    } finally {
+        hideLoading();
     }
-    
-    hideLoading();
-    throw new Error(`${maxAttempts}회 시도 후 요청 실패: ${endpoint}`);
 }
 
 // 화면 전환 함수들
@@ -3962,41 +3925,52 @@ document.getElementById('closeUserProfile').addEventListener('click', closeUserP
 
 async function initializeAdminDashboard(region, username) {
     try {
-        console.log("== 관리자 대시보드 초기화 시작 ==", { region, username });
-        
-        // 토큰 검증
+        // 토큰 유효성 확인
         const token = sessionStorage.getItem('token');
-        if (!token) throw new Error('인증이 필요합니다');
-        
-        // UI 요소 참조 및 설정
+        if (!token) {
+            throw new Error('인증이 필요합니다.');
+        }
+
         document.getElementById('adminDashboard').classList.remove('hidden');
         document.getElementById('userDashboard').classList.add('hidden');
         document.getElementById('adminName').textContent = username;
-        
+
         const regionFilterContainer = document.getElementById('regionFilterContainer');
         const adminRegionBadge = document.getElementById('adminRegionBadge');
         const dashboardTitle = document.querySelector('#adminDashboard .dashboard-title');
         const integratedSection = document.getElementById('integratedManagementSection');
-        
-        // 관리자 유형에 따른 UI 설정
+
+        // 이제 region 값이 'all'인 경우 통합 관리자로 처리
         const isIntegratedAdmin = region === 'all';
-        
+
         if (isIntegratedAdmin) {
+            // 통합 관리자 설정
             dashboardTitle.textContent = '스포츠박스 통합 관리자';
+            
+            // 지역 필터는 숨기기 (통합 모드에서는 불필요)
             regionFilterContainer.classList.add('hidden');
+            
             adminRegionBadge.textContent = '통합 관리자';
             adminRegionBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
-            
-            // 통합 예약 관리 섹션 설정
-            integratedSection.classList.remove('hidden');
-            const response = await apiRequest('/api/admin/booking-settings');
-            if (response.success) {
-                const settings = response.data;
-                const isIntegratedActive = settings.south?.is_active && settings.north?.is_active;
-                updateIntegratedBookingUI(isIntegratedActive);
+
+            // 통합 예약 관리 섹션 표시 및 초기화
+            if (integratedSection) {
+                integratedSection.classList.remove('hidden');
+                
+                // 남부/북부 지역 설정 조회
+                const response = await apiRequest('/api/admin/booking-settings');
+                if (response.success) {
+                    const settings = response.data;
+                    const southActive = settings.south?.is_active || false;
+                    const northActive = settings.north?.is_active || false;
+                    
+                    // 둘 다 활성화된 경우만 통합 활성화로 표시
+                    const isIntegratedActive = southActive && northActive;
+                    updateIntegratedBookingUI(isIntegratedActive);
+                }
             }
         } else {
-            // 지역 관리자 UI 설정
+            // 지역 관리자 설정 (기존 코드 유지)
             const regionText = region === 'south' ? '남부' : '북부';
             dashboardTitle.textContent = `${regionText} 스포츠박스`;
             regionFilterContainer.classList.add('hidden');
@@ -4004,44 +3978,41 @@ async function initializeAdminDashboard(region, username) {
             adminRegionBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${
                 region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
             }`;
-            
-            // 통합 섹션 숨김 및 설정 로드
-            integratedSection.classList.add('hidden');
+
+            // 통합 예약 관리 섹션 숨기기
+            if (integratedSection) {
+                integratedSection.classList.add('hidden');
+            }
+
+            // 지역 관리자용 설정 로드
             const settings = await loadAdminBookingSettings();
             updateBookingStatusUI(settings?.is_active || false);
         }
-        
-        // 핵심: 달력 초기화 및 데이터 로드 - API 에러 해결
-        initializeAdminCalendar();
-        
-        // 1초 지연 후 상태 로드 (네트워크 문제 해결)
-        await new Promise(r => setTimeout(r, 1000));
-        await updateCalendarStatus(); // 즉시 실행
-        
-        // 다른 데이터 로드
+
+        // 공통 초기화 작업
         await Promise.all([
             loadRegionStatistics(),
+            initializeAdminCalendar(),
+            updateCalendarStatus(), // 디바운스 없이 직접 호출
             loadPendingUsers(),
             loadPendingBookings(),
             loadAllUsers()
         ]);
-        
-        // 이벤트 리스너 설정
+
+        // 이벤트 리스너 설정 - 통합 예약 버튼
         const toggleIntegratedBtn = document.getElementById('toggleIntegratedBooking');
         if (toggleIntegratedBtn) {
             toggleIntegratedBtn.removeEventListener('click', window.toggleIntegratedBooking);
             toggleIntegratedBtn.addEventListener('click', window.toggleIntegratedBooking);
+            console.log('통합 예약 버튼 이벤트 핸들러 설정됨');
         }
         
+        // 예약 상태 토글 버튼 이벤트 리스너
         const toggleButton = document.getElementById('toggleBookingStatus');
         if (toggleButton) {
             toggleButton.removeEventListener('click', toggleBookingStatus);
             toggleButton.addEventListener('click', toggleBookingStatus);
         }
-        
-        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
-        
-        console.log("== 관리자 대시보드 초기화 완료 ==");
     } catch (error) {
         console.error('관리자 대시보드 초기화 오류:', error);
         showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
@@ -5132,35 +5103,14 @@ async function refreshCalendarStatus(region) {
     try {
         console.log(`[refreshCalendarStatus] 지역: ${region} 상태 새로고침 중`);
         
-        // 관리자 유형 확인
-        const adminRegion = sessionStorage.getItem('region');
-        const isIntegratedAdmin = adminRegion === 'all';
+        // 지역 정보를 쿼리 파라미터로 명시적 전달
+        const url = `/api/bookings/status?region=${region}`;
         
-        if (isIntegratedAdmin) {
-            // 통합 관리자는 남부/북부 데이터를 모두 가져와야 함
-            console.log('통합 관리자 감지, 남부/북부 데이터 모두 가져오기');
-            
-            // 두 지역 데이터 모두 가져오기
-            const [southResponse, northResponse] = await Promise.all([
-                apiRequest('/api/bookings/status?region=south'),
-                apiRequest('/api/bookings/status?region=north')
-            ]);
-            
-            // 데이터 구조 유지: 지역별로 분리하여 저장
-            bookingStatus = {
-                south: southResponse.data || {},
-                north: northResponse.data || {}
-            };
-            
-            console.log('통합 데이터 구조:', bookingStatus);
-        } else {
-            // 지역 관리자는 기존 로직 유지
-            const url = `/api/bookings/status?region=${region}`;
-            const data = await apiRequest(url);
-            
-            // 전역 상태 업데이트
-            bookingStatus = data.data;
-        }
+        const data = await apiRequest(url);
+        console.log('[refreshCalendarStatus] 받은 데이터:', data);
+        
+        // 전역 상태 업데이트
+        bookingStatus = data.data;
         
         // 관리자 캘린더 다시 렌더링
         renderAdminCalendar(adminCurrentDate);
@@ -5220,51 +5170,53 @@ async function unblockDate(date) {
 // 직접 호출하는 updateCalendarStatus 함수 추가 (디바운스 없이)
 async function updateCalendarStatus() {
     try {
+        console.log('캘린더 상태 업데이트 중...');
+        
         const role = sessionStorage.getItem('role');
         const adminRegion = sessionStorage.getItem('region');
         
-        console.log('캘린더 상태 업데이트:', { role, adminRegion });
-        
-        // 전역 변수 초기화 (누락된 초기화 코드)
-        window.bookingStatus = window.bookingStatus || {};
-        
+        // 전체 관리자인 경우 남부/북부 모두 가져오기
         if (role === 'admin' && adminRegion === 'all') {
-            console.log('통합 관리자용 캘린더 데이터 로드 시작');
+            console.log('통합 관리자용 캘린더 상태 조회');
             
-            // 남부/북부 데이터 별도 로드
-            const [southResponse, northResponse] = await Promise.all([
-                apiRequest('/api/bookings/status?region=south'),
-                apiRequest('/api/bookings/status?region=north')
-            ]);
-            
-            // 구조 확인 - 디버깅 추가
-            console.log('남부 데이터 키:', Object.keys(southResponse.data || {}));
-            console.log('북부 데이터 키:', Object.keys(northResponse.data || {}));
-            
-            // 전역 변수에 명시적 저장
-            window.bookingStatus = {
-                south: southResponse.data || {},
-                north: northResponse.data || {}
-            };
-            
-            console.log('통합 bookingStatus 설정 완료');
+            try {
+                // 남부/북부 데이터를 명시적으로 분리해서 저장
+                const [southResponse, northResponse] = await Promise.all([
+                    apiRequest('/api/bookings/status?region=south'),
+                    apiRequest('/api/bookings/status?region=north')
+                ]);
+                
+                // 데이터 구조 유지: 지역별로 분리하여 저장
+                bookingStatus = {
+                    south: southResponse.data || {},
+                    north: northResponse.data || {}
+                };
+                
+                console.log('남부/북부 예약 상태 로드 완료');
+            } catch (error) {
+                console.error('통합 관리자 예약 상태 로드 오류:', error);
+            }
         } else {
-            // 지역 관리자 또는 일반 사용자
-            const response = await apiRequest(`/api/bookings/status?region=${adminRegion || sessionStorage.getItem('region')}`);
+            // 일반 사용자 또는 지역 관리자
+            const userRegion = adminRegion || sessionStorage.getItem('region');
             
-            // 전역 변수에 명시적 저장
-            window.bookingStatus = response.data || {};
+            const response = await apiRequest(`/api/bookings/status?region=${userRegion}`);
+            bookingStatus = response.data || {};
             
-            console.log('지역 bookingStatus 설정 완료');
+            // 남은 예약 횟수 업데이트 (사용자인 경우)
+            if (role !== 'admin' && response.remainingBookings !== undefined) {
+                updateRemainingBookingsDisplay(response.remainingBookings);
+            }
         }
         
-        console.log('캘린더 렌더링 시작');
+        // 역할에 따라 적절한 캘린더 렌더링
         if (role === 'admin') {
             renderAdminCalendar(adminCurrentDate);
         } else {
             renderCalendar(currentDate);
         }
-        console.log('캘린더 렌더링 완료');
+        
+        console.log('캘린더 상태 업데이트 완료');
     } catch (error) {
         console.error('캘린더 상태 업데이트 오류:', error);
     }
@@ -5651,24 +5603,9 @@ const debouncedUpdateCalendarStatus = debounce(async () => {
     }
 }, 500);
 
-// 오류 메시지 표시 함수
-function showLoginError(message) {
-    const errorElement = document.getElementById('loginErrorMessage');
-    errorElement.textContent = message;
-    errorElement.classList.remove('hidden');
-    
-    // 3초 후 메시지 숨기기
-    setTimeout(() => {
-        errorElement.classList.add('hidden');
-    }, 5000);
-}
-
 // 로그인 함수도 수정
 async function login(username, password) {
     try {
-        // 오류 메시지 초기화
-        document.getElementById('loginErrorMessage').classList.add('hidden');
-        
         showLoading();
         const response = await apiRequest('/api/login', {
             method: 'POST',
@@ -5703,8 +5640,6 @@ async function login(username, password) {
         }
     } catch (error) {
         console.error('Login error:', error);
-        // 로그인 폼에 오류 메시지 표시
-        showLoginError(error.message || '로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
         showAlert(error.message || '로그인에 실패했습니다.', 'error');
     } finally {
         hideLoading();
@@ -6021,50 +5956,56 @@ function renderCalendar(date) {
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
         const dateStatus = bookingStatus[dateString];
 
-        // 날짜 상태 결정 조건 완전히 수정
         if (selectedDateObj < today) {
-            // 지난 날짜
             dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
             dayElement.title = '지난 날짜';
         } 
-        // 관리자 전체 마감
-        else if (dateStatus?.isFullyBlocked) {
+        // 조건 순서 변경: 예약 수 먼저 확인
+        else if (dateStatus?.bookingCount >= 2 || dateStatus?.isFull) {
+            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+            dayElement.title = '예약 마감 (2건 모두 예약됨)';
+        }
+        // 관리자가 직접 마감한 경우 (예약이 0개인 경우만)
+        else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
             dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
             dayElement.title = '관리자 전체 마감';
         } 
-        // 예약 2개일 때만 마감 - 핵심 수정
-        else if (dateStatus?.bookingCount >= 2) {
+        else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
             dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감 (2건 모두 예약됨)';
+            dayElement.title = '예약 마감';
         } 
-        // 예약 1개 (클릭 가능 - 추가 예약 가능) - 핵심 수정
-        else if (dateStatus?.hasBooking || dateStatus?.bookingCount === 1) {
-            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-            dayElement.title = `${dateStatus?.bookingCount || 1}개 예약됨`;
+        else if (dateStatus?.isPartiallyBlocked) {
+            // 부분 마감 상태이지만 일반 예약 가능 날짜와 같은 스타일 적용
+            dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = '부분 마감 (1개만 예약 가능)';
             addDateClickHandler(dayElement, year, month, currentDay);
         } 
-        // 예약 없음 (클릭 가능)
+        else if (dateStatus?.hasBooking) {
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+            addDateClickHandler(dayElement, year, month, currentDay);
+        } 
         else {
             dayElement.className = 'calendar-day h-12 flex items-center justify-center cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700';
             dayElement.title = '예약 가능';
             addDateClickHandler(dayElement, year, month, currentDay);
         }
 
-        // 날짜 텍스트 설정
         dayElement.textContent = currentDay;
 
-        // 배지 표시 로직 수정
+        // 예약 건수 배지 추가 (관리자 대시보드와 유사한 스타일로)
         if (dateStatus?.bookingCount > 0) {
             const countBadge = document.createElement('div');
             countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+            countBadge.textContent = `${Math.min(dateStatus.bookingCount, 2)}/2`; // 최대 2개로 제한
             
-            // 예약 수에 따른 배지 (부분 마감 무시)
-            if (dateStatus.bookingCount >= 2) {
-                countBadge.textContent = `2/2`;
+            if (dateStatus.isPartiallyBlocked) {
+                countBadge.style.backgroundColor = '#FEF3C7';
+                countBadge.style.color = '#92400E';
+            } else if (dateStatus.bookingCount >= 2) {
                 countBadge.style.backgroundColor = '#FEE2E2';
                 countBadge.style.color = '#B91C1C';
             } else {
-                countBadge.textContent = `1/2`; // 항상 1/2로 표시
                 countBadge.style.backgroundColor = '#DBEAFE';
                 countBadge.style.color = '#1E40AF';
             }
@@ -6073,8 +6014,8 @@ function renderCalendar(date) {
             dayElement.appendChild(countBadge);
         }
 
-        // 오늘 날짜 강조 표시
         if (
+            !dateStatus?.isFullyBlocked && 
             currentDay === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear()
@@ -6156,13 +6097,8 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
     
     // 통합 날짜 상태 - 남부와 북부 모두 고려
-    const southStatus = window.bookingStatus?.south?.[dateString];
-    const northStatus = window.bookingStatus?.north?.[dateString];
-    
-    console.log(`날짜 ${dateString} 통합 데이터:`, { 
-        남부: southStatus, 
-        북부: northStatus 
-    });
+    const southStatus = bookingStatus?.south?.[dateString];
+    const northStatus = bookingStatus?.north?.[dateString];
     
     // 지난 날짜 처리
     if (dateObj < today) {
@@ -6172,15 +6108,13 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
         return;
     }
     
-    // 중요: 남부/북부 예약 수 정확히 계산
-    const southBookingCount = southStatus?.bookingCount || 0;
-    const northBookingCount = northStatus?.bookingCount || 0;
-    const actualTotalBookings = southBookingCount + northBookingCount;
+    // 중요: 수정된 부분 - 예약 상태 로직 수정
+    // 남부/북부의 모든 예약을 합쳐서 총 예약 수 계산
+    const southBookings = southStatus?.bookingCount || 0;
+    const northBookings = northStatus?.bookingCount || 0;
+    const totalBookings = southBookings + northBookings;
     
-    // 로그 추가 - 디버깅용
-    console.log(`날짜: ${dateString}, 남부예약: ${southBookingCount}, 북부예약: ${northBookingCount}, 총예약: ${actualTotalBookings}`);
-    
-    // 관리자 마감 여부 확인
+    // 관리자 마감 여부 확인 (관리자가 명시적으로 마감한 경우)
     const isSouthAdminBlocked = southStatus?.isFullyBlocked && (!southStatus.bookingCount || southStatus.bookingCount === 0);
     const isNorthAdminBlocked = northStatus?.isFullyBlocked && (!northStatus.bookingCount || northStatus.bookingCount === 0);
     const isAdminFullyBlocked = isSouthAdminBlocked && isNorthAdminBlocked;
@@ -6190,26 +6124,36 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     const isNorthPartiallyBlocked = northStatus?.isPartiallyBlocked;
     const isPartiallyBlocked = (isSouthPartiallyBlocked || isNorthPartiallyBlocked) && !isAdminFullyBlocked;
     
-    // 상태에 따른 클래스와 타이틀 설정
+    // 수정된 로직: 예약 상태에 따른 클래스와 타이틀 설정
     let className, title, bgColor;
 
-    if (isAdminFullyBlocked) {
-        className = `${baseClass} blocked cursor-pointer`;
-        title = '관리자 마감';
-    } else if (actualTotalBookings >= 2) {
-        className = `${baseClass} full cursor-pointer`;
-        title = '예약 마감 (2건 예약됨)';
-    } else if (isPartiallyBlocked) {
-        className = `${baseClass} partially-blocked cursor-pointer`;
-        title = '부분 마감';
-        bgColor = '#F97316';
-    } else if (actualTotalBookings > 0) {
-        className = `${baseClass} booked cursor-pointer`;
-        title = `${actualTotalBookings}개 예약됨`;
-    } else {
-        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-        title = '예약 가능';
-    }
+// 남부/북부 예약 수 직접 가져오기
+const southBookingCount = southStatus?.bookingCount || 0;
+const northBookingCount = northStatus?.bookingCount || 0;
+const actualTotalBookings = southBookingCount + northBookingCount;
+
+if (isAdminFullyBlocked) {
+    // 관리자가 직접 마감한 경우
+    className = `${baseClass} blocked cursor-pointer`;
+    title = '관리자 마감';
+} else if (actualTotalBookings >= 2) {
+    // 실제 예약이 2개 이상인 경우에만 마감으로 표시
+    className = `${baseClass} full cursor-pointer`;
+    title = '예약 마감 (2건 예약됨)';
+} else if (isPartiallyBlocked) {
+    // 부분 마감 상태이지만 예약이 없으면 부분 마감으로 표시
+    className = `${baseClass} partially-blocked cursor-pointer`;
+    title = '부분 마감';
+    bgColor = '#F97316';
+} else if (actualTotalBookings > 0) {
+    // 예약 있음
+    className = `${baseClass} booked cursor-pointer`;
+    title = `${actualTotalBookings}개 예약됨`;
+} else {
+    // 예약 없음
+    className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+    title = '예약 가능';
+}
     
     // 클래스 및 스타일 적용
     dayElement.className = className;
@@ -6222,38 +6166,38 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     dateText.className = 'z-10';
     dayElement.appendChild(dateText);
     
-    // 중요: 예약 수 배지 표시 부분 수정
-    if (actualTotalBookings > 0) {
-        const countBadge = document.createElement('div');
-        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-        
-        // 정확한 예약 수 표시
-        if (isPartiallyBlocked) {
-            if (actualTotalBookings >= 1) {
-                // 부분 마감인 경우 최대 1개만 가능
-                countBadge.textContent = `1/1`;  // 부분 마감은 1/1로 표시
-                countBadge.style.backgroundColor = '#FEE2E2';
-                countBadge.style.color = '#B91C1C';
-            } else {
-                countBadge.textContent = `0/1`;
-                countBadge.style.backgroundColor = '#FEF3C7';
-                countBadge.style.color = '#92400E';
-            }
-        } else {
-            // 일반 예약 상태
-            countBadge.textContent = `${Math.min(actualTotalBookings, 2)}/2`;  // 정확한 숫자로 수정
-            
-            if (actualTotalBookings >= 2) {
-                countBadge.style.backgroundColor = '#FEE2E2';
-                countBadge.style.color = '#B91C1C';
-            } else {
-                countBadge.style.backgroundColor = '#DBEAFE';
-                countBadge.style.color = '#1E40AF';
-            }
-        }
-        
-        dayElement.appendChild(countBadge);
+    // 통합 예약 상태 배지 추가 - 중요: 수정된 부분
+    if (totalBookings > 0) {
+    const countBadge = document.createElement('div');
+    countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+    
+    // 남부/북부 예약 수 직접 사용
+    const southBookingCount = southStatus?.bookingCount || 0;
+    const northBookingCount = northStatus?.bookingCount || 0;
+    
+    // 실제 총 예약 수 (최대 2개로 제한)
+    const actualTotalBookings = Math.min(southBookingCount + northBookingCount, 2);
+    
+    // 디버깅 로그 추가
+    console.log(`날짜: ${dateString}, 남부예약: ${southBookingCount}, 북부예약: ${northBookingCount}, 총예약: ${actualTotalBookings}`);
+    
+    // 수정: 실제 예약 수를 표시 (최대 2개)
+    countBadge.textContent = `${actualTotalBookings}/2`;
+    
+    // 배지 스타일 설정
+    if (isPartiallyBlocked) {
+        countBadge.style.backgroundColor = '#FEF3C7';
+        countBadge.style.color = '#92400E';
+    } else if (actualTotalBookings >= 2) {
+        countBadge.style.backgroundColor = '#FEE2E2';
+        countBadge.style.color = '#B91C1C';
+    } else {
+        countBadge.style.backgroundColor = '#DBEAFE';
+        countBadge.style.color = '#1E40AF';
     }
+    
+    dayElement.appendChild(countBadge);
+}
     
     // 날짜 클릭 이벤트 처리
     dayElement.addEventListener('click', async function() {
@@ -6266,106 +6210,6 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
             showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
         }
     });
-    
-    // 오늘 날짜 강조
-    if (dateObj.getDate() === today.getDate() &&
-        dateObj.getMonth() === today.getMonth() &&
-        dateObj.getFullYear() === today.getFullYear()) {
-        dayElement.classList.add('font-bold');
-    }
-}
-
-function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, today, adminRegion) {
-    // 기본 클래스 설정
-    const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
-    
-    // 해당 날짜의 예약 상태 가져오기
-    const dateStatus = window.bookingStatus[dateString];
-    console.log(`날짜 ${dateString} 지역 데이터:`, dateStatus);
-    
-    // 지난 날짜 처리
-    if (dateObj < today) {
-        dayElement.className = `${baseClass} past`;
-        dayElement.title = '지난 날짜';
-        dayElement.textContent = currentDay;
-        return;
-    }
-    
-    // 상태에 따른 클래스와 타이틀 설정
-    let className, title, bgColor;
-    
-    // 관리자 마감 여부 확인 (예약 0개인 경우만)
-    const isAdminBlocked = dateStatus?.isFullyBlocked && (!dateStatus?.bookingCount || dateStatus?.bookingCount === 0);
-    
-    // 부분 마감 상태 확인
-    const isPartiallyBlocked = dateStatus?.isPartiallyBlocked;
-    
-    // 예약 수
-    const bookingCount = dateStatus?.bookingCount || 0;
-
-    if (isAdminBlocked) {
-        className = `${baseClass} blocked cursor-pointer`;
-        title = '관리자 마감';
-    } else if (dateStatus?.isFull || (isPartiallyBlocked && bookingCount >= 1)) {
-        className = `${baseClass} full cursor-pointer`;
-        title = '예약 마감';
-    } else if (isPartiallyBlocked) {
-        className = `${baseClass} partially-blocked cursor-pointer`;
-        title = '부분 마감';
-        bgColor = '#F97316';
-    } else if (bookingCount > 0) {
-        className = `${baseClass} booked cursor-pointer`;
-        title = `${bookingCount}개 예약됨`;
-    } else {
-        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-        title = '예약 가능';
-    }
-    
-    // 클래스 및 스타일 적용
-    dayElement.className = className;
-    dayElement.title = title;
-    if (bgColor) dayElement.style.backgroundColor = bgColor;
-    
-    // 날짜 텍스트 추가
-    const dateText = document.createElement('span');
-    dateText.textContent = currentDay;
-    dateText.className = 'z-10';
-    dayElement.appendChild(dateText);
-    
-    // 예약 수 배지 추가
-    if (bookingCount > 0) {
-        const countBadge = document.createElement('div');
-        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-        
-        if (isPartiallyBlocked) {
-            // 부분 마감인 경우
-            if (bookingCount >= 1) {
-                countBadge.textContent = `1/1`;
-                countBadge.style.backgroundColor = '#FEE2E2';
-                countBadge.style.color = '#B91C1C';
-            } else {
-                countBadge.textContent = `0/1`;
-                countBadge.style.backgroundColor = '#FEF3C7';
-                countBadge.style.color = '#92400E';
-            }
-        } else {
-            // 일반 예약 상태
-            countBadge.textContent = `${Math.min(bookingCount, 2)}/2`;
-            
-            if (bookingCount >= 2) {
-                countBadge.style.backgroundColor = '#FEE2E2';
-                countBadge.style.color = '#B91C1C';
-            } else {
-                countBadge.style.backgroundColor = '#DBEAFE';
-                countBadge.style.color = '#1E40AF';
-            }
-        }
-        
-        dayElement.appendChild(countBadge);
-    }
-    
-    // 날짜 클릭 이벤트 처리
-    addAdminDateClickHandler(dayElement, dateString, adminRegion);
     
     // 오늘 날짜 강조
     if (dateObj.getDate() === today.getDate() &&
@@ -6702,16 +6546,6 @@ function setupModalButtons(dateString) {
     document.getElementById('partialBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
             await blockDate(dateString, 'partial');
-            
-            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
-            if (adminRegion === 'all') {
-                // 전체 캘린더 상태 강제 업데이트 (디바운스 없이 즉시 실행)
-                await updateCalendarStatus(); // 기존 디바운스 함수 대신 직접 호출
-            } else {
-                // 지역 관리자의 경우 해당 지역만 갱신
-                await refreshCalendarStatus(targetRegion);
-            }
-            
             closeDateBookingsModal();
         }
     };
@@ -6719,14 +6553,6 @@ function setupModalButtons(dateString) {
     document.getElementById('fullBlockDateBtn').onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
             await blockDate(dateString, 'full');
-            
-            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
-            if (adminRegion === 'all') {
-                await updateCalendarStatus(); // 디바운스 없이 직접 호출
-            } else {
-                await refreshCalendarStatus(targetRegion);
-            }
-            
             closeDateBookingsModal();
         }
     };
@@ -6734,14 +6560,6 @@ function setupModalButtons(dateString) {
     document.getElementById('unblockDateBtn').onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
             await unblockDate(dateString);
-            
-            // 중요: 통합 관리자의 경우 명시적으로 전체 상태 갱신
-            if (adminRegion === 'all') {
-                await updateCalendarStatus(); // 디바운스 없이 직접 호출
-            } else {
-                await refreshCalendarStatus(targetRegion);
-            }
-            
             closeDateBookingsModal();
         }
     };
@@ -6752,26 +6570,27 @@ function addBookingCountBadge(dayElement, dateStatus) {
     if (!dateStatus?.bookingCount || dateStatus.bookingCount <= 0) return;
     
     const countBadge = document.createElement('div');
+    // 뱃지 가시성 개선
     countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
     
     if (dateStatus.isPartiallyBlocked) {
-        // 부분 마감 + 예약 있음 = 마감 표시를 2/2로 변경
+        countBadge.textContent = `${dateStatus.bookingCount}/1`;
+        // 더 명확한 색상 사용
+        countBadge.style.backgroundColor = '#FEF3C7';
+        countBadge.style.color = '#92400E';
+        
+        // 부분 마감 + 예약 있음 = 마감
         if (dateStatus.bookingCount >= 1) {
-            countBadge.textContent = `2/2`;  // 1/1 대신 2/2 표시
             countBadge.style.backgroundColor = '#FEE2E2';
             countBadge.style.color = '#B91C1C';
-        } else {
-            countBadge.textContent = `0/1`;  // 부분 마감은 1개만 가능함을 명시
-            countBadge.style.backgroundColor = '#FEF3C7';
-            countBadge.style.color = '#92400E';
         }
     } else if (dateStatus.bookingCount >= 2) {
-        // 일반 마감 (변경 없음)
+        // 예약 꽉 찬 경우
         countBadge.textContent = `${dateStatus.bookingCount}/2`;
         countBadge.style.backgroundColor = '#FEE2E2';
         countBadge.style.color = '#B91C1C';
     } else {
-        // 일반 예약 (변경 없음)
+        // 일반 예약
         countBadge.textContent = `${dateStatus.bookingCount}/2`;
         countBadge.style.backgroundColor = '#DBEAFE';
         countBadge.style.color = '#1E40AF';
@@ -6888,6 +6707,49 @@ function initializeTimeSelects() {
         endTimeSelect.innerHTML = '<option value="">선택해주세요</option>' + 
             timeOptions.slice(selectedIndex + 1).map(time => `<option value="${time}">${time}</option>`).join('');
     });
+}
+
+// 관리자 대시보드 초기화 함수
+async function initializeAdminDashboard(region, username) {
+    try {
+        // 예약 설정 로드
+        await loadAdminBookingSettings();
+        
+        // 관리자 캘린더 초기화
+        initializeAdminCalendar();
+        
+        // 예약 상태 업데이트
+        await updateCalendarStatus();  
+
+        // 통계 로드
+        await loadRegionStatistics();
+        
+        // 사용자 목록 로드 (두 목록 모두 병렬로 로드)
+        await Promise.all([
+            loadPendingUsers(),  // 승인 대기 목록
+            loadAllUsers(),      // 전체 회원 목록
+        ]);
+        
+        // 예약 승인 대기 목록 로드
+        await loadPendingBookings();
+
+        // 예약 상태 토글 버튼 이벤트 리스너 추가
+        const toggleButton = document.getElementById('toggleBookingStatus');
+if (toggleButton) {
+    toggleButton.removeEventListener('click', toggleBookingStatus);
+    toggleButton.addEventListener('click', toggleBookingStatus);
+    console.log('예약 상태 토글 버튼 이벤트 핸들러 설정됨');
+} else {
+    console.log('예약 상태 토글 버튼을 찾을 수 없음 - 계속 진행');
+}
+
+        // 비밀번호 변경 모달 이벤트 리스너 설정
+        document.getElementById('closeChangePassword').addEventListener('click', closeChangePasswordModal);
+        
+    } catch (error) {
+        console.error('Admin dashboard initialization error:', error);
+        showAlert('대시보드 초기화 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // 비밀번호 변경 관련 함수들
