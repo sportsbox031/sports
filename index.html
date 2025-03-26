@@ -6041,7 +6041,7 @@ function renderCalendar(date) {
         } 
         else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
             dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감';
+            dayElement.title = '예약 마감'; // 부분 마감 상태에서는, 예약 1개만으로도 마감으로 처리
         } 
         else if (dateStatus?.isPartiallyBlocked) {
             // 부분 마감 상태이지만 일반 예약 가능 날짜와 같은 스타일 적용
@@ -6067,17 +6067,19 @@ function renderCalendar(date) {
     const countBadge = document.createElement('div');
     countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
     
-    // 여기가 핵심 수정 부분
+    // 핵심 로직: 부분 마감 상태에서 예약 1개여도 2/2로 표시
     if (dateStatus.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
-        // 부분 마감 + 예약이 1개 이상 → 2/2로 표시
-        countBadge.textContent = `2/2`;
+        // 부분 마감 + 예약이 1개 → 2/2로 표시 (특별 케이스)
+        countBadge.textContent = `2/2`;  // 주목: 부분 마감 + 예약 1개여도 2/2로 표시
         countBadge.style.backgroundColor = '#FEE2E2';
         countBadge.style.color = '#B91C1C';
     } else if (dateStatus.bookingCount >= 2) {
+        // 일반 마감 상태
         countBadge.textContent = `${Math.min(dateStatus.bookingCount, 2)}/2`;
         countBadge.style.backgroundColor = '#FEE2E2';
         countBadge.style.color = '#B91C1C';
     } else {
+        // 일반 예약 상태 (예약 1개)
         countBadge.textContent = `${dateStatus.bookingCount}/2`;
         countBadge.style.backgroundColor = '#DBEAFE';
         countBadge.style.color = '#1E40AF';
