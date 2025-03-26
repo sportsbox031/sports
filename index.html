@@ -6284,6 +6284,105 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     }
 }
 
+function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, today, adminRegion) {
+    // 기본 클래스 설정
+    const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
+    
+    // 해당 날짜의 예약 상태 가져오기
+    const dateStatus = bookingStatus[dateString];
+    
+    // 지난 날짜 처리
+    if (dateObj < today) {
+        dayElement.className = `${baseClass} past`;
+        dayElement.title = '지난 날짜';
+        dayElement.textContent = currentDay;
+        return;
+    }
+    
+    // 상태에 따른 클래스와 타이틀 설정
+    let className, title, bgColor;
+    
+    // 관리자 마감 여부 확인 (예약 0개인 경우만)
+    const isAdminBlocked = dateStatus?.isFullyBlocked && (!dateStatus?.bookingCount || dateStatus?.bookingCount === 0);
+    
+    // 부분 마감 상태 확인
+    const isPartiallyBlocked = dateStatus?.isPartiallyBlocked;
+    
+    // 예약 수
+    const bookingCount = dateStatus?.bookingCount || 0;
+
+    if (isAdminBlocked) {
+        className = `${baseClass} blocked cursor-pointer`;
+        title = '관리자 마감';
+    } else if (dateStatus?.isFull || (isPartiallyBlocked && bookingCount >= 1)) {
+        className = `${baseClass} full cursor-pointer`;
+        title = '예약 마감';
+    } else if (isPartiallyBlocked) {
+        className = `${baseClass} partially-blocked cursor-pointer`;
+        title = '부분 마감';
+        bgColor = '#F97316';
+    } else if (bookingCount > 0) {
+        className = `${baseClass} booked cursor-pointer`;
+        title = `${bookingCount}개 예약됨`;
+    } else {
+        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+        title = '예약 가능';
+    }
+    
+    // 클래스 및 스타일 적용
+    dayElement.className = className;
+    dayElement.title = title;
+    if (bgColor) dayElement.style.backgroundColor = bgColor;
+    
+    // 날짜 텍스트 추가
+    const dateText = document.createElement('span');
+    dateText.textContent = currentDay;
+    dateText.className = 'z-10';
+    dayElement.appendChild(dateText);
+    
+    // 예약 수 배지 추가
+    if (bookingCount > 0) {
+        const countBadge = document.createElement('div');
+        countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+        
+        if (isPartiallyBlocked) {
+            // 부분 마감인 경우
+            if (bookingCount >= 1) {
+                countBadge.textContent = `1/1`;
+                countBadge.style.backgroundColor = '#FEE2E2';
+                countBadge.style.color = '#B91C1C';
+            } else {
+                countBadge.textContent = `0/1`;
+                countBadge.style.backgroundColor = '#FEF3C7';
+                countBadge.style.color = '#92400E';
+            }
+        } else {
+            // 일반 예약 상태
+            countBadge.textContent = `${Math.min(bookingCount, 2)}/2`;
+            
+            if (bookingCount >= 2) {
+                countBadge.style.backgroundColor = '#FEE2E2';
+                countBadge.style.color = '#B91C1C';
+            } else {
+                countBadge.style.backgroundColor = '#DBEAFE';
+                countBadge.style.color = '#1E40AF';
+            }
+        }
+        
+        dayElement.appendChild(countBadge);
+    }
+    
+    // 날짜 클릭 이벤트 처리
+    addAdminDateClickHandler(dayElement, dateString, adminRegion);
+    
+    // 오늘 날짜 강조
+    if (dateObj.getDate() === today.getDate() &&
+        dateObj.getMonth() === today.getMonth() &&
+        dateObj.getFullYear() === today.getFullYear()) {
+        dayElement.classList.add('font-bold');
+    }
+}
+
 // 통합 날짜별 예약 조회 함수 (새로 추가)
 async function loadDateBookingsIntegrated(dateString) {
     try {
