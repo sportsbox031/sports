@@ -6296,9 +6296,9 @@ function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, 
 
 // 통합 캘린더 일자 렌더링 함수 (새로 추가)
 function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay, today) {
-    const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
-    
-    const mergedStatus = bookingStatus[dateString] || {};
+  const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
+  // updateCalendarStatus에서 병합된 data는 bookingStatus[dateString]에 저장됨
+  const mergedStatus = bookingStatus[dateString] || {};
 
   // 지난 날짜 처리
   if (dateObj < today) {
@@ -6309,60 +6309,59 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
   }
 
   let className, title, bgColor;
-
-  // 관리자 직접 마감(전체 마감): mergedStatus.isFullyBlocked가 true면
+  
+  // 관리자 직접 마감: 압축된 병합 데이터에서 isFullyBlocked 사용
   if (mergedStatus.isFullyBlocked) {
     className = `${baseClass} blocked cursor-pointer`;
     title = '관리자 전체 마감';
   }
-  // 예약 마감 상태: 예약 수가 2건 이상이거나 부분 마감에 예약 1건 있는 경우
+  // 예약 마감: 예약 수가 2개 이상이거나 부분 마감 상태에서 예약 1건 이상이면
   else if (mergedStatus.bookingCount >= 2 || (mergedStatus.isPartiallyBlocked && mergedStatus.bookingCount >= 1)) {
     className = `${baseClass} full cursor-pointer`;
     title = '예약 마감 (2건 모두 예약됨)';
   }
-  // 부분 마감 상태 (예약 없이)
+  // 부분 마감 상태 (예약 없는 경우)
   else if (mergedStatus.isPartiallyBlocked) {
     className = `${baseClass} partially-blocked cursor-pointer`;
-    title = '예약 부분 마감 (1건만 예약 가능)';
-    bgColor = '#F97316';  // 예: 주황색 등
+    title = '예약 부분 마감 (1개 예약 가능)';
+    bgColor = '#F97316'; // 예시 색상(주황)
   }
   // 예약이 있는 경우
   else if (mergedStatus.hasBooking) {
     className = `${baseClass} booked cursor-pointer`;
     title = `${mergedStatus.bookingCount}개 예약됨`;
   }
-  // 예약이 하나도 없는 경우(예약 가능)
+  // 예약이 없는 경우 (예약 가능)
   else {
     className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
     title = '예약 가능';
   }
-
+  
   dayElement.className = className;
   dayElement.title = title;
   if (bgColor) dayElement.style.backgroundColor = bgColor;
   dayElement.textContent = currentDay;
 
-  // 예약 건수 배지 추가 (예시)
-  if (mergedStatus.bookingCount > 0 || mergedStatus.isPartiallyBlocked) {
+  // 예약 건수 배지 추가 (예약 수나 부분 마감시)
+  if ((mergedStatus.bookingCount && mergedStatus.bookingCount > 0) || mergedStatus.isPartiallyBlocked) {
     const countBadge = document.createElement('div');
     countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-    // 예시: 예약 수에 따라 배지 텍스트 결정
     if (mergedStatus.bookingCount >= 2) {
       countBadge.textContent = `2/2`;
-      countBadge.style.backgroundColor = '#FEE2E2';
+      countBadge.style.backgroundColor = '#FEE2E2'; // 빨간 배경
       countBadge.style.color = '#B91C1C';
     } else if (mergedStatus.isPartiallyBlocked) {
       countBadge.textContent = `1/2`;
-      countBadge.style.backgroundColor = '#FEF3C7';
+      countBadge.style.backgroundColor = '#FEF3C7'; // 노랑 배경
       countBadge.style.color = '#92400E';
     } else {
       countBadge.textContent = `${mergedStatus.bookingCount}/2`;
-      countBadge.style.backgroundColor = '#DBEAFE';
+      countBadge.style.backgroundColor = '#DBEAFE'; // 파랑 배경
       countBadge.style.color = '#1E40AF';
     }
     dayElement.appendChild(countBadge);
   }
-
+  
   // 오늘 날짜 강조
   if (
     dateObj.getDate() === today.getDate() &&
@@ -6371,8 +6370,8 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
   ) {
     dayElement.classList.add('font-bold');
   }
-
-  // 날짜 클릭 이벤트: 예약 상세 모달 로드
+  
+  // 날짜 클릭 이벤트 등록
   dayElement.addEventListener('click', async function() {
     currentSelectedDate = dateString;
     try {
