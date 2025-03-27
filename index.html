@@ -189,6 +189,40 @@
         cursor: pointer;
     }
 
+/* 관리자 달력 스타일 보강 */
+#adminCalendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+#adminCalendar .calendar-day {
+    min-height: 60px; /* 최소 높이 보장 */
+    aspect-ratio: 1/1; /* 정사각형 비율 유지 */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 날짜 셀 호버 효과 강화 */
+#adminCalendar .calendar-day:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* 날짜 클릭 상태 표시 */
+#adminCalendar .calendar-day.selected {
+    border: 2px solid #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
 /* 공지사항 디자인 개선 */
 .notice-item {
   transition: all 0.3s ease;
@@ -1812,21 +1846,21 @@ const CalendarRenderer = {
     
     // 캘린더 기본 구조 렌더링
     renderCalendarStructure() {
-        this.container.innerHTML = `
-            <div class="calendar-header grid grid-cols-7 gap-2 mb-2">
-                <div class="text-center font-medium text-gray-600">일</div>
-                <div class="text-center font-medium text-gray-600">월</div>
-                <div class="text-center font-medium text-gray-600">화</div>
-                <div class="text-center font-medium text-gray-600">수</div>
-                <div class="text-center font-medium text-gray-600">목</div>
-                <div class="text-center font-medium text-gray-600">금</div>
-                <div class="text-center font-medium text-gray-600">토</div>
-            </div>
-            <div id="${this.container.id}-days" class="calendar-days grid grid-cols-7 gap-2"></div>
-        `;
-        
-        this.daysContainer = document.getElementById(`${this.container.id}-days`);
-    },
+    this.container.innerHTML = `
+        <div class="calendar-header grid grid-cols-7 gap-4 mb-4">
+            <div class="text-center font-medium text-gray-600">일</div>
+            <div class="text-center font-medium text-gray-600">월</div>
+            <div class="text-center font-medium text-gray-600">화</div>
+            <div class="text-center font-medium text-gray-600">수</div>
+            <div class="text-center font-medium text-gray-600">목</div>
+            <div class="text-center font-medium text-gray-600">금</div>
+            <div class="text-center font-medium text-gray-600">토</div>
+        </div>
+        <div id="${this.container.id}-days" class="calendar-days grid grid-cols-7 gap-4"></div>
+    `;
+    
+    this.daysContainer = document.getElementById(`${this.container.id}-days`);
+},
     
     // 날짜 채우기
     fillCalendarDays() {
@@ -4252,11 +4286,22 @@ async function initializeAdminDashboard(region, username) {
             updateBookingStatusUI(settings?.is_active || false);
         }
 
-        // 공통 초기화 작업
+        // 먼저 UI 요소 업데이트
+        updateStatisticsUI(region);
+        
+        // 공통 초기화 작업 - 순서 중요
+        await loadRegionStatistics();
+        
+        // 캘린더 초기화를 별도로 수행
+        console.log('관리자 캘린더 초기화 시작');
+        const adminCalendarRenderer = initializeAdminCalendar();
+        
+        // 캘린더 데이터 로드 - 캘린더 초기화 후에 수행
+        console.log('캘린더 데이터 로드 시작');
+        await refreshCalendarStatus(AdminUtils.getTargetRegion());
+        
+        // 나머지 데이터 로드
         await Promise.all([
-            loadRegionStatistics(),
-            // 새로운 캘린더 렌더러 초기화
-            initializeAdminCalendar(),
             loadPendingUsers(),
             loadPendingBookings(),
             loadAllUsers()
@@ -5370,12 +5415,17 @@ async function refreshCalendarStatus(region) {
         
         const isIntegratedAdmin = AdminUtils.isIntegratedAdmin();
         
+        // API 요청 전 로딩 표시
+        showLoading();
+        
         // 전체 관리자인 경우 남부/북부 모두 로드
         if (isIntegratedAdmin) {
-            const [southResponse, northResponse] = await Promise.all([
-                apiRequest('/api/bookings/status?region=south'),
-                apiRequest('/api/bookings/status?region=north')
-            ]);
+            const southResponse = await apiRequest('/api/bookings/status?region=south');
+            const northResponse = await apiRequest('/api/bookings/status?region=north');
+            
+            // 응답 확인 로그 추가
+            console.log('남부 응답:', southResponse);
+            console.log('북부 응답:', northResponse);
             
             // 데이터 통합하여 저장
             bookingStatus = {
@@ -5390,6 +5440,8 @@ async function refreshCalendarStatus(region) {
         } else {
             // 지역 관리자는 해당 지역만
             const data = await apiRequest(`/api/bookings/status?region=${region}`);
+            console.log(`${region} 지역 응답:`, data);
+            
             if (data.success) {
                 bookingStatus = data.data;
                 console.log('지역 관리자 데이터 새로고침 완료:', Object.keys(bookingStatus));
@@ -5397,6 +5449,9 @@ async function refreshCalendarStatus(region) {
                 console.error('지역 데이터 새로고침 실패:', data.message);
             }
         }
+        
+        // 로딩 종료
+        hideLoading();
         
         // 캘린더 렌더러 사용
         if (window.adminCalendarRenderer) {
@@ -5409,7 +5464,9 @@ async function refreshCalendarStatus(region) {
         console.log('[refreshCalendarStatus] 캘린더 상태 업데이트 완료');
         return true;
     } catch (error) {
+        hideLoading();
         console.error('[refreshCalendarStatus] 오류:', error);
+        showAlert('예약 현황을 불러오는데 실패했습니다.', 'error');
         return false;
     }
 }
@@ -6152,14 +6209,18 @@ function addDateClickHandler(dayElement, dateString) {
 
 // 관리자용 날짜 클릭 핸들러
 function addAdminDateClickHandler(element, dateString, targetRegion) {
-    // 기존 이벤트 핸들러 제거 (중요!)
-    const clonedElement = element.cloneNode(true);
-    element.parentNode.replaceChild(clonedElement, element);
+    if (!element) return element;
     
-    // 새 이벤트 핸들러 추가
-    clonedElement.addEventListener('click', async (e) => {
-        e.preventDefault(); // 기본 동작 방지
-        e.stopPropagation(); // 이벤트 버블링 방지
+    // 기존 코드의 클론 방식은 유지하되, 이벤트 핸들러 설정 방식 변경
+    const clonedElement = element.cloneNode(true);
+    if (element.parentNode) {
+        element.parentNode.replaceChild(clonedElement, element);
+    }
+    
+    // 직접 onclick 핸들러 설정 (addEventListener 대신)
+    clonedElement.onclick = async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
         console.log(`날짜 클릭: ${dateString}`);
         
@@ -6170,23 +6231,13 @@ function addAdminDateClickHandler(element, dateString, targetRegion) {
         }
         
         try {
-            // 현재 모달이 열려있으면 닫기
-            const currentModal = document.getElementById('dateBookingsModal');
-            if (currentModal && currentModal.classList.contains('show')) {
-                closeDateBookingsModal();
-                // 약간의 딜레이 추가 (모달 전환 시 충돌 방지)
-                await new Promise(resolve => setTimeout(resolve, 300));
-            }
+            // 현재 선택된 날짜 저장
+            currentSelectedDate = dateString;
             
-            // 선택된 지역 정보 저장
+            // 선택된 지역 정보 저장 (기존 기능 유지)
             if (targetRegion) {
                 sessionStorage.setItem('selectedTargetRegion', targetRegion);
             }
-            
-            console.log(`날짜 ${dateString} 예약 로드 중, 지역: ${targetRegion}`);
-            
-            // 현재 선택된 날짜 저장
-            currentSelectedDate = dateString;
             
             // 예약 정보 로드
             await loadDateBookings(dateString);
@@ -6196,14 +6247,13 @@ function addAdminDateClickHandler(element, dateString, targetRegion) {
             
             // 모달 버튼 설정
             setupModalButtons(dateString);
-            
         } catch (error) {
             console.error('날짜 클릭 처리 오류:', error);
             showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
         }
-    });
+    };
     
-    return clonedElement; // 수정된 요소 반환
+    return clonedElement;
 }
 
 // 일반 사용자용 캘린더 렌더링
