@@ -5294,48 +5294,58 @@ async function updateCalendarStatus() {
         const role = sessionStorage.getItem('role');
         const adminRegion = sessionStorage.getItem('region');
         
+        // bookingStatus 초기화 (중요)
+        bookingStatus = {};
+        
         // 전체 관리자인 경우 남부/북부 모두 가져오기
         if (role === 'admin' && adminRegion === 'all') {
             console.log('통합 관리자용 캘린더 상태 조회');
             
             try {
                 // 남부/북부 데이터를 가져옴
-                const [southResponse, northResponse] = await Promise.all([
-                    apiRequest('/api/bookings/status?region=south'),
-                    apiRequest('/api/bookings/status?region=north')
-                ]);
+                const southPromise = apiRequest('/api/bookings/status?region=south');
+                const northPromise = apiRequest('/api/bookings/status?region=north');
                 
-                const southData = southResponse?.data || {};
-                const northData = northResponse?.data || {};
+                const [southResponse, northResponse] = await Promise.all([southPromise, northPromise]);
+                
+                // API 응답 유효성 확인
+                if (!southResponse || !southResponse.success || !northResponse || !northResponse.success) {
+                    throw new Error('API 응답 오류');
+                }
+                
+                const southData = southResponse.data || {};
+                const northData = northResponse.data || {};
                 
                 // 날짜별로 통합된 데이터 구조 생성
                 const mergedData = {};
                 
                 // 모든 날짜 키 수집 (남부/북부 통합)
                 const allDates = [...new Set([
-                    ...Object.keys(southData || {}),
-                    ...Object.keys(northData || {})
+                    ...Object.keys(southData),
+                    ...Object.keys(northData)
                 ])];
                 
-                console.log(`통합 관리자: ${allDates.length}개 날짜 데이터 병합`);
-                
-                // 날짜별로 데이터 통합 (단순화)
-                allDates.forEach(date => {
-                    const south = southData[date] || {};
-                    const north = northData[date] || {};
+                // 날짜별로 데이터 통합
+                if (allDates.length > 0) {
+                    allDates.forEach(date => {
+                        if (!date) return; // 날짜 키가 없으면 스킵
+                        
+                        const south = southData[date] || {};
+                        const north = northData[date] || {};
+                        
+                        mergedData[date] = {
+                            bookingCount: (parseInt(south.bookingCount || 0) + parseInt(north.bookingCount || 0)),
+                            hasBooking: Boolean(south.hasBooking || north.hasBooking),
+                            isFullyBlocked: Boolean(south.isFullyBlocked && north.isFullyBlocked),
+                            isPartiallyBlocked: Boolean(south.isPartiallyBlocked || north.isPartiallyBlocked)
+                        };
+                    });
                     
-                    mergedData[date] = {
-                        bookingCount: (south.bookingCount || 0) + (north.bookingCount || 0),
-                        hasBooking: Boolean(south.hasBooking || north.hasBooking),
-                        isFullyBlocked: Boolean(south.isFullyBlocked && north.isFullyBlocked),
-                        isPartiallyBlocked: Boolean(south.isPartiallyBlocked || north.isPartiallyBlocked)
-                    };
-                });
+                    // 통합된 데이터로 bookingStatus 업데이트
+                    bookingStatus = mergedData;
+                }
                 
-                // 통합된 데이터로 bookingStatus 업데이트
-                bookingStatus = mergedData;
-                
-                console.log('남부/북부 예약 상태 통합 완료');
+                console.log(`통합 관리자: ${Object.keys(mergedData).length}개 날짜 데이터 병합 완료`);
             } catch (error) {
                 console.error('통합 관리자 예약 상태 로드 오류:', error);
                 bookingStatus = {}; // 오류 시 빈 객체로 초기화
@@ -5345,12 +5355,23 @@ async function updateCalendarStatus() {
             try {
                 const userRegion = adminRegion || sessionStorage.getItem('region');
                 const response = await apiRequest(`/api/bookings/status?region=${userRegion}`);
-                bookingStatus = response?.data || {};
+                
+                if (response && response.success && response.data) {
+                    bookingStatus = response.data;
+                    
+                    // 남은 예약 횟수 업데이트 (사용자인 경우)
+                    if (role !== 'admin' && response.remainingBookings !== undefined) {
+                        updateRemainingBookingsDisplay(response.remainingBookings);
+                    }
+                }
             } catch (error) {
                 console.error('예약 상태 로드 오류:', error);
                 bookingStatus = {};
             }
         }
+        
+        // 달력 데이터 확인
+        console.log(`달력 상태 데이터: ${Object.keys(bookingStatus).length}개 날짜`);
         
         // 역할에 따라 적절한 캘린더 렌더링
         try {
@@ -5364,9 +5385,11 @@ async function updateCalendarStatus() {
         }
         
         console.log('캘린더 상태 업데이트 완료');
+        return true;
     } catch (error) {
         console.error('캘린더 상태 업데이트 오류:', error);
         bookingStatus = {}; // 오류 발생 시 기본값 설정
+        return false;
     }
 }
 
