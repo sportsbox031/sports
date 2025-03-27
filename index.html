@@ -6144,8 +6144,21 @@ function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, 
     // 기본 클래스
     const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
     
-    // 특정 지역의 상태 정보 가져오기
-    const dateStatus = bookingStatus[dateString];
+    // 특정 지역의 상태 정보 가져오기 - 데이터 구조 체크
+    let dateStatus;
+    
+    if (typeof bookingStatus === 'object' && bookingStatus !== null) {
+        if (bookingStatus.hasOwnProperty('south') && bookingStatus.hasOwnProperty('north')) {
+            // 지역별 구조인 경우 (전체 관리자용 구조)
+            dateStatus = bookingStatus[region]?.[dateString];
+        } else {
+            // 날짜별 구조인 경우 (일반 사용자/지역 관리자용 구조)
+            dateStatus = bookingStatus[dateString];
+        }
+    } else {
+        // bookingStatus가 유효하지 않은 경우 기본값
+        dateStatus = null;
+    }
     
     // 지난 날짜 처리
     if (dateObj < today) {
