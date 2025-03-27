@@ -5218,52 +5218,37 @@ async function updateCalendarStatus() {
                     apiRequest('/api/bookings/status?region=north')
                 ]);
                 
-                // 여기가 핵심 변경 부분: 지역별 구조가 아닌 날짜별 통합 구조로 변환
                 const southData = southResponse.data || {};
                 const northData = northResponse.data || {};
                 
                 // 날짜별로 통합된 데이터 구조 생성
                 const mergedData = {};
                 
-                // 남부 데이터 처리
-                Object.keys(southData).forEach(date => {
-                    mergedData[date] = {
-                        ...southData[date],
-                        _region: 'south', // 내부 처리용 지역 정보 추가
-                        _southData: southData[date] // 원본 남부 데이터 보존
-                    };
-                });
+                // 모든 날짜 키 수집 (남부/북부 통합)
+                const allDates = [...new Set([
+                    ...Object.keys(southData),
+                    ...Object.keys(northData)
+                ])];
                 
-                // 북부 데이터 처리 (이미 있는 날짜는 통합 정보로 업데이트)
-                Object.keys(northData).forEach(date => {
-                    if (mergedData[date]) {
-                        // 이미 남부 데이터가 있는 경우, 정보 합치기
-                        mergedData[date] = {
-                            ...mergedData[date],
-                            bookingCount: (mergedData[date].bookingCount || 0) + (northData[date].bookingCount || 0),
-                            hasBooking: mergedData[date].hasBooking || northData[date].hasBooking,
-                            isFullyBlocked: mergedData[date].isFullyBlocked && northData[date].isFullyBlocked,
-                            isPartiallyBlocked: mergedData[date].isPartiallyBlocked || northData[date].isPartiallyBlocked,
-                            _northData: northData[date] // 원본 북부 데이터 보존
-                        };
-                    } else {
-                        // 북부 데이터만 있는 경우
-                        mergedData[date] = {
-                            ...northData[date],
-                            _region: 'north', // 내부 처리용 지역 정보 추가
-                            _northData: northData[date] // 원본 북부 데이터 보존
-                        };
-                    }
+                // 날짜별로 데이터 통합
+                allDates.forEach(date => {
+                    mergedData[date] = {
+                        bookingCount: (southData[date]?.bookingCount || 0) + 
+                                     (northData[date]?.bookingCount || 0),
+                        hasBooking: (southData[date]?.hasBooking || false) || 
+                                   (northData[date]?.hasBooking || false),
+                        isFullyBlocked: (southData[date]?.isFullyBlocked || false) && 
+                                       (northData[date]?.isFullyBlocked || false),
+                        isPartiallyBlocked: (southData[date]?.isPartiallyBlocked || false) || 
+                                          (northData[date]?.isPartiallyBlocked || false),
+                        // 원본 지역 데이터 보존 (필요시 참조용)
+                        _southData: southData[date],
+                        _northData: northData[date]
+                    };
                 });
                 
                 // 통합된 데이터로 bookingStatus 업데이트
                 bookingStatus = mergedData;
-                
-                // 지역별 원본 데이터도 따로 저장 (필요시 참조용)
-                bookingStatus._originalData = {
-                    south: southData,
-                    north: northData
-                };
                 
                 console.log('남부/북부 예약 상태 통합 완료');
             } catch (error) {
