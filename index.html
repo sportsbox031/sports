@@ -6050,12 +6050,57 @@ async function initializeAdminCalendar() {
 // 일반 사용자용 날짜 클릭 핸들러
 function addDateClickHandler(element, year, month, day) {
     element.addEventListener('click', function() {
+        // 기존 선택 클래스 제거
         const selected = document.querySelector('.selected');
         if (selected) {
             selected.classList.remove('selected');
         }
+        
+        // 현재 선택에 선택 클래스 추가
         element.classList.add('selected');
+        
+        // 선택된 날짜 표시
         document.getElementById('selectedDate').value = `${year}년 ${month + 1}월 ${day}일`;
+        
+        // 이전 예약 정보 불러오기
+        const startTimeSelect = document.getElementById('startTime');
+        const endTimeSelect = document.getElementById('endTime');
+        const peopleInput = document.getElementById('people');
+        const placeInput = document.getElementById('place');
+        
+        // 저장된 값이 있으면 불러오기
+        const savedStartTime = localStorage.getItem('lastBookingStartTime');
+        const savedEndTime = localStorage.getItem('lastBookingEndTime');
+        const savedPeople = localStorage.getItem('lastBookingPeople');
+        const savedPlace = localStorage.getItem('lastBookingPlace');
+        
+        // 시작 시간 설정 (시작 시간 옵션이 있는지 확인)
+        if (savedStartTime && startTimeSelect.querySelector(`option[value="${savedStartTime}"]`)) {
+            startTimeSelect.value = savedStartTime;
+            // 시작 시간 변경 이벤트 발생시켜 종료 시간 옵션 업데이트
+            startTimeSelect.dispatchEvent(new Event('change'));
+            
+            // 종료 시간 설정 (종료 시간 옵션이 존재하는지 확인 후)
+            if (savedEndTime) {
+                // 약간의 지연 추가 (시작 시간 변경 이벤트가 처리된 후)
+                setTimeout(() => {
+                    // 옵션이 존재하는지 확인
+                    if (endTimeSelect.querySelector(`option[value="${savedEndTime}"]`)) {
+                        endTimeSelect.value = savedEndTime;
+                    }
+                }, 50);
+            }
+        }
+        
+        // 인원수 설정
+        if (savedPeople) {
+            peopleInput.value = savedPeople;
+        }
+        
+        // 장소 설정
+        if (savedPlace) {
+            placeInput.value = savedPlace;
+        }
     });
 }
 
@@ -7534,27 +7579,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // 예약 폼 제출
-    document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const selectedDateText = document.getElementById('selectedDate').value;
-        const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
-        
-        if (!dateParts) {
-            showAlert('날짜를 선택해주세요.', 'error', 3000);
-            return;
-        }
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const selectedDateText = document.getElementById('selectedDate').value;
+    const dateParts = selectedDateText.match(/(\d+)년 (\d+)월 (\d+)일/);
+    
+    if (!dateParts) {
+        showAlert('날짜를 선택해주세요.', 'error', 3000);
+        return;
+    }
 
-        const bookingData = {
-            date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
-            startTime: document.getElementById('startTime').value,
-            endTime: document.getElementById('endTime').value,
-            people: document.getElementById('people').value,
-            place: document.getElementById('place').value,
-            region: sessionStorage.getItem('region') // 사용자의 지역 정보 추가
-        };
+    // 현재 입력값 저장 (localStorage에)
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const people = document.getElementById('people').value;
+    const place = document.getElementById('place').value;
+    
+    // 유효한 값만 저장
+    if (startTime && endTime && people && place) {
+        localStorage.setItem('lastBookingStartTime', startTime);
+        localStorage.setItem('lastBookingEndTime', endTime);
+        localStorage.setItem('lastBookingPeople', people);
+        localStorage.setItem('lastBookingPlace', place);
+    }
 
-        createBooking(bookingData);
-    });
+    const bookingData = {
+        date: `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`,
+        startTime: startTime,
+        endTime: endTime,
+        people: people,
+        place: place,
+        region: sessionStorage.getItem('region')
+    };
+
+    createBooking(bookingData);
+});
 
     // 로그아웃 버튼
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
