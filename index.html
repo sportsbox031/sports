@@ -4820,7 +4820,15 @@ async function cancelBooking(bookingId) {
                 'success'
             );
             await loadBookings();
-            await debouncedUpdateCalendarStatus();
+            
+            // 디바운스 대신 부드러운 달력 업데이트 함수 사용
+            if (booking.status === 'pending') {
+                // 즉시 취소된 경우에만 달력 업데이트 (승인 대기 취소는 즉시 달력에 반영됨)
+                refreshCalendarSmoothly();
+            } else {
+                // 취소 요청 상태는 달력에 변화가 없으므로 일반 업데이트 사용
+                debouncedUpdateCalendarStatus();
+            }
         }
     } catch (error) {
         console.error('Booking cancellation error:', error);
