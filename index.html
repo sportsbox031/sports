@@ -65,6 +65,15 @@
         box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
     }
 
+    /* 선택된 날짜에 대한 강화된 스타일 (항상 우선 적용) */
+.calendar-day.selected {
+    background-color: #3B82F6 !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    z-index: 10;
+}
+
     /* 모달 스타일 */
     .modal {
     display: none; /* !important 제거 */
@@ -4509,10 +4518,26 @@ async function createBooking(bookingData) {
 // 예약 목록 로드 함수
 async function loadBookings() {
     try {
-        const data = await apiRequest('/api/bookings');
+        // 현재 선택된 달(currentDate)에 해당하는 달의 시작일과 종료일
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
+        
+        // 날짜 범위를 포함한 API 요청
+        const data = await apiRequest(`/api/bookings?start=${startDate}&end=${endDate}`);
         const tbody = document.getElementById('bookingsList');
         
         if (data.success && data.data) {
+            // 추가: 현재 월에 대한 정보 표시
+            const monthName = currentDate.toLocaleString('default', { month: 'long' });
+            const tableTitle = tbody.closest('div').querySelector('h2');
+            if (tableTitle) {
+                tableTitle.textContent = `${monthName} 예약 목록`;
+            }
+            
+            // 기존 로직은 유지
             tbody.innerHTML = data.data
                 .filter(booking => booking.status !== 'cancelled')
                 .map(booking => {
@@ -4546,7 +4571,7 @@ async function loadBookings() {
                             </td>
                         </tr>
                     `;
-                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">예약 내역이 없습니다.</td></tr>';
+                }).join('') || '<tr><td colspan="6" class="px-6 py-4 text-center">이번 달 예약 내역이 없습니다.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
@@ -5897,6 +5922,7 @@ function initializeCalendar() {
         currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
         renderCalendar(currentDate);
         debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
+        loadBookings(); // 예약 목록 다시 로드 (추가)
     });
 
     newNextButton.addEventListener('click', function() {
@@ -5904,6 +5930,7 @@ function initializeCalendar() {
         currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
         renderCalendar(currentDate);
         debouncedUpdateCalendarStatus();  // 상태 업데이트 추가
+        loadBookings(); // 예약 목록 다시 로드 (추가)
     });
 
     renderCalendar(currentDate);
@@ -6077,7 +6104,7 @@ function renderCalendar(date) {
         }
         // 부분 마감 상태 (예약 0개)
         else if (dateStatus?.isPartiallyBlocked) {
-            dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
             dayElement.title = '부분 마감 (1개만 예약 가능)';
             addDateClickHandler(dayElement, year, month, currentDay);
         } 
@@ -6114,7 +6141,7 @@ function renderCalendar(date) {
             // 부분 마감 (예약 0개)
             else if (dateStatus.isPartiallyBlocked) {
                 countBadge.textContent = `1/2`;
-                countBadge.style.backgroundColor = '#FEF3C7'; // 노란색 배경 (부분 마감)
+                countBadge.style.backgroundColor = '#DBEAFE'; // 파란색 배경 (부분 마감)
                 countBadge.style.color = '#92400E';
             }
             // 1개 예약
