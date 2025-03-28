@@ -4491,14 +4491,12 @@ async function createBooking(bookingData) {
         const dateStatus = bookingStatus[bookingData.date];
         if (dateStatus?.isFullyBlocked) {
             showAlert('해당 날짜는 전체 마감되었습니다.', 'error', 3000);
-            // 날짜 상태 업데이트 (중요!)
-            await updateCalendarStatus(); // 디바운스 없이 즉시 업데이트
+            await refreshCalendarSmoothly(); // 부드러운 새로고침
             return;
         }
         if (dateStatus?.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
             showAlert('해당 날짜는 부분 마감되어 더 이상 예약할 수 없습니다.', 'error', 3000);
-            // 날짜 상태 업데이트 (중요!)
-            await updateCalendarStatus(); // 디바운스 없이 즉시 업데이트
+            await refreshCalendarSmoothly(); // 부드러운 새로고침
             return;
         }
 
@@ -4511,24 +4509,65 @@ async function createBooking(bookingData) {
             showAlert('예약이 신청되었습니다. 관리자 승인을 기다려주세요.', 'success', 3000);
             document.getElementById('bookingForm').reset();
             
-            // 예약 목록 및 달력 상태 모두 즉시 업데이트
+            // 예약 목록 및 달력 상태 모두 부드럽게 업데이트
             await Promise.all([
                 loadBookings(),
-                updateCalendarStatus() // 디바운스 없이 즉시 업데이트
+                refreshCalendarSmoothly() // 부드러운 새로고침
             ]);
         }
     } catch (error) {
         console.error('Booking creation error:', error);
         
-        // 에러 메시지 표시 - '마감' 관련 메시지만 특별 처리
+        // 에러 메시지 표시
         if (error.message && error.message.includes('마감')) {
-            // 예약 마감 관련 에러인 경우
             showAlert(error.message, 'error', 3000);
-            // 중요: 달력 상태 즉시 새로고침
-            await updateCalendarStatus(); // 디바운스 없이 즉시 업데이트
+            // 달력 부드럽게 새로고침
+            await refreshCalendarSmoothly();
         } else {
-            // 기타 에러
             showAlert(error.message || '예약 생성 중 오류가 발생했습니다.', 'error', 3000);
+        }
+    }
+}
+
+// 부드러운 달력 새로고침 함수 (새로 추가)
+async function refreshCalendarSmoothly() {
+    // 1. 현재 달력에 로딩 오버레이 표시
+    const calendar = document.getElementById('calendar');
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10';
+    overlay.innerHTML = `
+        <div class="animate-pulse text-blue-500">
+            <i class="fas fa-sync-alt fa-spin text-xl"></i>
+            <p class="mt-2 text-sm font-medium">최신 예약 정보 가져오는 중...</p>
+        </div>
+    `;
+    
+    // 달력의 상대적 위치 설정 (오버레이 배치를 위해)
+    if (getComputedStyle(calendar).position === 'static') {
+        calendar.style.position = 'relative';
+    }
+    
+    calendar.appendChild(overlay);
+    
+    try {
+        // 2. 달력 데이터 새로고침
+        await updateCalendarStatus(); // 디바운스 없이 직접 호출
+        
+        // 3. 애니메이션 효과와 함께 오버레이 제거
+        overlay.style.transition = 'opacity 0.3s ease';
+        overlay.style.opacity = '0';
+        
+        setTimeout(() => {
+            if (calendar.contains(overlay)) {
+                calendar.removeChild(overlay);
+            }
+        }, 300);
+        
+    } catch (error) {
+        console.error('달력 새로고침 오류:', error);
+        // 오류 발생해도 오버레이 제거
+        if (calendar.contains(overlay)) {
+            calendar.removeChild(overlay);
         }
     }
 }
