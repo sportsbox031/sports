@@ -182,6 +182,7 @@
     background-color: #FEF3C7 !important;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(251, 191, 36, 0.1);
+    color: #000000 !important; /* 텍스트 색상을 검정색으로 변경 */
 }
 
 /* 관리자 대시보드에서는 기존 partially-blocked 스타일 유지 */
@@ -5124,6 +5125,9 @@ async function forceCancel(bookingId, dateString, region) {
             // 관리자 유형 확인
             const adminRegion = sessionStorage.getItem('region');
             const isIntegratedAdmin = adminRegion === 'all';
+
+             // 중요: 모달 닫기 추가
+             closeDateBookingsModal();
             
             // 통합 관리자인 경우 통합 예약 정보 로드
             if (isIntegratedAdmin) {
@@ -6233,13 +6237,19 @@ function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, 
     
     let className, title, bgColor;
     
+    // 수정: 부분 마감 + 예약 === 전체 마감 조건 추가 및 우선순위 조정
+    if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
+        // 부분 마감 + 예약 = 예약 마감 상태
+        className = `${baseClass} full cursor-pointer`;
+        title = '예약 마감 (부분 마감 + 1개 예약)';
+    }
     // 관리자가 직접 마감한 경우
-    if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
+    else if (dateStatus?.isFullyBlocked && (!dateStatus.bookingCount || dateStatus.bookingCount === 0)) {
         className = `${baseClass} blocked cursor-pointer`;
         title = '관리자 전체 마감';
     }
-    // 예약 마감 상태: 2개 예약 또는 부분 마감 + 1개 예약
-    else if (dateStatus?.bookingCount >= 2 || (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1)) {
+    // 예약 마감 상태: 2개 예약
+    else if (dateStatus?.bookingCount >= 2) {
         className = `${baseClass} full cursor-pointer`;
         title = '예약 마감 (2건)';
     }
@@ -6360,31 +6370,38 @@ function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay
     let className, title, bgColor;
 
     if (isAdminFullyBlocked) {
-        // 관리자가 직접 마감한 경우
-        className = `${baseClass} blocked cursor-pointer`;
-        title = '관리자 마감';
-    } else if (isSouthFull && isNorthFull) {
-        // 남부/북부 모두 마감인 경우
-        className = `${baseClass} full cursor-pointer`;
-        title = '남부/북부 모두 예약 마감';
-    } else if (totalBookings >= 2) {
-        // 실제 예약이 2개 이상인 경우에만 마감으로 표시
-        className = `${baseClass} full cursor-pointer`;
-        title = '예약 마감 (2건 예약됨)';
-    } else if (isPartiallyBlocked) {
-        // 부분 마감 상태이지만 예약이 없으면 부분 마감으로 표시
-        className = `${baseClass} partially-blocked cursor-pointer`;
-        title = '부분 마감';
-        bgColor = '#F97316';
-    } else if (totalBookings > 0) {
-        // 예약 있음
-        className = `${baseClass} booked cursor-pointer`;
-        title = `${totalBookings}개 예약됨`;
-    } else {
-        // 예약 없음
-        className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-        title = '예약 가능';
-    }
+    // 관리자가 직접 마감한 경우
+    className = `${baseClass} blocked cursor-pointer`;
+    title = '관리자 마감';
+} else if (isSouthFull && isNorthFull) {
+    // 남부/북부 모두 마감인 경우
+    className = `${baseClass} full cursor-pointer`;
+    title = '남부/북부 모두 예약 마감';
+} 
+// 여기에 새 조건 추가: 부분 마감 + 예약
+else if (isPartiallyBlocked && totalBookings > 0) {
+    // 부분 마감 + 예약이 있는 경우 = 마감 상태로 표시
+    className = `${baseClass} full cursor-pointer`;
+    title = '예약 마감 (부분 마감 + 예약)';
+}
+else if (totalBookings >= 2) {
+    // 실제 예약이 2개 이상인 경우에만 마감으로 표시
+    className = `${baseClass} full cursor-pointer`;
+    title = '예약 마감 (2건 예약됨)';
+} else if (isPartiallyBlocked) {
+    // 부분 마감 상태이지만 예약이 없으면 부분 마감으로 표시
+    className = `${baseClass} partially-blocked cursor-pointer`;
+    title = '부분 마감';
+    bgColor = '#F97316';
+} else if (totalBookings > 0) {
+    // 예약 있음
+    className = `${baseClass} booked cursor-pointer`;
+    title = `${totalBookings}개 예약됨`;
+} else {
+    // 예약 없음
+    className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+    title = '예약 가능';
+}
     
     // 클래스 및 스타일 적용
     dayElement.className = className;
