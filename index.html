@@ -177,11 +177,19 @@
         box-shadow: 0 2px 4px rgba(75, 85, 99, 0.2) !important;
     }
 
-    .calendar-day.partially-blocked {
-        background-color: #F97316 !important;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
-    }
+    /* 사용자 대시보드에서는 partially-blocked 클래스에 대한 스타일 적용 안 함 (booked와 동일하게 처리) */
+#userDashboard .calendar-day.partially-blocked {
+    background-color: #FEF3C7 !important;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(251, 191, 36, 0.1);
+}
+
+/* 관리자 대시보드에서는 기존 partially-blocked 스타일 유지 */
+#adminDashboard .calendar-day.partially-blocked {
+    background-color: #F97316 !important;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+}
 
     /* 관리자 캘린더 특수 스타일 */
     #adminCalendar .calendar-day.blocked,
