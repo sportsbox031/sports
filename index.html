@@ -5937,7 +5937,7 @@ document.getElementById('signupForm').addEventListener('submit', async function(
     const password = document.getElementById('signupPassword').value;
     const manager = document.getElementById('manager').value.trim();
     const city = document.getElementById('city').value;
-    const contact = document.getElementById('contact').value.trim();
+    let contact = document.getElementById('contact').value.trim();
     const region = determineRegion(city);
 
     // 단체명 유효성 검사
