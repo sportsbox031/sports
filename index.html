@@ -620,54 +620,67 @@
                 </section>
 
                 <!-- 신청절차 섹션 -->
-                <section id="process" class="py-20 bg-gray-50">
-                    <div class="container mx-auto px-6">
-                        <h2 class="text-3xl font-bold text-center mb-16">신청절차</h2>
-                        <div class="relative">
-                            <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2"></div>
-                            <div class="relative grid md:grid-cols-3 gap-8">
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">1</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">수요처등록 신청</h3>
-                                    <p class="text-gray-600 text-center mb-6">신청서를 다운로드하여 작성 후 제출해주세요</p>
-                                    <div class="flex justify-center">
-                                        <div class="flex justify-center">
-                                            <button onclick="downloadApplication()" 
-                                                class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-                                                <i class="ri-download-line"></i>
-                                                <span>신청서 다운로드</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">2</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">홈페이지 회원가입</h3>
-                                    <p class="text-gray-600 text-center mb-6">홈페이지에서 회원가입을 진행해주세요</p>
-                                    <div class="flex justify-center">
-                                        <button onclick="showLoginScreen()" 
-    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-    <i class="ri-user-add-line"></i>
-    <span>회원가입하기</span>
-</button>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl p-8 shadow-lg relative z-10">
-                                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-6 mx-auto">3</div>
-                                    <h3 class="text-xl font-bold text-center mb-4">스포츠교실 예약</h3>
-                                    <p class="text-gray-600 text-center mb-6">원하시는 날짜를 선택하여 예약해주세요</p>
-                                    <div class="flex justify-center">
-                                        <button onclick="showLoginScreen()" 
-    class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
-    <i class="ri-calendar-check-line"></i>
-    <span>예약하기</span>
-</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+<section id="process" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-16">신청절차</h2>
+        <div class="relative">
+            <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2"></div>
+            <div class="relative grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- 1번째 줄 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">2</div>
+                    <h3 class="text-lg font-bold text-center mb-2">✏️ 회원가입</h3>
+                    <p class="text-gray-600 text-center text-sm">(관리자승인대기)</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">3</div>
+                    <h3 class="text-lg font-bold text-center mb-2">🔑 로그인</h3>
+                    <p class="text-gray-600 text-center text-sm">승인완료 후 로그인</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">4</div>
+                    <h3 class="text-lg font-bold text-center mb-2">📅 희망일자/시간 선택</h3>
+                    <p class="text-gray-600 text-center text-sm">예약 정보 입력</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">5</div>
+                    <h3 class="text-lg font-bold text-center mb-2">⏳ 관리자승인 대기</h3>
+                    <p class="text-gray-600 text-center text-sm">예약 검토중</p>
+                </div>
+                
+                <!-- 2번째 줄 -->
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">6</div>
+                    <h3 class="text-lg font-bold text-center mb-2">✅ 관리자 승인</h3>
+                    <p class="text-gray-600 text-center text-sm">예약 승인 완료</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">7</div>
+                    <h3 class="text-lg font-bold text-center mb-2">🎫 예약확정</h3>
+                    <p class="text-gray-600 text-center text-sm">서비스 이용 가능</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg relative z-10">
+                    <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4 mx-auto">8</div>
+                    <h3 class="text-lg font-bold text-center mb-2">📋 예약 정보확인</h3>
+                    <p class="text-gray-600 text-center text-sm">대시보드에서 확인</p>
+                </div>
+                
+                <div class="flex justify-center items-center">
+                    <button onclick="showLoginScreen()" 
+                        class="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 !rounded-button hover:bg-primary/90">
+                        <i class="ri-login-box-line"></i>
+                        <span>지금 시작하기</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- 자주 묻는 질문 섹션 -->
 <section id="faq" class="py-20 bg-white">
@@ -826,47 +839,46 @@
 </div>
 
             <!-- 회원가입 모달 -->
-<div id="signupModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-96 m-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">회원가입</h2>
-            <button id="closeSignup" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="signupForm" class="space-y-4">
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">단체명</label>
-                <input type="text" id="groupName" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">비밀번호</label>
-                <input type="password" id="signupPassword" required minlength="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <p class="text-sm text-gray-500 mt-1">6자 이상 입력해주세요</p>
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">담당자</label>
-                <input type="text" id="manager" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">시/군</label>
-                <select id="city" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <option value="">시/군을 선택하세요</option>
-                </select>
-                <p id="regionInfo" class="text-sm text-gray-500 mt-1"></p>
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">연락처</label>
-                <input type="text" id="contact" required
-                    placeholder="예: 010-1234-5678"
-                    pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <p class="text-sm text-gray-500 mt-1">형식: 010-0000-0000</p>
-            </div>
+            <div id="signupModal" class="modal">
+                <div class="bg-white p-8 rounded-lg shadow-md w-96 m-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">회원가입</h2>
+                        <button id="closeSignup" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form id="signupForm" class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">단체명</label>
+                            <input type="text" id="groupName" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">비밀번호</label>
+                            <input type="password" id="signupPassword" required minlength="6"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <p class="text-sm text-gray-500 mt-1">6자 이상 입력해주세요</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">담당자</label>
+                            <input type="text" id="manager" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">시/군</label>
+                            <select id="city" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <option value="">시/군을 선택하세요</option>
+                            </select>
+                            <p id="regionInfo" class="text-sm text-gray-500 mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">연락처</label>
+                            <input type="text" id="contact" required
+                                placeholder="예: 01012345678 또는 010-1234-5678"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <p class="text-sm text-gray-500 mt-1">하이픈(-) 포함 또는 제외 모두 가능합니다</p>
+                        </div>
             <button type="submit" 
                 class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
                 가입하기
