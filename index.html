@@ -5999,37 +5999,41 @@ document.getElementById('signupForm').addEventListener('submit', async function(
         return;
     }
 
-    // 연락처 유효성 검사 강화
+    // 연락처 유효성 검사
     if (!contact) {
-    showAlert('연락처를 입력해주세요.', 'error', 3000);
-    document.getElementById('contact').focus();
-    return;
-}
+        showAlert('연락처를 입력해주세요.', 'error', 3000);
+        document.getElementById('contact').focus();
+        return;
+    }
 
-// 연락처 형식 검사 - 하이픈 유무에 관계없이 숫자만 추출하여 길이 확인
-const digits = contact.replace(/\D/g, '');
-if (digits.length < 9 || digits.length > 11) {
-    showAlert('올바른 연락처 형식이 아닙니다.', 'error', 3000);
-    document.getElementById('contact').focus();
-    return;
-}
+    // 연락처 형식 검사 - 하이픈 유무에 관계없이 숫자만 추출하여 길이 확인
+    const digits = contact.replace(/\D/g, '');
+    if (digits.length < 9 || digits.length > 11) {
+        showAlert('올바른 연락처 형식이 아닙니다.', 'error', 3000);
+        document.getElementById('contact').focus();
+        return;
+    }
 
-// 연락처 형식 통일 (하이픈 추가)
-const formattedContact = formatContact(contact);
+    // 연락처 형식 통일 (하이픈 추가)
+    contact = formatContact(contact);
 
-// formData에 포맷된 연락처 사용
-formData.contact = formattedContact;
-
+    // 개인정보 동의 확인
+    if (!document.getElementById('privacyConsent').checked) {
+        showAlert('개인정보 수집 및 이용에 동의해주세요.', 'error', 3000);
+        return;
+    }
+    
     // 폼 제출 전 확인
     try {
         // 로딩 표시
         showLoading();
 
+        // formData 객체 생성 - 이미 포맷된 연락처 사용
         const formData = {
             groupName: groupName,
             password: password,
             manager: manager,
-            contact: contact,
+            contact: contact, // 이미 포맷된 연락처
             city: city,
             region: region
         };
