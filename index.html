@@ -821,7 +821,7 @@
                     </div>
                     <form id="loginForm" class="space-y-6">
                         <div>
-                            <label class="block text-gray-700 text-sm font-semibold mb-2">아이디</label>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">단체명</label>
                             <div class="relative">
                                 <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
                                 <input type="text" id="username" required
@@ -1988,14 +1988,6 @@ function setupIndependentNoticeSystem() {
     document.getElementById('independentModalClose').onclick = function() {
         document.getElementById('independentNoticeModal').style.display = 'none';
         document.body.style.overflow = '';
-    };
-    
-    // 4. 모달 외부 클릭 시 닫기
-    document.getElementById('independentNoticeModal').onclick = function(e) {
-        if (e.target === this) {
-            this.style.display = 'none';
-            document.body.style.overflow = '';
-        }
     };
     
     // 5. ESC 키로 모달 닫기 기능 추가
@@ -7317,13 +7309,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 모달 외부 클릭 시 닫기
-    document.getElementById('noticeDetailModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeNoticeDetail();
-        }
-    });
-
     // ESC 키로 모달 닫기
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && !document.getElementById('noticeDetailModal').classList.contains('hidden')) {
@@ -7341,34 +7326,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 e.stopPropagation();
             });
         }
-        
-        // 모달 바깥 영역 클릭 시 닫기
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                // 모달 ID에 따라 적절한 닫기 함수 호출
-                if (this.id === 'noticeDetailModal') {
-                    closeNoticeDetail();
-                } else if (this.id === 'signupModal') {
-                    document.getElementById('closeSignup').click();
-                } else if (this.id === 'noticeWriteModal') {
-                    closeNoticeWriteModal();
-                } else if (this.id === 'userProfileModal') {
-                    closeUserProfileModal();
-                } else if (this.id === 'changePasswordModal') {
-                    closeChangePasswordModal();
-                } else if (this.id === 'dateBookingsModal') {
-                    closeDateBookingsModal();
-                } else {
-                    // 일반적인 모달 닫기
-                    this.classList.remove('show');
-                    setTimeout(() => {
-                        this.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }, 300);
-                }
-            }
-        });
-    });
 
     // ESC 키로 모달 닫기
     document.addEventListener('keydown', function(e) {
@@ -7733,12 +7690,6 @@ const formattedContact = formatContact(contact);
 
     // 날짜별 예약 모달 컨트롤
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', closeDateBookingsModal);
-    
-    document.getElementById('dateBookingsModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeDateBookingsModal();
-        }
-    });
 
     // ESC 키로 모달 닫기 (추가로 이미 위에 있지만 유지)
     document.addEventListener('keydown', function(e) {
