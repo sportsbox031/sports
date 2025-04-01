@@ -7617,8 +7617,15 @@ if (digits.length < 9 || digits.length > 11) {
 // 연락처 형식 통일 (하이픈 추가)
 const formattedContact = formatContact(contact);
 
-// formData에 포맷된 연락처 사용
-formData.contact = formattedContact;
+// formData 객체 생성 - 모든 정보 포함
+const formData = {
+    groupName: groupName,
+    password: password,
+    manager: manager,
+    contact: formattedContact, // 포맷된 연락처 사용
+    city: city,
+    region: region
+};
 
             console.log('회원가입 폼 데이터 검증 완료');
             
