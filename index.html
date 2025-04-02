@@ -44,6 +44,8 @@
 
 <!-- jsPDF 라이브러리 추가 - PDF 생성용 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- jsPDF 한글 지원을 위한 vfs_fonts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/polyfills.umd.js"></script>
 <!-- 날짜 포맷팅 유틸리티 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/date-fns.min.js"></script>
 
@@ -5684,6 +5686,9 @@ async function generateCalendarPDF(year, month) {
     try {
         showLoading();
         
+        // 한글 폰트 로드 - 중요!
+        await loadKoreanFont();
+        
         // 관리자 지역 정보 가져오기
         const adminRegion = sessionStorage.getItem('region') || 'all';
         
@@ -5692,10 +5697,6 @@ async function generateCalendarPDF(year, month) {
         const endDate = new Date(year, month, 0);
         const lastDay = endDate.getDate();
         const firstDayOfWeek = startDate.getDay(); // 0: 일요일, 6: 토요일
-        
-        // 월 이름
-        const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-        const monthName = monthNames[month-1];
         
         // 예약 데이터 가져오기
         const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`, {
@@ -5734,13 +5735,15 @@ async function generateCalendarPDF(year, month) {
             today: '#E6F7FF'
         };
         
+        // 한글 폰트 적용
+        doc.setFont('NotoSansKR');
+        
         // 헤더 추가
         doc.setFillColor(colors.primary);
         doc.rect(margin, margin, pageWidth - margin*2, 15, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`스포츠박스 ${year}년 ${monthName} 일정표`, pageWidth/2, margin + 10, { align: 'center' });
+        doc.text(`스포츠박스 ${year}년 ${month}월 일정표`, pageWidth/2, margin + 10, { align: 'center' });
         
         // 지역 정보 추가
         const regionText = adminRegion === 'all' ? '전체 지역' : 
@@ -5761,7 +5764,6 @@ async function generateCalendarPDF(year, month) {
         doc.rect(margin, calendarTop, calendarWidth, rowHeight / 3, 'F');
         doc.setTextColor(colors.text);
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
         
         for (let i = 0; i < 7; i++) {
             const x = margin + i * colWidth;
@@ -5803,10 +5805,9 @@ async function generateCalendarPDF(year, month) {
                 // 셀 위치 계산
                 const x = margin + col * colWidth;
                 
-                // 오늘 날짜 강조
-                const isToday = today.getFullYear() === year && 
-                                today.getMonth() === month-1 && 
-                                today.getDate() === currentDay;
+                // 셀 그리기
+                doc.setDrawColor(220, 220, 220);
+                doc.rect(x, y, colWidth, rowHeight, 'S');
                 
                 // 주말 배경색 추가
                 if (col === 0 || col === 6) {
@@ -5814,49 +5815,41 @@ async function generateCalendarPDF(year, month) {
                     doc.rect(x, y, colWidth, rowHeight, 'F');
                 }
                 
-                // 오늘 날짜 강조
-                if (isToday) {
-                    doc.setFillColor(colors.today);
-                    doc.circle(x + 5, y + 5, 4, 'F');
-                }
-                
                 // 날짜 표시
-                doc.setFont('helvetica', isToday ? 'bold' : 'normal');
                 doc.setFontSize(10);
-                doc.text(String(currentDay), x + 5, y + 5);
+                doc.text(String(currentDay), x + 4, y + 6);
                 
                 // 해당 날짜에 예약이 있는지 확인
                 const dayBookings = bookings[dateString] || [];
                 
                 // 예약 정보 표시
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
                 
                 dayBookings.forEach((booking, index) => {
-                    if (index > 2) return; // 최대 3개까지만 표시
+                    if (index > 3) return; // 최대 4개까지만 표시
                     
-                    const statusColor = booking.status === 'approved' ? '#22C55E' : 
-                                        booking.status === 'pending' ? '#FBBF24' : 
-                                        booking.status === 'cancelled' ? '#6B7280' : '#EF4444';
+                    // 시작 및 종료 시간 포맷팅
+                    const startTime = booking.start_time.substring(0, 5);
+                    const endTime = booking.end_time.substring(0, 5);
+                    const timeText = `${startTime}~${endTime}`;
                     
-                    // 예약 색상 블록
-                    doc.setFillColor(statusColor);
-                    doc.rect(x + 3, y + 7 + (index * 4), 2, 2, 'F');
-                    
-                    // 예약 텍스트
-                    doc.setTextColor(colors.text);
-                    const timeText = `${booking.start_time.substring(0, 5)}`;
-                    const groupText = booking.group_name.length > 10 ? 
-                                     booking.group_name.substring(0, 9) + "..." : 
+                    // 단체명 길이 제한 (공간에 맞춤)
+                    const groupName = booking.group_name.length > 8 ? 
+                                     booking.group_name.substring(0, 7) + "..." : 
                                      booking.group_name;
                     
-                    doc.text(`${timeText} ${groupText}`, x + 6, y + 9 + (index * 4));
+                    // 상태에 따른 색상 설정
+                    doc.setTextColor(0, 150, 0); // 승인 상태는 녹색
+                    
+                    // 예약 정보 표시
+                    doc.text(`${timeText}`, x + 4, y + 14 + (index * 6));
+                    doc.text(`${groupName}`, x + 4, y + 18 + (index * 6));
                 });
                 
                 // 일정이 더 있음을 표시
-                if (dayBookings.length > 3) {
+                if (dayBookings.length > 4) {
                     doc.setTextColor(colors.secondary);
-                    doc.text(`+${dayBookings.length - 3}개 더...`, x + 6, y + 9 + (3 * 4));
+                    doc.text(`+${dayBookings.length - 4}개 더...`, x + 4, y + 14 + (4 * 6));
                 }
                 
                 // 날짜 증가
@@ -5864,35 +5857,15 @@ async function generateCalendarPDF(year, month) {
             }
         }
         
-        // 상태 범례 추가
-        const legendY = pageHeight - margin - 7;
-        doc.setFontSize(8);
-        doc.setTextColor(colors.text);
-        
-        // 승인완료
-        doc.setFillColor('#22C55E');
-        doc.rect(margin, legendY, 3, 3, 'F');
-        doc.text('승인완료', margin + 5, legendY + 2.5);
-        
-        // 승인대기
-        doc.setFillColor('#FBBF24');
-        doc.rect(margin + 30, legendY, 3, 3, 'F');
-        doc.text('승인대기', margin + 35, legendY + 2.5);
-        
-        // 취소
-        doc.setFillColor('#6B7280');
-        doc.rect(margin + 60, legendY, 3, 3, 'F');
-        doc.text('취소됨', margin + 65, legendY + 2.5);
-        
-        // 거부
-        doc.setFillColor('#EF4444');
-        doc.rect(margin + 90, legendY, 3, 3, 'F');
-        doc.text('거부됨', margin + 95, legendY + 2.5);
-        
-        // 푸터 추가
+        // 출력일 추가
         doc.setFontSize(8);
         doc.setTextColor(colors.lightText);
-        doc.text(`출력일: ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - margin, { align: 'right' });
+        const today_str = new Date().toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        doc.text(`출력일: ${today_str}`, pageWidth - margin, pageHeight - margin, { align: 'right' });
         doc.text('경기도체육회 스포츠박스', margin, pageHeight - margin);
         
         // PDF 파일 저장
@@ -5909,6 +5882,37 @@ async function generateCalendarPDF(year, month) {
     } finally {
         hideLoading();
     }
+}
+
+// 한글 폰트 로드 함수
+async function loadKoreanFont() {
+    return new Promise((resolve, reject) => {
+        try {
+            // Noto Sans KR 폰트 URL
+            const fontUrl = 'https://cdn.jsdelivr.net/npm/noto-sans-kr@0.1.1/fonts/NotoSansKR-Regular.ttf';
+            
+            // 폰트를 Blob으로 가져오기
+            fetch(fontUrl)
+                .then(response => response.arrayBuffer())
+                .then(fontBuffer => {
+                    const { jsPDF } = window.jspdf;
+                    // 폰트 등록
+                    jsPDF.API.events.push(['addFonts', function() {
+                        this.addFileToVFS('NotoSansKR-Regular.ttf', fontBuffer);
+                        this.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
+                    }]);
+                    
+                    resolve();
+                })
+                .catch(error => {
+                    console.error('한글 폰트 로드 실패:', error);
+                    reject(error);
+                });
+        } catch (error) {
+            console.error('한글 폰트 로드 실패:', error);
+            reject(error);
+        }
+    });
 }
 
 // 엑셀 다운로드 관련 함수들
@@ -5968,16 +5972,10 @@ async function generateExcelData(year, month) {
     const month = adminCurrentDate.getMonth() + 1;
     
     try {
-        showLoading();
-        
-        // 기존 엑셀 생성 함수 대신 PDF 달력 생성 함수 호출
         await generateCalendarPDF(year, month);
-        
     } catch (error) {
         console.error('PDF 다운로드 오류:', error);
         showAlert('PDF 다운로드 중 오류가 발생했습니다.', 'error', 3000);
-    } finally {
-        hideLoading();
     }
 });
 
