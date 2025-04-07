@@ -6342,18 +6342,15 @@ function updateRegionDisplay() {
 // 월별 남은 예약 횟수 업데이트 함수
 async function updateMonthlyRemainingBookings() {
     try {
-        // 현재 선택된 달의 시작일과 종료일
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth() + 1;
         const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
         
-        // 해당 월의 남은 예약 횟수 조회
         const response = await apiRequest(`/api/bookings/remaining?start=${startDate}&end=${endDate}`);
         
         if (response.success && response.remainingBookings !== undefined) {
-            // UI 업데이트
             updateRemainingBookingsDisplay(response.remainingBookings);
         }
     } catch (error) {
@@ -6405,28 +6402,6 @@ newNextButton.addEventListener('click', async function() {
 });
 
 renderCalendar(currentDate);
-}
-
-// 월별 남은 예약 횟수 업데이트 함수
-async function updateMonthlyRemainingBookings() {
-    try {
-        // 현재 선택된 달의 시작일과 종료일
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
-        const lastDay = new Date(year, month, 0).getDate();
-        const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
-        
-        // 해당 월의 남은 예약 횟수 조회
-        const response = await apiRequest(`/api/bookings/remaining?start=${startDate}&end=${endDate}`);
-        
-        if (response.success && response.remainingBookings !== undefined) {
-            // UI 업데이트
-            updateRemainingBookingsDisplay(response.remainingBookings);
-        }
-    } catch (error) {
-        console.error('남은 예약 횟수 조회 오류:', error);
-    }
 }
 
 async function initializeAdminCalendar() {
