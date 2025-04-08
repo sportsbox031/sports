@@ -946,7 +946,8 @@
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-2">단체명</label>
                             <input type="text" id="groupName" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+    placeholder="예: 수원초등학교 또는 행복한지역아동센터"
+    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
                         </div>
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-2">비밀번호</label>
@@ -972,7 +973,6 @@
                             <input type="text" id="contact" required
                                 placeholder="예: 01012345678 또는 010-1234-5678"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <p class="text-sm text-gray-500 mt-1">하이픈(-) 포함 또는 제외 모두 가능합니다</p>
                         </div>
 
                         <!-- 개인정보동의 섹션 추가 -->
@@ -5164,8 +5164,10 @@ async function loadPendingBookings() {
                     'bg-orange-100 text-orange-800' : 
                     'bg-yellow-100 text-yellow-800';
                 
-                const createdAt = new Date(booking.created_at);
-                const formattedCreatedAt = `${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')} ${String(createdAt.getHours()).padStart(2, '0')}:${String(createdAt.getMinutes()).padStart(2, '0')}`;
+                    const createdAt = new Date(booking.created_at);
+// UTC 시간에 9시간(32400000 밀리초) 추가하여 한국 시간으로 변환
+const kstCreatedAt = new Date(createdAt.getTime() + 9 * 60 * 60 * 1000);
+const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0')}-${String(kstCreatedAt.getDate()).padStart(2, '0')} ${String(kstCreatedAt.getHours()).padStart(2, '0')}:${String(kstCreatedAt.getMinutes()).padStart(2, '0')}`;
                 
                 const actionButtons = booking.status === 'cancel_pending' 
                     ? `
