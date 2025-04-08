@@ -424,121 +424,6 @@
     .validation-message.success {
         color: #10B981;
     }
-
-    /* 모바일 최적화 스타일 - 기존 스타일 맨 아래에 추가 */
-@media (max-width: 768px) {
-    /* 헤더 레이아웃 개선 */
-    nav.bg-gradient-to-r .container {
-        padding: 0.5rem;
-    }
-    
-    nav.bg-gradient-to-r .flex.items-center.justify-between {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    nav.bg-gradient-to-r .flex.items-center.space-x-6 {
-        margin-top: 1rem;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 0.5rem;
-        nav.bg-gradient-to-r .flex.items-center.space-x-6 > * {
-    margin-left: 0 !important;
-    margin-right: 0 !important;}
-    }
-    
-    /* 테이블 스크롤 처리 */
-    .overflow-x-auto {
-        max-width: 100%;
-        margin-bottom: 1rem;
-    }
-    
-    /* 그리드 레이아웃 조정 */
-    .grid.md\\:grid-cols-2.gap-8 {
-        grid-template-columns: 1fr;
-    }
-    
-    /* 보기 좋게 패딩 조정 */
-    .p-8 {
-        padding: 1rem;
-    }
-    
-    /* 테이블 셀 콘텐츠 줄바꿈 설정 */
-    .whitespace-nowrap {
-        white-space: normal;
-        word-break: break-word;
-    }
-    
-    /* 버튼 크기 조정 */
-    button {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-    }
-    
-    /* 검색 입력창 최적화 */
-    .w-64 {
-        width: 100%;
-        max-width: 100%;
-    }
-    
-    /* 테이블 헤더 최적화 */
-    thead th {
-        padding: 0.5rem;
-        font-size: 0.7rem;
-    }
-    
-    /* 테이블 셀 최적화 */
-    tbody td {
-        padding: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    /* 날짜 셀렉터 크기 조정 */
-    #adminCurrentMonth {
-        min-width: 100px;
-    }
-    
-    /* 관리자 모달 최적화 */
-    .modal-content {
-        width: 95%;
-        padding: 1rem;
-    }
-}
-
-/* 작은 모바일 화면을 위한 추가 최적화 */
-@media (max-width: 480px) {
-    /* 테이블 컬럼 순차적 표시 (세로 레이아웃) */
-    .min-w-full tbody tr {
-        display: grid;
-        grid-template-columns: 1fr;
-        border-bottom: 1px solid #e5e7eb;
-        padding: 0.5rem 0;
-    }
-    
-    .min-w-full tbody td {
-        display: flex;
-        padding: 0.25rem 0.5rem;
-        border: none;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .min-w-full tbody td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        margin-right: 0.5rem;
-    }
-    
-    /* 헤더 숨기기 */
-    .min-w-full thead {
-        display: none;
-    }
-    
-    /* 통계 카드 조정 */
-    .grid.grid-cols-2.gap-4 {
-        grid-template-columns: 1fr;
-    }
-}
 </style>
 
 <!-- 구조화된 데이터 추가: 여기에 추가 -->
@@ -3840,12 +3725,8 @@ function updateRemainingBookingsDisplay(remainingBookings) {
 
 // API 요청 헬퍼 함수
 async function apiRequest(endpoint, options = {}) {
+    showLoading();
     try {
-        // 모바일 환경에서는 타임아웃 연장
-        const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('요청 시간이 초과되었습니다.')), 20000)
-        );
-        
         const token = sessionStorage.getItem('token');
         if (!token && !endpoint.includes('/login') && !endpoint.includes('/signup') 
             && !endpoint.includes('/public')) {
@@ -3859,8 +3740,13 @@ async function apiRequest(endpoint, options = {}) {
             defaultHeaders['Content-Type'] = 'application/json';
         }
 
-        // 실제 요청 생성
-        const fetchPromise = fetch(`${API_BASE_URL}${endpoint}`, {
+        console.log(`[apiRequest] 요청: ${endpoint}`, {
+            method: options.method,
+            headers: { ...defaultHeaders, ...options.headers },
+            body: options.body instanceof FormData ? '[FormData]' : options.body
+        });
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
                 ...defaultHeaders,
@@ -3868,15 +3754,15 @@ async function apiRequest(endpoint, options = {}) {
             }
         });
 
-        // 타임아웃과 함께 요청 실행
-        const response = await Promise.race([fetchPromise, timeout]);
-
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        if (!endpoint.includes('/login')) {
+            console.log(`[apiRequest] 응답:`, data);
+        }
         return data;
     } catch (error) {
         console.error(`[apiRequest] 오류: ${endpoint}`, error);
@@ -4063,28 +3949,39 @@ async function showDashboard(role) {
 
         const region = sessionStorage.getItem('region');
         const username = sessionStorage.getItem('username');
+        const dashboardTitle = region === 'south' ? '남부 스포츠박스' : 
+                             region === 'north' ? '북부 스포츠박스' : 
+                             '스포츠박스 관리자';
 
         // 이전 대시보드 상태 초기화
         document.getElementById('adminDashboard').classList.add('hidden');
         document.getElementById('userDashboard').classList.add('hidden');
         
-        // 오류가 발생해도 UI가 깨지지 않도록 try-catch로 각 초기화 함수 감싸기
         if (role === 'admin') {
             // 관리자 대시보드 표시
             document.getElementById('adminDashboard').classList.remove('hidden');
             
-            try {
-                // 관리자 대시보드 초기화
-                await initializeAdminDashboard(region, username);
-            } catch (adminError) {
-                console.error('관리자 대시보드 초기화 오류:', adminError);
-                showAlert('관리자 대시보드 초기화 중 일부 기능에 오류가 발생했습니다.', 'error');
-                // 오류가 발생해도 UI는 유지
+            // 관리자 타입에 따른 UI 조정
+            if (region === 'all') {
+                document.querySelector('#adminDashboard .dashboard-title').textContent = '스포츠박스 관리자';
+                document.getElementById('regionFilter').classList.remove('hidden');
+                document.getElementById('regionFilterContainer').classList.remove('hidden');
+            } else {
+                document.querySelector('#adminDashboard .dashboard-title').textContent = dashboardTitle;
+                document.getElementById('regionFilter').classList.add('hidden');
+                document.getElementById('regionFilterContainer').classList.add('hidden');
             }
+
+            // 관리자 대시보드 초기화
+            await initializeAdminDashboard(region, username);
+
         } else {
             // 사용자 대시보드 표시
             document.getElementById('userDashboard').classList.remove('hidden');
             document.getElementById('adminDashboard').classList.add('hidden');
+            
+            // 대시보드 제목 설정
+            document.querySelector('#userDashboard .dashboard-title').textContent = dashboardTitle;
             
             try {
                 // 예약 시스템 상태 확인
@@ -4093,21 +3990,13 @@ async function showDashboard(role) {
                 
                 // 사용자 대시보드 초기화
                 await initializeUserDashboard(region, username);
-            } catch (userError) {
-                console.error('사용자 대시보드 초기화 오류:', userError);
-                if (userError.message.includes('인증')) {
+            } catch (error) {
+                console.error('User dashboard initialization error:', error);
+                if (error.message.includes('인증')) {
                     logout();
                     showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
                 } else {
-                    showAlert('일부 정보를 가져오는데 실패했습니다.', 'error');
-                    // 기본 UI는 유지하며 최소 기능 보장
-                    try {
-                        // 최소한의 기능 초기화 시도
-                        initializeCalendar();
-                        initializeTimeSelects();
-                    } catch (e) {
-                        console.error('최소 기능 초기화 오류:', e);
-                    }
+                    showAlert('시스템 상태 확인 중 오류가 발생했습니다.', 'error');
                 }
             }
         }
@@ -4338,62 +4227,44 @@ async function initializeAdminDashboard(region, username) {
         // 공통 초기화 작업
         // 지역 통계 먼저 로드
         await loadRegionStatistics();
+        
+        // 캘린더 초기화 (내부에서 updateCalendarStatus 호출)
+        await initializeAdminCalendar();
+        
+        // 나머지 작업은 병렬 실행
+        await Promise.all([
+            loadPendingUsers(),
+            loadPendingBookings(),
+            loadAllUsers()
+        ]);
 
-// 캘린더 초기화 (내부에서 updateCalendarStatus 호출)
-await initializeAdminCalendar();
+        // 추가: 사용자 검색 기능 초기화
+        initializeUserSearch();
 
-// 중요: 순차적으로 로드하도록 변경 (병렬 → 순차)
-// 가장 중요한 것부터 순서대로 로드
-await loadPendingUsers();
-await loadPendingBookings();
-
-// 마지막으로 전체 회원 목록 로드 (가장 데이터가 많은 부분)
-try {
-    await loadAllUsers();
-} catch (userLoadError) {
-    console.error('전체 회원 목록 로드 오류:', userLoadError);
-    // 오류 메시지 표시
-    document.getElementById('allUsersList').innerHTML = `
-        <tr>
-            <td colspan="6" class="px-6 py-10 text-center text-gray-500">
-                <button onclick="loadAllUsers()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    회원 목록 다시 불러오기
-                </button>
-            </td>
-        </tr>
-    `;
-}
-
-// 추가: 사용자 검색 기능 초기화
-initializeUserSearch();
-window.addEventListener('resize', addMobileTableLabels);
-// 초기 로드 시 한 번 실행
-addMobileTableLabels();
-
-// 이벤트 리스너 설정 - 통합 예약 버튼
-const toggleIntegratedBtn = document.getElementById('toggleIntegratedBooking');
-if (toggleIntegratedBtn) {
-    toggleIntegratedBtn.removeEventListener('click', window.toggleIntegratedBooking);
-    toggleIntegratedBtn.addEventListener('click', window.toggleIntegratedBooking);
-    console.log('통합 예약 버튼 이벤트 핸들러 설정됨');
-}
-
-// 예약 상태 토글 버튼 이벤트 리스너
-const toggleButton = document.getElementById('toggleBookingStatus');
-if (toggleButton) {
-    toggleButton.removeEventListener('click', toggleBookingStatus);
-    toggleButton.addEventListener('click', toggleBookingStatus);
-    console.log('예약 상태 토글 버튼 이벤트 핸들러 설정됨');
-} else {
-    console.log('예약 상태 토글 버튼을 찾을 수 없음 - 계속 진행');
-}
-
-// 비밀번호 변경 모달 이벤트 리스너 설정 (두 번째 버전에서 추가)
-const passwordModal = document.getElementById('closeChangePassword');
-if (passwordModal) {
-    passwordModal.removeEventListener('click', closeChangePasswordModal);
-    passwordModal.addEventListener('click', closeChangePasswordModal);
-}
+        // 이벤트 리스너 설정 - 통합 예약 버튼
+        const toggleIntegratedBtn = document.getElementById('toggleIntegratedBooking');
+        if (toggleIntegratedBtn) {
+            toggleIntegratedBtn.removeEventListener('click', window.toggleIntegratedBooking);
+            toggleIntegratedBtn.addEventListener('click', window.toggleIntegratedBooking);
+            console.log('통합 예약 버튼 이벤트 핸들러 설정됨');
+        }
+        
+        // 예약 상태 토글 버튼 이벤트 리스너
+        const toggleButton = document.getElementById('toggleBookingStatus');
+        if (toggleButton) {
+            toggleButton.removeEventListener('click', toggleBookingStatus);
+            toggleButton.addEventListener('click', toggleBookingStatus);
+            console.log('예약 상태 토글 버튼 이벤트 핸들러 설정됨');
+        } else {
+            console.log('예약 상태 토글 버튼을 찾을 수 없음 - 계속 진행');
+        }
+        
+        // 비밀번호 변경 모달 이벤트 리스너 설정 (두 번째 버전에서 추가)
+        const passwordModal = document.getElementById('closeChangePassword');
+        if (passwordModal) {
+            passwordModal.removeEventListener('click', closeChangePasswordModal);
+            passwordModal.addEventListener('click', closeChangePasswordModal);
+        }
         
     } catch (error) {
         console.error('관리자 대시보드 초기화 오류:', error);
@@ -4694,29 +4565,11 @@ async function validateStoredToken() {
     if (!token) return false;
 
     try {
-        // 세 번까지 재시도 추가
-        let retries = 0;
-        const maxRetries = 2;
-        
-        while (retries <= maxRetries) {
-            try {
-                const response = await apiRequest('/api/validate-token');
-                return response.success;
-            } catch (error) {
-                retries++;
-                if (retries > maxRetries) throw error;
-                
-                // 재시도 전 잠시 대기
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log(`토큰 검증 재시도 (${retries}/${maxRetries})...`);
-            }
-        }
-        
-        return false;
+        const response = await apiRequest('/api/validate-token');
+        return response.success;
     } catch (error) {
         console.error('Token validation error:', error);
-        // 오류 시 세션 데이터 정리
-        sessionStorage.clear();
+        logout();
         return false;
     }
 }
@@ -5183,8 +5036,6 @@ async function loadPendingUsers() {
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 회원이 없습니다.</td></tr>';
-            // 모바일 최적화를 위한 테이블 레이블 추가
-addMobileTableLabels();
         }
     } catch (error) {
         console.error('Error loading pending users:', error);
@@ -5195,66 +5046,26 @@ addMobileTableLabels();
 // 전체 회원 목록 로드
 async function loadAllUsers() {
     try {
-        // 로딩 표시
-        const tableBody = document.getElementById('allUsersList');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="px-6 py-4 text-center">
-                        <div class="flex justify-center items-center">
-                            <div class="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                            <span>회원 정보를 불러오는 중...</span>
-                        </div>
-                    </td>
-                </tr>
-            `;
+        const data = await apiRequest('/api/admin/users');
+        
+        if (data.success) {
+            // 추가: 전역 변수에 데이터 저장
+            allUsersData = data.data || [];
+            
+            // 수정: 렌더링 함수 호출
+            renderUsersList(allUsersData);
+        } else {
+            showAlert('회원 목록을 불러오는데 실패했습니다.', 'error');
         }
-        
-        // 세 번까지 재시도 추가
-        let retries = 0;
-        const maxRetries = 2;
-        let error;
-        
-        while (retries <= maxRetries) {
-            try {
-                const data = await apiRequest('/api/admin/users');
-                
-                if (data.success) {
-                    // 추가: 전역 변수에 데이터 저장
-                    allUsersData = data.data || [];
-                    
-                    // 수정: 렌더링 함수 호출
-                    renderUsersList(allUsersData);
-                    return;
-                } else {
-                    throw new Error('회원 목록을 불러오는데 실패했습니다.');
-                }
-            } catch (e) {
-                error = e;
-                retries++;
-                
-                if (retries <= maxRetries) {
-                    console.log(`회원 정보 로드 재시도 (${retries}/${maxRetries})...`);
-                    // 재시도 전 잠시 대기
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
-        }
-        
-        throw error; // 모든 재시도 실패 시 마지막 오류 발생
     } catch (error) {
         console.error('Users fetch error:', error);
         document.getElementById('allUsersList').innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-10 text-center text-gray-500">
-                    <p class="mb-3">회원 목록을 불러오는데 실패했습니다.</p>
-                    <button onclick="loadAllUsers()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                        다시 시도
-                    </button>
+                    회원 목록을 불러오는데 실패했습니다.
                 </td>
             </tr>
         `;
-        throw error;
     }
 }
 
@@ -5307,8 +5118,6 @@ function renderUsersList(users) {
             </td>
         </tr>
     `).join('');
-    // 모바일 최적화를 위한 테이블 레이블 추가
-    addMobileTableLabels();
 }
 
 // 추가: 사용자 검색 기능을 위한 초기화 함수
@@ -5356,59 +5165,6 @@ function filterUsersList(searchTerm) {
     
     // 필터링된 목록 렌더링
     renderUsersList(filteredUsers);
-}
-
-// 모바일 최적화를 위한 테이블 셀 레이블 추가 함수
-function addMobileTableLabels() {
-    // 모바일 화면에서만 실행
-    if (window.innerWidth <= 480) {
-        // 전체 회원 관리 테이블
-        const allUsersTable = document.getElementById('allUsersList');
-        if (allUsersTable) {
-            const rows = allUsersTable.querySelectorAll('tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 0) {
-                    cells[0].setAttribute('data-label', '단체명');
-                    cells[1].setAttribute('data-label', '담당자');
-                    cells[2].setAttribute('data-label', '연락처');
-                    cells[3].setAttribute('data-label', '지역');
-                    cells[4].setAttribute('data-label', '상태');
-                    cells[5].setAttribute('data-label', '관리');
-                }
-            });
-        }
-        
-        // 승인 대기 회원 테이블
-        const pendingUsersTable = document.getElementById('pendingUsersList');
-        if (pendingUsersTable) {
-            const rows = pendingUsersTable.querySelectorAll('tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 0) {
-                    cells[0].setAttribute('data-label', '단체명');
-                    cells[1].setAttribute('data-label', '담당자');
-                    cells[2].setAttribute('data-label', '연락처');
-                    cells[3].setAttribute('data-label', '관리');
-                }
-            });
-        }
-        
-        // 예약 승인 대기 테이블
-        const pendingBookingsTable = document.getElementById('pendingBookingsList');
-        if (pendingBookingsTable) {
-            const rows = pendingBookingsTable.querySelectorAll('tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 0) {
-                    cells[0].setAttribute('data-label', '단체명');
-                    cells[1].setAttribute('data-label', '날짜');
-                    cells[2].setAttribute('data-label', '시간');
-                    cells[3].setAttribute('data-label', '관리');
-                }
-            });
-        }
-    }
 }
 
 // 비밀번호 초기화 함수 추가
@@ -5563,8 +5319,6 @@ const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0
                     </tr>
                 `;
             }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
-            // 모바일 최적화를 위한 테이블 레이블 추가
-addMobileTableLabels();
         }
     } catch (error) {
         console.error('Error loading pending bookings:', error);
@@ -8454,32 +8208,20 @@ if (DEBUG) {
 }
 
 // 페이지 새로고침 시 상태 복원
-window.addEventListener('pageshow', async function(event) {
+window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
         // 뒤로가기로 페이지 복원 시
         const token = sessionStorage.getItem('token');
         const role = sessionStorage.getItem('role');
         
         if (token && role) {
-            try {
-                showLoading(); // 로딩 표시 추가
-                const isValid = await validateStoredToken();
-                
+            validateStoredToken().then(isValid => {
                 if (isValid) {
-                    console.log('토큰 유효, 대시보드로 이동');
-                    await showDashboard(role);
+                    showDashboard(role);
                 } else {
-                    console.log('토큰 유효하지 않음, 로그아웃');
                     logout();
-                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info');
                 }
-            } catch (error) {
-                console.error('페이지 복원 중 오류:', error);
-                logout();
-                showAlert('오류가 발생했습니다. 다시 로그인해주세요.', 'error');
-            } finally {
-                hideLoading();
-            }
+            });
         } else {
             showHomeScreen();
         }
