@@ -8244,9 +8244,17 @@ let inquiryPage = 1;
 let inquiryLimit = 10;
 
 // 문의사항 페이지 표시 함수
-// 문의사항 페이지 표시 함수를 전역 스코프에 명시적으로 할당
 window.showInquiryPage = function() {
     console.log('문의사항 페이지 열기 시작');
+
+    // 관리자 권한 체크 추가
+    const isAdmin = sessionStorage.getItem('role') === 'admin';
+    if (!isAdmin) {
+        showAlert('관리자만 접근할 수 있는 페이지입니다.', 'error');
+        showHomeScreen();
+        return;
+    }
+    
     try {
         // 다른 페이지들 숨기기
         const mainContainer = document.getElementById('mainContainer');
