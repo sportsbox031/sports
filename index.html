@@ -424,16 +424,6 @@
     .validation-message.success {
         color: #10B981;
     }
-
-    /* 관리자 전용 섹션 스타일 */
-    .admin-only-section {
-        display: none !important;
-    }
-    
-    /* 관리자 로그인 시에는 표시 */
-    body.admin-logged-in .admin-only-section {
-        display: block !important;
-    }
 </style>
 
 <!-- 구조화된 데이터 추가: 여기에 추가 -->
@@ -1536,7 +1526,7 @@
 </div>
 
 <!-- 관리자 대시보드에 문의사항 관리 섹션 추가 -->
-<div class="mt-8 bg-white rounded-2xl shadow-xl p-8">
+<div class="mt-8 bg-white rounded-2xl shadow-xl p-8" id="inquiryManagementSection" style="display: none;">
     <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
         <i class="fas fa-question-circle text-indigo-600 mr-2"></i>
         문의사항 관리
@@ -1831,7 +1821,7 @@
 </div>
 
 <!-- 문의사항 페이지 -->
-<div id="inquiryPage" class="hidden admin-only-section">
+<div id="inquiryPage" class="hidden">
     <header class="fixed w-full bg-white shadow-sm z-50">
         <div class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
@@ -3162,14 +3152,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
     initializeInquirySystem();
-
-    // 관리자 로그인 상태 확인 (admin-logged-in 클래스 설정)
-    const isAdmin = sessionStorage.getItem('role') === 'admin';
-    if (isAdmin) {
-        document.body.classList.add('admin-logged-in');
-    } else {
-        document.body.classList.remove('admin-logged-in');
-    }
     
     document.getElementById('inquiryFile')?.addEventListener('change', function() {
         const fileNameSpan = document.getElementById('inquirySelectedFileName');
@@ -4520,9 +4502,6 @@ function logout() {
     
     // 관리자 상태 확인 (공지사항 글쓰기 버튼 숨김)
     checkAdminStatus();
-
-    // 관리자 로그인 클래스 제거
-    document.body.classList.remove('admin-logged-in');
     
     showAlert('로그아웃되었습니다.', 'info', 3000);
     
@@ -6362,13 +6341,6 @@ async function login(username, password) {
 
             // 관리자 상태 확인 (공지사항 글쓰기 버튼 표시 여부)
             checkAdminStatus();
-
-            // 관리자 여부에 따라 body 클래스 설정
-            if (response.user.role === 'admin') {
-                document.body.classList.add('admin-logged-in');
-            } else {
-                document.body.classList.remove('admin-logged-in');
-            }
 
             await showDashboard(response.user.role);
             showAlert('로그인되었습니다.', 'success', 2000);
@@ -8272,17 +8244,9 @@ let inquiryPage = 1;
 let inquiryLimit = 10;
 
 // 문의사항 페이지 표시 함수
+// 문의사항 페이지 표시 함수를 전역 스코프에 명시적으로 할당
 window.showInquiryPage = function() {
     console.log('문의사항 페이지 열기 시작');
-
-    // 관리자 권한 체크 추가
-    const isAdmin = sessionStorage.getItem('role') === 'admin';
-    if (!isAdmin) {
-        showAlert('관리자만 접근할 수 있는 페이지입니다.', 'error');
-        showHomeScreen();
-        return;
-    }
-
     try {
         // 다른 페이지들 숨기기
         const mainContainer = document.getElementById('mainContainer');
@@ -8989,6 +8953,13 @@ window.initializeUserDashboard = async function() {
 const originalInitAdminDashboard = window.initializeAdminDashboard;
 window.initializeAdminDashboard = async function() {
     await originalInitAdminDashboard.apply(this, arguments);
+    
+    // 관리자 문의사항 섹션 표시 (관리자만)
+    const inquiryManagementSection = document.getElementById('inquiryManagementSection');
+    if (inquiryManagementSection) {
+        inquiryManagementSection.style.display = 'block';
+    }
+
     // 관리자 문의사항 로드
     await loadAdminInquiries();
 };
