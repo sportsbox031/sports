@@ -7315,20 +7315,13 @@ function setupIntegratedModalButtons(dateString) {
         }
     };
     
-    unblockBtn.addEventListener('click', async function() {
-    console.log('통합 마감 해제 버튼 클릭됨');
+    unblockBtn.onclick = async () => {
     if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
-        console.log('통합 마감 해제 시작');
-        try {
-            await unblockIntegratedDate(dateString);
-            closeDateBookingsModal();
-            console.log('통합 마감 해제 완료');
-        } catch (error) {
-            console.error('통합 마감 해제 중 오류:', error);
-            showAlert('마감 해제 중 오류가 발생했습니다.', 'error');
-        }
+        await unblockIntegratedDate(dateString);
+        closeDateBookingsModal();
     }
-});
+};
+}
 
 // 통합 날짜 마감 함수
 async function blockIntegratedDate(date, blockType) {
