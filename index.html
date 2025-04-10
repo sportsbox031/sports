@@ -7227,7 +7227,12 @@ async function loadDateBookingsIntegrated(dateString) {
             return;
         }
 
-        console.log('통합 예약 정보 로드 중:', dateString);
+        // 날짜 문자열 명확하게 로깅
+        console.log('통합 예약 정보 로드 시작 - 날짜:', dateString);
+        
+        // 현재 선택된 날짜 변수를 명시적으로 업데이트하고 로깅
+        currentSelectedDate = dateString;
+        console.log(`현재 선택된 날짜 설정됨: ${currentSelectedDate}`);
         
         // 남부/북부 동시 조회
         const [southData, northData] = await Promise.all([
@@ -7241,10 +7246,9 @@ async function loadDateBookingsIntegrated(dateString) {
         const modalDate = document.getElementById('modalDate');
         
         modalDate.textContent = `${formatDate(dateString)}`;
-        currentSelectedDate = dateString;
-
-        // 중요: 통합 버전 설정 함수 호출
-        setupIntegratedModalButtons(dateString);
+        
+        // 중요: 날짜 문자열을 직접 전달하여 통합 버전 설정 함수 호출
+        setupIntegratedModalButtons(currentSelectedDate);
 
         if (southData.success && northData.success) {
             // 남부/북부 데이터 통합
@@ -7307,16 +7311,9 @@ async function loadDateBookingsIntegrated(dateString) {
 // 통합 모달 버튼 설정
 function setupIntegratedModalButtons(dateString) {
     console.log('통합 관리자용 모달 버튼 설정 시작:', dateString);
-    console.log('현재 bookingStatus 데이터:', bookingStatus);
     
-    // 남부/북부 각각의 상태 확인 - 수정된 접근 방식
-    const southStatus = bookingStatus[dateString]?.south;
-    const northStatus = bookingStatus[dateString]?.north;
-    
-    console.log(`날짜 ${dateString}의 상태:`, {
-        남부: southStatus,
-        북부: northStatus
-    });
+    // Store the date string in a closure to ensure it doesn't change
+    const selectedDateForUnblock = dateString;
     
     // 모달 버튼 참조
     const partialBlockBtn = document.getElementById('partialBlockDateBtn');
@@ -7328,11 +7325,13 @@ function setupIntegratedModalButtons(dateString) {
         return;
     }
     
-    // 통합 상태 확인 (남부/북부 중 하나라도 마감 상태이면 마감 해제 버튼 표시)
+    // 남부/북부 각각의 상태 확인
+    const southStatus = bookingStatus[dateString]?.south;
+    const northStatus = bookingStatus[dateString]?.north;
+    
+    // 통합 상태 확인
     const isFullyBlocked = (southStatus?.isFullyBlocked || northStatus?.isFullyBlocked);
     const isPartiallyBlocked = (southStatus?.isPartiallyBlocked || northStatus?.isPartiallyBlocked) && !isFullyBlocked;
-    
-    console.log('통합 상태 확인:', {isFullyBlocked, isPartiallyBlocked});
     
     // 버튼 라벨 업데이트
     partialBlockBtn.textContent = '통합 부분 마감';
@@ -7344,35 +7343,34 @@ function setupIntegratedModalButtons(dateString) {
         partialBlockBtn.classList.add('hidden');
         fullBlockBtn.classList.add('hidden');
         unblockBtn.classList.remove('hidden');
-        console.log('마감 해제 버튼 표시됨');
     } else {
         partialBlockBtn.classList.remove('hidden');
         fullBlockBtn.classList.remove('hidden');
         unblockBtn.classList.add('hidden');
-        console.log('마감 버튼 표시됨');
     }
     
-    // 통합 마감 이벤트 핸들러 설정
+    // IMPORTANT: Use onclick instead of addEventListener to avoid duplicating handlers
     partialBlockBtn.onclick = async () => {
         if (confirm('남부/북부 모두 부분 마감 처리하시겠습니까? (각 지역에 1개씩만 예약 가능)')) {
-            await blockIntegratedDate(dateString, 'partial');
+            await blockIntegratedDate(selectedDateForUnblock, 'partial');
             closeDateBookingsModal();
         }
     };
     
     fullBlockBtn.onclick = async () => {
         if (confirm('남부/북부 모두 전체 마감 처리하시겠습니까?')) {
-            await blockIntegratedDate(dateString, 'full');
+            await blockIntegratedDate(selectedDateForUnblock, 'full');
             closeDateBookingsModal();
         }
     };
     
-    unblockBtn.addEventListener('click', async function() {
+    // IMPORTANT: Replace addEventListener with onclick assignment
+    unblockBtn.onclick = async () => {
         console.log('통합 마감 해제 버튼 클릭됨');
         if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
-            console.log('통합 마감 해제 시작');
+            console.log(`마감 해제 날짜: ${selectedDateForUnblock}`);
             try {
-                await unblockIntegratedDate(dateString);
+                await unblockIntegratedDate(selectedDateForUnblock);
                 closeDateBookingsModal();
                 console.log('통합 마감 해제 완료');
             } catch (error) {
@@ -7380,7 +7378,7 @@ function setupIntegratedModalButtons(dateString) {
                 showAlert('마감 해제 중 오류가 발생했습니다.', 'error');
             }
         }
-    });
+    };
     
     console.log('통합 관리자용 모달 버튼 설정 완료');
 }
@@ -7562,6 +7560,11 @@ function showDateBookingsModal() {
 
 // 모달 버튼 설정
 function setupModalButtons(dateString) {
+    // 저장된 날짜 문자열 변수 (closure에 캡처)
+    const selectedDateForUnblock = dateString;
+    
+    console.log(`모달 버튼 설정: 날짜 = ${selectedDateForUnblock}`);
+
     // 전체 관리자가 선택한 지역 정보 가져오기
     const adminRegion = sessionStorage.getItem('region');
     let targetRegion = adminRegion;
@@ -7572,26 +7575,31 @@ function setupModalButtons(dateString) {
             targetRegion = regionFilter.value;
         }
     }
+
+    // 모달 버튼 참조
+    const partialBlockBtn = document.getElementById('partialBlockDateBtn');
+    const fullBlockBtn = document.getElementById('fullBlockDateBtn');
+    const unblockBtn = document.getElementById('unblockDateBtn');
     
-    console.log(`Setting up modal buttons for date: ${dateString}, region: ${targetRegion}`);
-
-    document.getElementById('partialBlockDateBtn').onclick = async () => {
+    // onclick으로 이벤트 핸들러 할당 (addEventListener 대신)
+    partialBlockBtn.onclick = async () => {
         if (confirm('이 날짜를 부분 마감 처리하시겠습니까? (1개 예약만 가능)')) {
-            await blockDate(dateString, 'partial');
+            await blockDate(selectedDateForUnblock, 'partial');
             closeDateBookingsModal();
         }
     };
 
-    document.getElementById('fullBlockDateBtn').onclick = async () => {
+    fullBlockBtn.onclick = async () => {
         if (confirm('이 날짜를 전체 마감 처리하시겠습니까?')) {
-            await blockDate(dateString, 'full');
+            await blockDate(selectedDateForUnblock, 'full');
             closeDateBookingsModal();
         }
     };
 
-    document.getElementById('unblockDateBtn').onclick = async () => {
+    unblockBtn.onclick = async () => {
         if (confirm('마감을 해제하시겠습니까?')) {
-            await unblockDate(dateString);
+            console.log(`마감 해제 날짜: ${selectedDateForUnblock}`);
+            await unblockDate(selectedDateForUnblock);
             closeDateBookingsModal();
         }
     };
