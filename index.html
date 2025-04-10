@@ -7315,13 +7315,20 @@ function setupIntegratedModalButtons(dateString) {
         }
     };
     
-    unblockBtn.onclick = async () => {
-        if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
+    unblockBtn.addEventListener('click', async function() {
+    console.log('통합 마감 해제 버튼 클릭됨');
+    if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
+        console.log('통합 마감 해제 시작');
+        try {
             await unblockIntegratedDate(dateString);
             closeDateBookingsModal();
+            console.log('통합 마감 해제 완료');
+        } catch (error) {
+            console.error('통합 마감 해제 중 오류:', error);
+            showAlert('마감 해제 중 오류가 발생했습니다.', 'error');
         }
-    };
-}
+    }
+});
 
 // 통합 날짜 마감 함수
 async function blockIntegratedDate(date, blockType) {
@@ -7367,34 +7374,48 @@ async function blockIntegratedDate(date, blockType) {
 // 통합 날짜 마감 해제 함수
 async function unblockIntegratedDate(date) {
     try {
-        console.log(`통합 날짜 마감 해제: ${date}`);
+        console.log(`통합 날짜 마감 해제 시작: ${date}`);
         showLoading();
         
-        // 남부/북부 동시 마감 해제
-        await Promise.all([
-            apiRequest('/api/admin/dates/unblock', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    date,
-                    region: 'south'
-                })
-            }),
-            apiRequest('/api/admin/dates/unblock', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    date,
-                    region: 'north'
-                })
+        // 남부/북부 동시 마감 해제 - 각 요청 별도 처리
+        const southPromise = apiRequest('/api/admin/dates/unblock', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                date,
+                region: 'south'
             })
-        ]);
+        }).catch(error => {
+            console.error('남부 마감 해제 오류:', error);
+            return { success: false };
+        });
         
-        showAlert('남부/북부 날짜 마감이 해제되었습니다.', 'success');
+        const northPromise = apiRequest('/api/admin/dates/unblock', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                date,
+                region: 'north'
+            })
+        }).catch(error => {
+            console.error('북부 마감 해제 오류:', error);
+            return { success: false };
+        });
         
-        // 캘린더 상태 업데이트
-        await updateCalendarStatus();
+        const [southResult, northResult] = await Promise.all([southPromise, northPromise]);
+        
+        // 하나라도 성공하면 성공으로 처리
+        if (southResult.success || northResult.success) {
+            showAlert('마감이 해제되었습니다.', 'success');
+            
+            // 캘린더 상태 즉시 업데이트 (디바운스 없이)
+            await updateCalendarStatus();
+            return true;
+        } else {
+            throw new Error('마감 해제에 실패했습니다.');
+        }
     } catch (error) {
         console.error('통합 날짜 마감 해제 오류:', error);
         showAlert(error.message || '날짜 마감 해제 중 오류가 발생했습니다.', 'error');
+        throw error; // 오류 전파
     } finally {
         hideLoading();
     }
