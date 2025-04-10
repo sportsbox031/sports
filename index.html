@@ -7251,57 +7251,92 @@ async function loadDateBookingsIntegrated(dateString) {
         setupIntegratedModalButtons(currentSelectedDate);
 
         if (southData.success && northData.success) {
-            // 남부/북부 데이터 통합
-            const southBookings = southData.data || [];
-            const northBookings = northData.data || [];
-            
-            // 유효한 예약만 필터링 (취소/거부/취소대기 제외)
-            const allBookings = [
-                ...southBookings.map(booking => ({
-                    ...booking,
-                    _region: 'south' // 내부 처리용 필드
-                })),
-                ...northBookings.map(booking => ({
-                    ...booking,
-                    _region: 'north' // 내부 처리용 필드
-                }))
-            ].filter(booking => 
-                booking.status !== 'cancelled' && 
-                booking.status !== 'rejected' &&
-                booking.status !== 'cancel_pending'
-            );
-            
-            tbody.innerHTML = allBookings.length > 0 
-                ? allBookings.map(booking => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            ${booking.group_name}
-                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${booking._region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                ${booking._region === 'south' ? '남부' : '북부'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            ${booking.status === 'approved' ? `
-                                <button onclick="forceCancel(${booking.id}, '${dateString}', '${booking._region}')" 
-                                    class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
-                                    강제취소
-                                </button>
-                            ` : ''}
-                        </td>
-                    </tr>
-                `).join('')
-                : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+    // 남부/북부 데이터 가져오기
+    const southBookings = southData.data || [];
+    const northBookings = northData.data || [];
+    
+    // 모든 예약을 하나의 배열로 가져오되, 내부적으로 _region 필드 유지
+    const rawBookings = [
+        ...southBookings.map(booking => ({
+            ...booking,
+            _region: 'south' // 내부 처리용 필드
+        })),
+        ...northBookings.map(booking => ({
+            ...booking,
+            _region: 'north' // 내부 처리용 필드
+        }))
+    ].filter(booking => 
+        booking.status !== 'cancelled' && 
+        booking.status !== 'rejected' &&
+        booking.status !== 'cancel_pending'
+    );
+    
+    // 그룹명 기준으로 예약 병합을 위한 객체 생성
+    const bookingsByGroup = {};
+    
+    // 예약을 그룹명별로 분류
+    rawBookings.forEach(booking => {
+        const groupName = booking.group_name;
+        
+        // 해당 그룹명의 첫 예약이면 배열 초기화
+        if (!bookingsByGroup[groupName]) {
+            bookingsByGroup[groupName] = [];
         }
+        
+        // 예약 추가
+        bookingsByGroup[groupName].push(booking);
+    });
+    
+    // 병합된 예약 목록 생성
+    const mergedBookings = Object.keys(bookingsByGroup).map(groupName => {
+        const groupBookings = bookingsByGroup[groupName];
+        
+        // 첫 번째 예약 정보를 기본으로 사용
+        const baseBooking = groupBookings[0];
+        
+        // 남부/북부 지역 정보가 있는지 확인
+        const hasSouth = groupBookings.some(b => b._region === 'south');
+        const hasNorth = groupBookings.some(b => b._region === 'north');
+        
+        // 취소 버튼 생성을 위한 지역별 ID 정보 보존
+        const regions = {
+            south: hasSouth ? groupBookings.find(b => b._region === 'south')?.id : null,
+            north: hasNorth ? groupBookings.find(b => b._region === 'north')?.id : null
+        };
+        
+        return {
+            ...baseBooking,
+            _regions: regions
+        };
+    });
+    
+    tbody.innerHTML = mergedBookings.length > 0 
+        ? mergedBookings.map(booking => `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${booking.group_name}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.place}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${booking.people}명</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${getStatusClass(booking.status)}">
+                        ${getStatusText(booking.status)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${booking.status === 'approved' ? `
+                        <button onclick="forceCancel(${booking.id}, '${dateString}', '${booking._region}')" 
+                            class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors">
+                            강제취소
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="6" class="px-6 py-4 text-center">현재 유효한 예약이 없습니다.</td></tr>';
+}
     } catch (error) {
         console.error('통합 예약 정보 로드 오류:', error);
         showAlert('예약 내역을 불러오는데 실패했습니다.', 'error');
