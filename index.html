@@ -7031,13 +7031,60 @@ function renderRegionalCalendarDay(dayElement, dateObj, dateString, currentDay, 
     }
 }
 
+function addAdminDateClickHandler(dayElement, dateString) {
+    // 이벤트 핸들러 중첩 방지
+    const newElement = dayElement.cloneNode(true);
+    if (dayElement.parentNode) {
+        dayElement.parentNode.replaceChild(newElement, dayElement);
+    }
+    
+    // 새로운 이벤트 핸들러 추가
+    newElement.addEventListener('click', async function() {
+        currentSelectedDate = dateString;
+        try {
+            // 관리자 유형 확인
+            const adminRegion = sessionStorage.getItem('region');
+            const isIntegratedAdmin = adminRegion === 'all';
+            
+            console.log(`날짜 클릭: ${dateString}, 관리자 유형: ${isIntegratedAdmin ? '통합' : '일반'}`);
+            
+            if (isIntegratedAdmin) {
+                // 통합 관리자는 loadDateBookingsIntegrated 함수 호출
+                await loadDateBookingsIntegrated(dateString);
+            } else {
+                // 일반 관리자는 기존 함수 호출
+                await loadDateBookings(dateString);
+            }
+            
+            // 모달 표시
+            showDateBookingsModal();
+        } catch (error) {
+            console.error('날짜 클릭 처리 오류:', error);
+            showAlert('예약 정보를 불러오는데 실패했습니다.', 'error');
+        }
+    });
+    
+    return newElement;
+}
+
 // 통합 캘린더 일자 렌더링 함수 (새로 추가)
 function renderIntegratedCalendarDay(dayElement, dateObj, dateString, currentDay, today) {
     const baseClass = 'calendar-day h-12 flex items-center justify-center relative';
     
-    // 데이터 구조에 맞게 접근 방식 수정
-    const southStatus = bookingStatus?.[dateString]?.south;
-    const northStatus = bookingStatus?.[dateString]?.north;
+    // 데이터 구조 확인 로그 추가
+    console.log(`renderIntegratedCalendarDay: ${dateString}의 데이터`, bookingStatus[dateString]);
+    
+    // 데이터 구조 접근 수정
+    const southStatus = bookingStatus[dateString]?.south;
+    const northStatus = bookingStatus[dateString]?.north;
+    
+    // 디버깅 로그 추가
+    if (southStatus?.isFullyBlocked || northStatus?.isFullyBlocked) {
+        console.log(`날짜 ${dateString}는 마감 상태:`, {
+            남부마감: southStatus?.isFullyBlocked,
+            북부마감: northStatus?.isFullyBlocked
+        });
+    }
     
     // 지난 날짜 처리
     if (dateObj < today) {
@@ -7196,7 +7243,7 @@ async function loadDateBookingsIntegrated(dateString) {
         modalDate.textContent = `${formatDate(dateString)}`;
         currentSelectedDate = dateString;
 
-        // 모달 버튼 상태 설정
+        // 중요: 통합 버전 설정 함수 호출
         setupIntegratedModalButtons(dateString);
 
         if (southData.success && northData.success) {
@@ -7220,20 +7267,8 @@ async function loadDateBookingsIntegrated(dateString) {
                 booking.status !== 'cancel_pending'
             );
             
-            // 중요: 중복 제거 로직 추가 - 단체명 기준으로 중복 제거
-            const uniqueGroupNames = new Set();
-            const uniqueBookings = allBookings.filter(booking => {
-                // 이미 추가된 단체명인지 확인
-                if (uniqueGroupNames.has(booking.group_name)) {
-                    return false; // 중복이면 제외
-                }
-                // 새로운 단체명이면 추가
-                uniqueGroupNames.add(booking.group_name);
-                return true;
-            });
-
-            tbody.innerHTML = uniqueBookings.length > 0 
-                ? uniqueBookings.map(booking => `
+            tbody.innerHTML = allBookings.length > 0 
+                ? allBookings.map(booking => `
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${booking.group_name}
@@ -7271,18 +7306,33 @@ async function loadDateBookingsIntegrated(dateString) {
 
 // 통합 모달 버튼 설정
 function setupIntegratedModalButtons(dateString) {
-    // 남부/북부 각각의 상태 확인
-    const southStatus = bookingStatus?.south?.[dateString];
-    const northStatus = bookingStatus?.north?.[dateString];
+    console.log('통합 관리자용 모달 버튼 설정 시작:', dateString);
+    console.log('현재 bookingStatus 데이터:', bookingStatus);
+    
+    // 남부/북부 각각의 상태 확인 - 수정된 접근 방식
+    const southStatus = bookingStatus[dateString]?.south;
+    const northStatus = bookingStatus[dateString]?.north;
+    
+    console.log(`날짜 ${dateString}의 상태:`, {
+        남부: southStatus,
+        북부: northStatus
+    });
     
     // 모달 버튼 참조
     const partialBlockBtn = document.getElementById('partialBlockDateBtn');
     const fullBlockBtn = document.getElementById('fullBlockDateBtn');
     const unblockBtn = document.getElementById('unblockDateBtn');
     
-    // 통합 상태 확인 (남부/북부 모두 마감/부분마감인 경우)
-    const isFullyBlocked = (southStatus?.isFullyBlocked && northStatus?.isFullyBlocked);
+    if (!partialBlockBtn || !fullBlockBtn || !unblockBtn) {
+        console.error('모달 버튼 요소를 찾을 수 없음');
+        return;
+    }
+    
+    // 통합 상태 확인 (남부/북부 중 하나라도 마감 상태이면 마감 해제 버튼 표시)
+    const isFullyBlocked = (southStatus?.isFullyBlocked || northStatus?.isFullyBlocked);
     const isPartiallyBlocked = (southStatus?.isPartiallyBlocked || northStatus?.isPartiallyBlocked) && !isFullyBlocked;
+    
+    console.log('통합 상태 확인:', {isFullyBlocked, isPartiallyBlocked});
     
     // 버튼 라벨 업데이트
     partialBlockBtn.textContent = '통합 부분 마감';
@@ -7294,10 +7344,12 @@ function setupIntegratedModalButtons(dateString) {
         partialBlockBtn.classList.add('hidden');
         fullBlockBtn.classList.add('hidden');
         unblockBtn.classList.remove('hidden');
+        console.log('마감 해제 버튼 표시됨');
     } else {
         partialBlockBtn.classList.remove('hidden');
         fullBlockBtn.classList.remove('hidden');
         unblockBtn.classList.add('hidden');
+        console.log('마감 버튼 표시됨');
     }
     
     // 통합 마감 이벤트 핸들러 설정
@@ -7315,12 +7367,22 @@ function setupIntegratedModalButtons(dateString) {
         }
     };
     
-    unblockBtn.onclick = async () => {
-    if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
-        await unblockIntegratedDate(dateString);
-        closeDateBookingsModal();
-    }
-};
+    unblockBtn.addEventListener('click', async function() {
+        console.log('통합 마감 해제 버튼 클릭됨');
+        if (confirm('남부/북부 모두 마감을 해제하시겠습니까?')) {
+            console.log('통합 마감 해제 시작');
+            try {
+                await unblockIntegratedDate(dateString);
+                closeDateBookingsModal();
+                console.log('통합 마감 해제 완료');
+            } catch (error) {
+                console.error('통합 마감 해제 중 오류:', error);
+                showAlert('마감 해제 중 오류가 발생했습니다.', 'error');
+            }
+        }
+    });
+    
+    console.log('통합 관리자용 모달 버튼 설정 완료');
 }
 
 // 통합 날짜 마감 함수
