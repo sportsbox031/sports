@@ -3668,7 +3668,6 @@ function forceFileDownload(url, fileName) {
 
 // DOMContentLoaded 내에 다음 코드 추가
 document.addEventListener('DOMContentLoaded', function() {
-    // 기존 코드...
     
     // 모든 첨부파일 링크에 클릭 이벤트 추가 (주기적 체크)
     setInterval(function() {
@@ -3899,6 +3898,10 @@ function showLoginScreen() {
     const token = sessionStorage.getItem('token');
     const role = sessionStorage.getItem('role');
 
+    // 문의사항 관리 섹션 숨기기 (이 줄 추가)
+    const inquiryManagementSection = document.getElementById('inquiryManagementSection');
+    if (inquiryManagementSection) inquiryManagementSection.style.display = 'none';
+
     // 이미 로그인된 상태라면 직접 대시보드 초기화
     if (token && role) {
         const region = sessionStorage.getItem('region');
@@ -4017,6 +4020,9 @@ async function showDashboard(role) {
 async function initializeUserDashboard(region, username) {
     document.getElementById('userDashboard').classList.remove('hidden');
     document.getElementById('adminDashboard').classList.add('hidden');
+
+    // 문의사항 관리 섹션 숨기기 (이 줄 추가)
+    document.getElementById('inquiryManagementSection').style.display = 'none';
 
     document.querySelector('#userDashboard .dashboard-title').textContent = region === 'south' ? '남부 스포츠박스' : '북부 스포츠박스';
     document.getElementById('userGroupName').textContent = username;
@@ -4484,6 +4490,10 @@ async function refreshAdminDashboard() {
 
 function logout() {
     console.log('로그아웃 시작');
+
+    // 문의사항 관리 섹션 숨기기 (이 줄 추가)
+    const inquiryManagementSection = document.getElementById('inquiryManagementSection');
+    if (inquiryManagementSection) inquiryManagementSection.style.display = 'none';
     
     // sessionStorage 클리어
     sessionStorage.clear();
