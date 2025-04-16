@@ -1638,6 +1638,29 @@
     </div>
 </div>
 
+<!-- 사용자 삭제 확인 모달 -->
+<div id="deleteUserModal" class="modal">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96 m-auto">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-red-600">계정 삭제 확인</h2>
+        </div>
+        <p class="mb-6">
+            <span id="deleteUserName" class="font-bold"></span> 계정을 완전히 삭제하시겠습니까?
+        </p>
+        <p class="mb-8 text-sm text-gray-600">
+            이 작업은 되돌릴 수 없으며 해당 사용자의 모든 예약 및 문의 내역이 함께 삭제됩니다.
+        </p>
+        <div class="flex justify-end space-x-4">
+            <button id="cancelDeleteUser" class="px-4 py-2 bg-gray-200 text-gray-700 rounded">
+                취소
+            </button>
+            <button id="confirmDeleteUser" class="px-4 py-2 bg-red-500 text-white rounded">
+                삭제
+            </button>
+        </div>
+    </div>
+</div>
+
     <!-- 관리자 비밀번호 변경 모달 -->
     <div id="changePasswordModal" class="modal">
         <div class="bg-white p-8 rounded-lg shadow-md w-96 m-auto">
@@ -3228,6 +3251,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // 공지사항 모달 초기화 및 개선
     initializeNoticeModal();
     
+    // 여기에 삭제 모달 이벤트 리스너 추가
+    document.getElementById('cancelDeleteUser')?.addEventListener('click', function() {
+        closeModal('deleteUserModal');
+    });
+
+    document.getElementById('confirmDeleteUser')?.addEventListener('click', async function() {
+        closeModal('deleteUserModal');
+        await forceDeleteUser(deleteUserId, deleteUserGroupName);
+    });
+
     // 디버깅 함수 추가 - 전역 스코프에 정의
     window.debugNotices = function() {
     console.log('===== 공지사항 디버깅 =====');
@@ -5125,6 +5158,10 @@ function renderUsersList(users) {
                         비밀번호 초기화
                     </button>
                 ` : ''}
+                <button onclick="showDeleteUserModal(${user.id}, '${user.group_name}')"
+    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
+    삭제
+</button>
             </td>
         </tr>
     `).join('');
@@ -5244,6 +5281,13 @@ async function rejectUser(userId) {
     }
 }
 
+// 사용자 삭제 확인 함수
+function confirmDeleteUser(userId, groupName) {
+    if (confirm(`정말 '${groupName}' 계정을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며 해당 사용자의 모든 예약 및 문의 내역이 함께 삭제됩니다.`)) {
+        forceDeleteUser(userId, groupName);
+    }
+}
+
 // 비밀번호 초기화 함수 추가
 async function resetUserPassword(userId, groupName) {
     try {
@@ -5263,6 +5307,41 @@ async function resetUserPassword(userId, groupName) {
     } catch (error) {
         console.error('Password reset error:', error);
         showAlert(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+let deleteUserId = null;
+let deleteUserGroupName = null;
+
+function showDeleteUserModal(userId, groupName) {
+    deleteUserId = userId;
+    deleteUserGroupName = groupName;
+    
+    document.getElementById('deleteUserName').textContent = groupName;
+    openModal('deleteUserModal');
+}
+
+// 사용자 강제 삭제 함수
+async function forceDeleteUser(userId, groupName) {
+    try {
+        showLoading();
+        
+        const response = await apiRequest(`/api/admin/users/${userId}/force-delete`, {
+            method: 'DELETE'
+        });
+        
+        if (response.success) {
+            showAlert(`'${groupName}' 계정이 완전히 삭제되었습니다.`, 'success');
+            // 사용자 목록 다시 로드
+            await loadAllUsers();
+        } else {
+            throw new Error(response.message || '사용자 삭제 중 오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('User deletion error:', error);
+        showAlert(error.message || '사용자 삭제 중 오류가 발생했습니다.', 'error');
     } finally {
         hideLoading();
     }
@@ -8282,6 +8361,8 @@ const formattedContact = formatContact(contact);
 
     // 날짜별 예약 모달 컨트롤
     document.getElementById('closeDateBookingsModal')?.addEventListener('click', closeDateBookingsModal);
+
+
 
     // ESC 키로 모달 닫기 (추가로 이미 위에 있지만 유지)
     document.addEventListener('keydown', function(e) {
