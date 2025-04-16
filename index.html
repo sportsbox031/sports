@@ -9131,9 +9131,10 @@ async function loadAdminInquiries() {
                 return;
             }
             
-            tbody.innerHTML = adminInquiries.map(inquiry => `
+            // 여기서 인덱스를 사용하여 1부터 시작하는 번호 부여
+            tbody.innerHTML = adminInquiries.map((inquiry, index) => `
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">${inquiry.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                             ${getCategoryClass(inquiry.category)}">
@@ -9168,6 +9169,16 @@ async function loadAdminInquiries() {
                     </td>
                 </tr>
             `).join('');
+            
+            // 문의사항 관리 제목에 총 개수 표시
+            const inquirySection = document.getElementById('inquiryManagementSection');
+            const sectionTitle = inquirySection?.querySelector('h2');
+            if (sectionTitle) {
+                sectionTitle.innerHTML = `
+                    <i class="fas fa-question-circle text-indigo-600 mr-2"></i>
+                    문의사항 관리 <span class="text-sm font-normal text-gray-500 ml-2">(총 ${adminInquiries.length}건)</span>
+                `;
+            }
         } else {
             showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
         }
