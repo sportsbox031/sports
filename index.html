@@ -5154,13 +5154,9 @@ function renderUsersList(users) {
     }
 
     try {
-        // 페이지네이션 로직
-        const startIndex = (currentUserPage - 1) * usersPerPage;
-        const paginatedUsers = users.slice(startIndex, startIndex + usersPerPage);
-        
-        tbody.innerHTML = paginatedUsers.map((user, index) => `
+        tbody.innerHTML = users.map((user, index) => `
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-center">${startIndex + index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">${index + 1}</td>
                 <td class="px-6 py-4 whitespace-nowrap">${user.group_name}</td>
                 <td class="px-6 py-4 whitespace-nowrap">${user.manager}</td>
                 <td class="px-6 py-4 whitespace-nowrap">${user.contact}</td>
@@ -5185,7 +5181,7 @@ function renderUsersList(users) {
                 <td class="px-6 py-4 whitespace-nowrap">
                     ${user.status === 'approved' ? `
                         <button onclick="resetUserPassword(${user.id}, '${user.group_name}')"
-                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm mr-2">
+                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
                             비밀번호 초기화
                         </button>
                     ` : ''}
@@ -5196,141 +5192,9 @@ function renderUsersList(users) {
                 </td>
             </tr>
         `).join('');
-        
-        // 페이지네이션 컨트롤 렌더링
-        renderPaginationControls(users.length, usersPerPage, currentUserPage);
-        
     } catch (error) {
         console.error('사용자 목록 렌더링 오류:', error);
         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">사용자 목록을 표시하는 중 오류가 발생했습니다.</td></tr>';
-    }
-}
-
-// 페이지네이션 컨트롤 렌더링 함수
-function renderPaginationControls(totalItems, itemsPerPage, currentPage) {
-    const paginationContainer = document.createElement('div');
-    paginationContainer.className = 'flex justify-center mt-4 space-x-2';
-    
-    // 총 페이지 수 계산
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    
-    // 페이지가 1개만 있으면 페이지네이션 표시하지 않음
-    if (totalPages <= 1) return;
-    
-    // 이전 페이지 버튼
-    const prevButton = document.createElement('button');
-    prevButton.className = 'px-3 py-1 rounded border border-gray-300 hover:bg-gray-100';
-    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
-    prevButton.disabled = currentPage === 1;
-    prevButton.style.opacity = currentPage === 1 ? '0.5' : '1';
-    prevButton.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentUserPage = currentPage - 1;
-            renderUsersList(allUsersData); // 전역 변수에서 데이터 사용
-        }
-    });
-    
-    // 첫 페이지 버튼
-    const firstPageButton = document.createElement('button');
-    firstPageButton.className = `px-3 py-1 rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'border border-gray-300 hover:bg-gray-100'}`;
-    firstPageButton.textContent = '1';
-    firstPageButton.addEventListener('click', () => {
-        currentUserPage = 1;
-        renderUsersList(allUsersData);
-    });
-    
-    // 페이지 버튼들
-    const pageButtons = [];
-    const maxVisiblePages = 5; // 최대 표시할 페이지 버튼 수
-    
-    let startPage = Math.max(2, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
-    
-    if (endPage - startPage < maxVisiblePages - 3) {
-        startPage = Math.max(2, endPage - maxVisiblePages + 3);
-    }
-    
-    // 생략 표시 (처음과 시작 페이지 사이)
-    const leftEllipsis = document.createElement('span');
-    leftEllipsis.className = 'px-3 py-1';
-    leftEllipsis.textContent = '...';
-    leftEllipsis.style.display = startPage > 2 ? 'block' : 'none';
-    
-    // 시작 페이지부터 끝 페이지까지 버튼 생성
-    for (let i = startPage; i <= endPage; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.className = `px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'border border-gray-300 hover:bg-gray-100'}`;
-        pageButton.textContent = i.toString();
-        pageButton.addEventListener('click', () => {
-            currentUserPage = i;
-            renderUsersList(allUsersData);
-        });
-        pageButtons.push(pageButton);
-    }
-    
-    // 생략 표시 (끝 페이지와 마지막 페이지 사이)
-    const rightEllipsis = document.createElement('span');
-    rightEllipsis.className = 'px-3 py-1';
-    rightEllipsis.textContent = '...';
-    rightEllipsis.style.display = endPage < totalPages - 1 ? 'block' : 'none';
-    
-    // 마지막 페이지 버튼 (총 페이지가 1개 이상인 경우)
-    const lastPageButton = document.createElement('button');
-    if (totalPages > 1) {
-        lastPageButton.className = `px-3 py-1 rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'border border-gray-300 hover:bg-gray-100'}`;
-        lastPageButton.textContent = totalPages.toString();
-        lastPageButton.addEventListener('click', () => {
-            currentUserPage = totalPages;
-            renderUsersList(allUsersData);
-        });
-    }
-    
-    // 다음 페이지 버튼
-    const nextButton = document.createElement('button');
-    nextButton.className = 'px-3 py-1 rounded border border-gray-300 hover:bg-gray-100';
-    nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.style.opacity = currentPage === totalPages ? '0.5' : '1';
-    nextButton.addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            currentUserPage = currentPage + 1;
-            renderUsersList(allUsersData);
-        }
-    });
-    
-    // 모든 요소 추가
-    paginationContainer.appendChild(prevButton);
-    paginationContainer.appendChild(firstPageButton);
-    
-    if (leftEllipsis.style.display !== 'none') {
-        paginationContainer.appendChild(leftEllipsis);
-    }
-    
-    pageButtons.forEach(button => {
-        paginationContainer.appendChild(button);
-    });
-    
-    if (rightEllipsis.style.display !== 'none') {
-        paginationContainer.appendChild(rightEllipsis);
-    }
-    
-    if (totalPages > 1) {
-        paginationContainer.appendChild(lastPageButton);
-    }
-    
-    paginationContainer.appendChild(nextButton);
-    
-    // 기존 페이지네이션 컨테이너가 있으면 제거
-    const existingPagination = document.getElementById('userPaginationContainer');
-    if (existingPagination) {
-        existingPagination.remove();
-    }
-    
-    // 새 페이지네이션 컨테이너 추가
-    paginationContainer.id = 'userPaginationContainer';
-    const userManagementSection = document.querySelector('.mt-8.bg-white.rounded-2xl.shadow-xl.p-8');
-    if (userManagementSection) {
-        userManagementSection.appendChild(paginationContainer);
     }
 }
 
