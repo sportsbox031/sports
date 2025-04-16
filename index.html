@@ -3601,6 +3601,8 @@ let currentSelectedDate = null;
 let currentNoticeId = null;
 let isSubmittingInquiry = false; // 플래그 추가
 let allUsersData = [];
+let currentUserPage = 1;
+const usersPerPage = 10;
 
 // 로딩 인디케이터 제어
 function showLoading() {
@@ -5093,23 +5095,35 @@ async function loadAllUsers() {
         const data = await apiRequest('/api/admin/users');
         
         if (data.success) {
-            // 추가: 전역 변수에 데이터 저장
+            // 전역 변수에 데이터 저장
             allUsersData = data.data || [];
             
-            // 수정: 렌더링 함수 호출
+            // 사용자 목록 렌더링 함수 호출
             renderUsersList(allUsersData);
         } else {
             showAlert('회원 목록을 불러오는데 실패했습니다.', 'error');
+            // 오류 발생 시 빈 테이블 표시
+            document.getElementById('allUsersList').innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                        회원 목록을 불러오는데 실패했습니다.
+                    </td>
+                </tr>
+            `;
         }
     } catch (error) {
         console.error('Users fetch error:', error);
+        // 오류 메시지 표시
         document.getElementById('allUsersList').innerHTML = `
             <tr>
-                <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500">
                     회원 목록을 불러오는데 실패했습니다.
                 </td>
             </tr>
         `;
+        
+        // 오류 경고창 표시
+        showAlert('회원 목록을 불러오는 중 오류가 발생했습니다.', 'error');
     }
 }
 
@@ -5121,7 +5135,7 @@ function renderUsersList(users) {
     if (!users || users.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500">
                     등록된 회원이 없습니다.
                 </td>
             </tr>
@@ -5139,44 +5153,49 @@ function renderUsersList(users) {
         `;
     }
 
-    tbody.innerHTML = users.map(user => `
-        <tr>
-            <td class="px-6 py-4 whitespace-nowrap text-center">${index + 1}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${user.group_name}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${user.manager}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${user.contact}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs rounded-full 
-                    ${user.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                    ${user.region === 'south' ? '남부' : '북부'}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs rounded-full 
-                    ${user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                    user.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                    'bg-red-100 text-red-800'}">
-                    ${
-                        user.status === 'pending' ? '대기중' : 
-                        user.status === 'approved' ? '승인됨' : 
-                        '거부됨'
-                    }
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                ${user.status === 'approved' ? `
-                    <button onclick="resetUserPassword(${user.id}, '${user.group_name}')"
-                        class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
-                        비밀번호 초기화
+    try {
+        tbody.innerHTML = users.map((user, index) => `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-center">${index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${user.group_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${user.manager}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${user.contact}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs rounded-full 
+                        ${user.region === 'south' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                        ${user.region === 'south' ? '남부' : '북부'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs rounded-full 
+                        ${user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                        user.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                        'bg-red-100 text-red-800'}">
+                        ${
+                            user.status === 'pending' ? '대기중' : 
+                            user.status === 'approved' ? '승인됨' : 
+                            '거부됨'
+                        }
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${user.status === 'approved' ? `
+                        <button onclick="resetUserPassword(${user.id}, '${user.group_name}')"
+                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+                            비밀번호 초기화
+                        </button>
+                    ` : ''}
+                    <button onclick="showDeleteUserModal(${user.id}, '${user.group_name}')"
+                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
+                        삭제
                     </button>
-                ` : ''}
-                <button onclick="showDeleteUserModal(${user.id}, '${user.group_name}')"
-    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
-    삭제
-</button>
-            </td>
-        </tr>
-    `).join('');
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('사용자 목록 렌더링 오류:', error);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">사용자 목록을 표시하는 중 오류가 발생했습니다.</td></tr>';
+    }
 }
 
 // 추가: 사용자 검색 기능을 위한 초기화 함수
