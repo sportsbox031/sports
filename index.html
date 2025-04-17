@@ -9301,5 +9301,127 @@ window.initializeAdminDashboard = async function() {
 };
 
 </script>
+
+<!-- 팝업 모달 -->
+<div id="welcomePopup" class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- 배경 오버레이 -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+      
+      <!-- 모달 컨텐츠 -->
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-1">
+          <div class="bg-white p-6">
+            <!-- 상단 타이틀과 닫기 버튼 -->
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                예약 시스템 안내
+              </h3>
+              <button type="button" id="closePopup" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <!-- 내용 -->
+            <div class="mt-2">
+              <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                      현재 많은 단체가 동시에 예약을 시도하고 있습니다. 일시적인 서버 부하로 <strong>"다시 시도해주세요"</strong> 메시지가 표시될 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <p class="text-sm text-gray-600 mb-4">
+                스포츠박스 예약 시스템은 <span class="font-semibold text-primary">실시간 예약 방식</span>으로 운영됩니다. 같은 날짜에 여러 단체가 동시에 예약을 시도할 경우:
+              </p>
+              
+              <ul class="list-disc pl-5 mb-4 text-sm text-gray-600 space-y-2">
+                <li>일시적인 <span class="text-red-500 font-medium">서버 오류</span>가 발생하면 잠시 후 <span class="text-primary font-medium">다시 시도</span>해 주세요.</li>
+                <li>예약은 <span class="text-primary font-medium">선착순</span>으로 진행되며, 다른 단체가 먼저 예약한 날짜는 자동으로 <span class="text-red-500 font-medium">마감</span> 처리됩니다.</li>
+                <li>원하시는 날짜가 마감된 경우, 다른 날짜를 선택해 주시기 바랍니다.</li>
+              </ul>
+            </div>
+            
+            <!-- 하단 버튼 -->
+            <div class="mt-4">
+              <button id="confirmPopup" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary/90 focus:outline-none sm:text-sm">
+                확인했습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 팝업 스크립트 -->
+  <script>
+    // 페이지 로드 시 팝업 표시
+    document.addEventListener('DOMContentLoaded', function() {
+      const popup = document.getElementById('welcomePopup');
+      const closeBtn = document.getElementById('closePopup');
+      const confirmBtn = document.getElementById('confirmPopup');
+      
+      // 닫기 버튼 클릭 이벤트
+      closeBtn.addEventListener('click', function() {
+        closeWelcomePopup();
+      });
+      
+      // 확인 버튼 클릭 이벤트
+      confirmBtn.addEventListener('click', function() {
+        closeWelcomePopup();
+      });
+      
+      // ESC 키 누를 때 팝업 닫기
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeWelcomePopup();
+        }
+      });
+      
+      // 팝업 닫기 함수
+      function closeWelcomePopup() {
+        popup.classList.add('opacity-0');
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 300);
+        
+        // 쿠키 저장 (24시간 동안 다시 보지 않기)
+        const date = new Date();
+        date.setTime(date.getTime() + (24 * 60 * 60 * 1000));
+        document.cookie = "welcomePopupShown=true; expires=" + date.toUTCString() + "; path=/";
+      }
+      
+      // 쿠키 확인 (이미 본 사용자에게는 표시하지 않음)
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+      
+      // 팝업을 이미 봤는지 확인
+      const popupShown = getCookie('welcomePopupShown');
+      if (popupShown) {
+        popup.style.display = 'none';
+      } else {
+        popup.style.display = 'block';
+        popup.classList.add('opacity-100');
+      }
+    });
+  </script>
+
 </body>
 </html>
