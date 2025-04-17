@@ -3176,6 +3176,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHomeNotices();
     checkAdminStatus();
     initializeInquirySystem();
+    setupSessionValidation();
     
     document.getElementById('inquiryFile')?.addEventListener('change', function() {
         const fileNameSpan = document.getElementById('inquirySelectedFileName');
@@ -3191,6 +3192,82 @@ document.addEventListener('DOMContentLoaded', function() {
             fileNameSpan.classList.add('text-gray-600');
         }
     });
+
+    // 다중 로그인 방지를 위한 세션 검증 코드
+function setupSessionValidation() {
+    // 1분마다 세션 유효성 검사
+    setInterval(async () => {
+        try {
+            // 토큰이 있을 경우에만 검사
+            const token = sessionStorage.getItem('token');
+            if (!token) return;
+            
+            // 이미 로그인 페이지에 있으면 검사 중단
+            if (document.getElementById('loginScreen') && 
+                !document.getElementById('loginScreen').classList.contains('hidden')) {
+                return;
+            }
+            
+            const response = await apiRequest('/api/validate-token');
+            
+            // 검증 실패 시 로그아웃 처리
+            if (!response.success) {
+                if (response.message && response.message.includes('다른 기기에서 로그인')) {
+                    showAlert('다른 기기에서 로그인이 감지되어 로그아웃됩니다.', 'error');
+                }
+                logout();
+            }
+        } catch (error) {
+            console.error('Session validation error:', error);
+            
+            // 에러 메시지가 세션 만료 관련이면 로그아웃
+            if (error.message && (
+                error.message.includes('다른 기기에서 로그인') || 
+                error.message.includes('세션이 만료') ||
+                error.message.includes('인증')
+            )) {
+                showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                logout();
+            }
+        }
+    }, 60000); // 60초(1분)마다 체크
+}
+
+// 페이지 가시성 변경 시 세션 검사
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        // 페이지가 활성화될 때 즉시 검증
+        (async () => {
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) return;
+                
+                // 이미 로그인 페이지에 있으면 검사 중단
+                if (document.getElementById('loginScreen') && 
+                    !document.getElementById('loginScreen').classList.contains('hidden')) {
+                    return;
+                }
+                
+                const response = await apiRequest('/api/validate-token');
+                if (!response.success) {
+                    if (response.message && response.message.includes('다른 기기에서 로그인')) {
+                        showAlert('다른 기기에서 로그인이 감지되어 로그아웃됩니다.', 'error');
+                    }
+                    logout();
+                }
+            } catch (error) {
+                if (error.message && (
+                    error.message.includes('다른 기기에서 로그인') || 
+                    error.message.includes('세션이 만료') ||
+                    error.message.includes('인증')
+                )) {
+                    showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                    logout();
+                }
+            }
+        })();
+    }
+});
     
     document.getElementById('inquiryAnswerForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -6446,7 +6523,12 @@ async function login(username, password) {
         });
 
         if (response.success) {
-            // sessionStorage 사용으로 통일
+            // 세션 정보가 있는지 확인하고 처리 (다른 기기에서 로그인 감지)
+            if (response.session && response.session.duplicate_login) {
+                showAlert(`다른 기기에서 이미 로그인한 계정입니다. 해당 기기는 자동으로 로그아웃됩니다.`, 'warning', 5000);
+            }
+            
+            // 기존 코드와 동일
             sessionStorage.setItem('token', response.token);
             sessionStorage.setItem('role', response.user.role);
             sessionStorage.setItem('username', response.user.group_name);
