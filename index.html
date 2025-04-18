@@ -6975,10 +6975,12 @@ function renderCalendar(date) {
             dayElement.title = '관리자 전체 마감';
         }
         // 예약 마감 상태: 일반 마감(2개) 또는 부분 마감+예약(1개)
-        else if (dateStatus?.bookingCount >= 2 || (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1)) {
-            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-            dayElement.title = '예약 마감 (2건 모두 예약됨)';
-        }
+        else if (dateStatus?.bookingCount >= 2 || 
+         (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) || 
+         (dateStatus?.totalBookings && dateStatus?.totalBookings >= 2)) {  // 이 부분 추가
+    dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+    dayElement.title = '예약 마감 (2건 모두 예약됨)';
+}
         // 부분 마감 상태 (예약 0개)
         else if (dateStatus?.isPartiallyBlocked) {
             dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
@@ -7384,11 +7386,11 @@ else if (totalBookings >= 2) {
         const actualTotalBookings = Math.min(southCount + northCount, 2);
         
         // 남/북 모두 마감이면 2/2 표시
-        if (isSouthFull && isNorthFull) {
-            countBadge.textContent = `2/2`;
-            countBadge.style.backgroundColor = '#FEE2E2';
-            countBadge.style.color = '#B91C1C';
-        }
+        if (isSouthFull && isNorthFull || totalBookingsForDate >= 2) {  // 이 부분 추가
+    countBadge.textContent = `2/2`;
+    countBadge.style.backgroundColor = '#FEE2E2';
+    countBadge.style.color = '#B91C1C';
+}
         // 부분 마감이면서 예약이 있는 경우
         else if (isPartiallyBlocked && totalBookings >= 1) {
             countBadge.textContent = `2/2`;
