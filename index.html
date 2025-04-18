@@ -6999,37 +6999,46 @@ function renderCalendar(date) {
         }
 
         // 예약 건수 배지 추가
-        if (dateStatus?.bookingCount > 0 || dateStatus?.isPartiallyBlocked) {
-            const countBadge = document.createElement('div');
-            countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
-            
-            // 부분 마감 + 예약 1개 = 2/2로 표시
-            if (dateStatus.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
-                countBadge.textContent = `2/2`;
-                countBadge.style.backgroundColor = '#FEE2E2'; // 빨간색 배경
-                countBadge.style.color = '#B91C1C';
-            }
-            // 2개 이상 예약 = 2/2로 표시
-            else if (dateStatus.bookingCount >= 2) {
-                countBadge.textContent = `2/2`;
-                countBadge.style.backgroundColor = '#FEE2E2'; // 빨간색 배경
-                countBadge.style.color = '#B91C1C';
-            }
-            // 부분 마감 (예약 0개)
-            else if (dateStatus.isPartiallyBlocked) {
-                countBadge.textContent = `1/2`;
-                countBadge.style.backgroundColor = '#DBEAFE'; // 파란색 배경 (부분 마감)
-                countBadge.style.color = '#92400E';
-            }
-            // 1개 예약
-            else {
-                countBadge.textContent = `1/2`;
-                countBadge.style.backgroundColor = '#DBEAFE'; // 파란색 배경
-                countBadge.style.color = '#1E40AF';
-            }
-            
-            dayElement.appendChild(countBadge);
-        }
+        if (dateStatus?.bookingCount > 0 || dateStatus?.isPartiallyBlocked || dateStatus?.otherRegionBookingCount > 0) {
+    const countBadge = document.createElement('div');
+    countBadge.className = 'absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-white shadow-md z-30';
+    
+    // 통합 시스템 - 총 예약 수 계산
+    const totalBookings = (dateStatus.totalBookings || 0);
+    
+    // 총 예약 수가 2개 이상이면 무조건 2/2 표시
+    if (totalBookings >= 2) {
+        countBadge.textContent = `2/2`;
+        countBadge.style.backgroundColor = '#FEE2E2'; // 빨간색 배경
+        countBadge.style.color = '#B91C1C';
+    }
+    // 부분 마감 + 예약 1개 = 2/2로 표시
+    else if (dateStatus.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
+        countBadge.textContent = `2/2`;
+        countBadge.style.backgroundColor = '#FEE2E2'; // 빨간색 배경
+        countBadge.style.color = '#B91C1C';
+    }
+    // 2개 이상 예약 = 2/2로 표시
+    else if (dateStatus.bookingCount >= 2) {
+        countBadge.textContent = `2/2`;
+        countBadge.style.backgroundColor = '#FEE2E2'; // 빨간색 배경
+        countBadge.style.color = '#B91C1C';
+    }
+    // 부분 마감 (예약 0개)
+    else if (dateStatus.isPartiallyBlocked) {
+        countBadge.textContent = `1/2`;
+        countBadge.style.backgroundColor = '#FEF3C7';
+        countBadge.style.color = '#92400E';
+    }
+    // 1개 예약 (이 지역 또는 다른 지역)
+    else if (dateStatus.bookingCount > 0 || dateStatus.otherRegionBookingCount > 0) {
+        countBadge.textContent = `1/2`;
+        countBadge.style.backgroundColor = '#DBEAFE'; // 파란색 배경
+        countBadge.style.color = '#1E40AF';
+    }
+    
+    dayElement.appendChild(countBadge);
+}
 
         // 오늘 날짜 표시 (마감되지 않은 경우에만)
         if (
