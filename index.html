@@ -7386,11 +7386,11 @@ else if (totalBookings >= 2) {
         const actualTotalBookings = Math.min(southCount + northCount, 2);
         
         // 남/북 모두 마감이면 2/2 표시
-        if (isSouthFull && isNorthFull || totalBookingsForDate >= 2) {  // 이 부분 추가
-    countBadge.textContent = `2/2`;
-    countBadge.style.backgroundColor = '#FEE2E2';
-    countBadge.style.color = '#B91C1C';
-}
+        if (isSouthFull && isNorthFull) {
+            countBadge.textContent = `2/2`;
+            countBadge.style.backgroundColor = '#FEE2E2';
+            countBadge.style.color = '#B91C1C';
+        }
         // 부분 마감이면서 예약이 있는 경우
         else if (isPartiallyBlocked && totalBookings >= 1) {
             countBadge.textContent = `2/2`;
