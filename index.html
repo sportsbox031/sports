@@ -6048,10 +6048,14 @@ async function generateCalendarPDF(year, month) {
         // 관리자 지역 정보 가져오기
         const adminRegion = sessionStorage.getItem('region') || 'all';
         
-        // 예약 데이터 가져오기
+        console.log('PDF 생성 시작: 관리자 지역 =', adminRegion);
+        
+        // 예약 데이터 가져오기 - 항상 'all'을 전달하여 모든 지역 데이터 요청
         const response = await apiRequest(`/api/admin/bookings/month/${year}/${month}`, {
             method: 'POST',
-            body: JSON.stringify({ region: adminRegion })
+            body: JSON.stringify({ 
+                region: 'all'  // 항상 'all'로 설정하여 모든 지역 데이터 요청
+            })
         });
         
         if (!response.success) {
@@ -6059,6 +6063,7 @@ async function generateCalendarPDF(year, month) {
         }
         
         const bookings = response.data || {};
+        console.log('PDF용 예약 데이터 로드 완료:', Object.keys(bookings).length, '일의 데이터');
         
         // 임시 달력 요소 생성
         const tempDiv = document.createElement('div');
@@ -6275,6 +6280,9 @@ async function generateCalendarHTML(year, month, bookings, adminRegion) {
                 const startTime = booking.start_time.substring(0, 5);
                 const endTime = booking.end_time.substring(0, 5);
                 const timeText = `${startTime}~${endTime}`;
+
+                // 지역 정보 추가 (남부/북부 구분)
+                const regionText = booking.region === 'south' ? '[남]' : '[북]';
                 
                 // 단체명 (길면 자르기)
                 const groupName = booking.group_name.length > 10 ? 
@@ -6284,6 +6292,7 @@ async function generateCalendarHTML(year, month, bookings, adminRegion) {
                 html += `
                     <div class="booking-item">
                         <span class="booking-time">${timeText}</span>
+                        <span class="booking-region">${regionText}</span>
                         <span class="booking-group">${groupName}</span>
                     </div>
                 `;
