@@ -6494,19 +6494,27 @@ renderCalendar(currentDate);
 function initializeAdminCalendar() {
     const adminCalendar = document.getElementById('adminCalendar');
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
+    const adminPrevMonth = document.getElementById('adminPrevMonth');
+    const adminNextMonth = document.getElementById('adminNextMonth');
+
+    // 필요한 DOM 요소들이 모두 존재하는지 확인
+    if (!adminCalendar || !adminCurrentMonthElement || !adminPrevMonth || !adminNextMonth) {
+        console.warn('관리자 캘린더 초기화에 필요한 DOM 요소를 찾을 수 없습니다.');
+        return;
+    }
 
     // 현재 날짜 상태 초기화
     if (!adminCurrentDate) {
         adminCurrentDate = new Date();
     }
 
-    document.getElementById('adminPrevMonth').addEventListener('click', function() {
+    adminPrevMonth.addEventListener('click', function() {
         adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
                                   adminCurrentDate.getMonth() - 1, 1);
         renderAdminCalendar(adminCurrentDate);
     });
 
-    document.getElementById('adminNextMonth').addEventListener('click', function() {
+    adminNextMonth.addEventListener('click', function() {
         adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
                                   adminCurrentDate.getMonth() + 1, 1);
         renderAdminCalendar(adminCurrentDate);
