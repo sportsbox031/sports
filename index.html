@@ -6537,17 +6537,26 @@ function initializeAdminCalendar() {
         adminCurrentDate = new Date();
     }
 
-    adminPrevMonth.addEventListener('click', function() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
-                                  adminCurrentDate.getMonth() - 1, 1);
-        renderAdminCalendar(adminCurrentDate);
-    });
+    // 기존 이벤트 핸들러 제거
+    adminPrevMonth.removeEventListener('click', handleAdminPrevMonth);
+    adminNextMonth.removeEventListener('click', handleAdminNextMonth);
 
-    adminNextMonth.addEventListener('click', function() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
-                                  adminCurrentDate.getMonth() + 1, 1);
+    // 이벤트 핸들러 함수 정의
+    async function handleAdminPrevMonth() {
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() - 1, 1);
         renderAdminCalendar(adminCurrentDate);
-    });
+        await updateCalendarStatus();
+    }
+
+    async function handleAdminNextMonth() {
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() + 1, 1);
+        renderAdminCalendar(adminCurrentDate);
+        await updateCalendarStatus();
+    }
+
+    // 이벤트 핸들러 등록
+    adminPrevMonth.addEventListener('click', handleAdminPrevMonth);
+    adminNextMonth.addEventListener('click', handleAdminNextMonth);
 
     // 초기 달력 렌더링
     renderAdminCalendar(adminCurrentDate);
@@ -6837,23 +6846,17 @@ function renderAdminCalendar(date) {
 
         // 예약 수 배지 추가 (중요: bookingCount 값이 있는지 확인)
         if (dateStatus?.bookingCount > 0) {
-    addBookingCountBadge(dayElement, dateStatus);
-}
+            addBookingCountBadge(dayElement, dateStatus);
+        }
 
         // 날짜 텍스트 추가
         const dateText = document.createElement('span');
         dateText.textContent = currentDay;
         dateText.className = 'z-10';
-        // 배지가 추가된 후에 날짜 텍스트 추가
-        if (dayElement.firstChild) {
-            dayElement.insertBefore(dateText, dayElement.firstChild);
-        } else {
-            dayElement.appendChild(dateText);
-        }
+        dayElement.appendChild(dateText);
 
         // 날짜 클릭 이벤트 추가
         if (selectedDateObj >= today) {
-            // 새로운 방식: 마감 모달 열기
             dayElement.addEventListener('click', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
