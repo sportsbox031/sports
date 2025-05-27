@@ -5379,15 +5379,36 @@ async function forceCancel(bookingId, dateString) {
         }
 
         showLoading();
-
+        
+        // 1. API 요청
         const response = await apiRequest(`/api/admin/bookings/${bookingId}/force-cancel`, {
             method: 'PUT'
         });
 
         if (response.success) {
             showAlert('예약이 강제 취소되었습니다.', 'success');
-            await loadDateBookings(dateString);  // 날짜별 예약 목록 새로고침
-            await updateCalendarStatus  // 캘린더 상태 업데이트
+            
+            // 2. 모달 바로 닫기 (사용자 경험 향상)
+            closeDateBookingsModal();
+            
+            // 3. 달력 업데이트 중임을 시각적으로 표시
+            const adminCalendar = document.getElementById('adminCalendar');
+            if (adminCalendar) {
+                adminCalendar.classList.add('updating'); // CSS 클래스로 업데이트 중임을 표시
+                
+                // 클래스 추가를 위한 CSS 코드 (스크립트 상단에 추가 필요):
+                // .updating { opacity: 0.6; position: relative; }
+                // .updating::after { content: "업데이트 중..."; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+            }
+            
+            // 4. 캘린더 상태 업데이트
+            await updateCalendarStatus();
+            
+            // 5. 업데이트 표시 제거
+            if (adminCalendar) {
+                adminCalendar.classList.remove('updating');
+            }
+            
         }
     } catch (error) {
         console.error('강제 취소 오류:', error);
