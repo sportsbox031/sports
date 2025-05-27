@@ -5239,9 +5239,9 @@ async function loadPendingBookings() {
                     'bg-yellow-100 text-yellow-800';
                 
                 const createdAt = new Date(booking.created_at);
-// UTC 시간에 9시간(32400000 밀리초) 추가하여 한국 시간으로 변환
-const kstCreatedAt = new Date(createdAt.getTime() + 9 * 60 * 60 * 1000);
-const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0')}-${String(kstCreatedAt.getDate()).padStart(2, '0')} ${String(kstCreatedAt.getHours()).padStart(2, '0')}:${String(kstCreatedAt.getMinutes()).padStart(2, '0')}`;
+                // UTC 시간에 9시간(32400000 밀리초) 추가하여 한국 시간으로 변환
+                const kstCreatedAt = new Date(createdAt.getTime() + 9 * 60 * 60 * 1000);
+                const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0')}-${String(kstCreatedAt.getDate()).padStart(2, '0')} ${String(kstCreatedAt.getHours()).padStart(2, '0')}:${String(kstCreatedAt.getMinutes()).padStart(2, '0')}`;
                 
                 const actionButtons = booking.status === 'cancel_pending' 
                     ? `
@@ -5270,12 +5270,7 @@ const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex flex-col">
-                                <span>${booking.start_time} - ${booking.end_time}</span>
-                                <span class="text-xs text-gray-500 mt-1">신청: ${formattedCreatedAt}</span>
-                            </div>
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.start_time} - ${booking.end_time}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mb-2 ${statusClass}">
                                 ${statusText}
@@ -5286,7 +5281,9 @@ const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0
                         </td>
                     </tr>
                 `;
-            }).join('') || '<tr><td colspan="4" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
+            }).join('') || '<tr><td colspan="5" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">대기 중인 예약이 없습니다.</td></tr>';
         }
     } catch (error) {
         console.error('Error loading pending bookings:', error);
