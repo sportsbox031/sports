@@ -5368,42 +5368,6 @@ async function rejectBookingCancel(bookingId) {
     }
 }
 
-async function refreshSingleDateStatus(dateString) {
-    try {
-        // sessionStorage에서 관리자 지역 정보 가져오기
-        const adminRegion = sessionStorage.getItem('region');
-        
-        // 지역 필터 요소에서 선택된 값 가져오기
-        const regionFilterElement = document.getElementById('regionFilter');
-        const selectedRegion = regionFilterElement ? regionFilterElement.value : null;
-        
-        // 최종 대상 지역 결정
-        const targetRegion = adminRegion === 'all' ? selectedRegion : adminRegion;
-        
-        // 지역 값 검증
-        if (!targetRegion || !['south', 'north'].includes(targetRegion)) {
-            throw new Error('유효한 지역을 선택해주세요.');
-        }
-
-        // API 요청
-        const data = await apiRequest(`/api/bookings/status?region=${targetRegion}`);
-        
-        if (data.success && data.data) {
-            // 전역 상태 업데이트
-            bookingStatus = data.data;
-            
-            // 관리자 캘린더 다시 렌더링
-            renderAdminCalendar(adminCurrentDate);
-            
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('[refreshSingleDateStatus] 오류:', error);
-        return false;
-    }
-}
-
 async function forceCancel(bookingId, dateString) {
     try {
         if (!dateString) {
@@ -5424,7 +5388,7 @@ async function forceCancel(bookingId, dateString) {
         if (response.success) {
             showAlert('예약이 강제 취소되었습니다.', 'success');
             await loadDateBookings(dateString);  // 날짜별 예약 목록 새로고침
-            await refreshSingleDateStatus(dateString);  // 캘린더 상태 업데이트
+            await updateCalendarStatus  // 캘린더 상태 업데이트
         }
     } catch (error) {
         console.error('강제 취소 오류:', error);
@@ -6492,32 +6456,39 @@ function initializeCalendar() {
         currentDate = new Date();
     }
 
-    // 기존 이벤트 핸들러 제거
-    prevButton.removeEventListener('click', handlePrevMonth);
-    nextButton.removeEventListener('click', handleNextMonth);
+    // 기존 이벤트 핸들러 제거 후 새로 추가
+    const newPrevButton = prevButton.cloneNode(true);
+    const newNextButton = nextButton.cloneNode(true);
+    prevButton.parentNode.replaceChild(newPrevButton, prevButton);
+    nextButton.parentNode.replaceChild(newNextButton, nextButton);
 
-    // 이벤트 핸들러 함수 정의
-    async function handlePrevMonth() {
-        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-        renderCalendar(currentDate);
-        await updateCalendarStatus();
-        loadBookings();
-        updateMonthlyRemainingBookings();
-    }
-
-    async function handleNextMonth() {
-        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-        renderCalendar(currentDate);
-        await updateCalendarStatus();
-        loadBookings();
-        updateMonthlyRemainingBookings();
-    }
-
-    // 이벤트 핸들러 등록
-    prevButton.addEventListener('click', handlePrevMonth);
-    nextButton.addEventListener('click', handleNextMonth);
-
+    newPrevButton.addEventListener('click', async function() {
+    // 이전 달로 이동 (한 달씩)
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     renderCalendar(currentDate);
+    
+    // 필수: 달력 상태 업데이트와 예약 목록을 비동기로 처리하고 완료될 때까지 기다림
+    await updateCalendarStatus(); // 디바운스 대신 직접 호출로 변경
+    loadBookings(); // 예약 목록 다시 로드
+    
+    // 해당 월의 남은 예약 횟수 갱신 요청
+    updateMonthlyRemainingBookings();
+});
+
+newNextButton.addEventListener('click', async function() {
+    // 다음 달로 이동 (한 달씩)
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    renderCalendar(currentDate);
+    
+    // 필수: 달력 상태 업데이트와 예약 목록을 비동기로 처리하고 완료될 때까지 기다림
+    await updateCalendarStatus(); // 디바운스 대신 직접 호출로 변경
+    loadBookings(); // 예약 목록 다시 로드
+    
+    // 해당 월의 남은 예약 횟수 갱신 요청
+    updateMonthlyRemainingBookings();
+});
+
+renderCalendar(currentDate);
 }
 
 function initializeAdminCalendar() {
@@ -6537,26 +6508,17 @@ function initializeAdminCalendar() {
         adminCurrentDate = new Date();
     }
 
-    // 기존 이벤트 핸들러 제거
-    adminPrevMonth.removeEventListener('click', handleAdminPrevMonth);
-    adminNextMonth.removeEventListener('click', handleAdminNextMonth);
-
-    // 이벤트 핸들러 함수 정의
-    async function handleAdminPrevMonth() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() - 1, 1);
+    adminPrevMonth.addEventListener('click', function() {
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
+                                  adminCurrentDate.getMonth() - 1, 1);
         renderAdminCalendar(adminCurrentDate);
-        await updateCalendarStatus();
-    }
+    });
 
-    async function handleAdminNextMonth() {
-        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), adminCurrentDate.getMonth() + 1, 1);
+    adminNextMonth.addEventListener('click', function() {
+        adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
+                                  adminCurrentDate.getMonth() + 1, 1);
         renderAdminCalendar(adminCurrentDate);
-        await updateCalendarStatus();
-    }
-
-    // 이벤트 핸들러 등록
-    adminPrevMonth.addEventListener('click', handleAdminPrevMonth);
-    adminNextMonth.addEventListener('click', handleAdminNextMonth);
+    });
 
     // 초기 달력 렌더링
     renderAdminCalendar(adminCurrentDate);
@@ -6817,28 +6779,29 @@ function renderAdminCalendar(date) {
 
         // 날짜 상태에 따른 클래스 설정
         if (selectedDateObj < today) {
-            dayElement.className = `${baseClass} past`;
-            dayElement.title = '지난 날짜';
-        } else if (dateStatus?.isFullyBlocked) {
-            dayElement.className = `${baseClass} blocked cursor-pointer`;
-            dayElement.title = '관리자 전체 마감';
-        } else if (dateStatus?.isFull) {
-            dayElement.className = `${baseClass} full cursor-pointer`;
-            dayElement.title = '예약 마감 (2건 모두 예약됨)';
-        } else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-            dayElement.className = `${baseClass} full cursor-pointer`;
-            dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
-        } else if (dateStatus?.isPartiallyBlocked) {
-            dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
-            dayElement.title = '부분 마감 (1개 예약만 가능)';
-            dayElement.style.backgroundColor = '#F97316';
-        } else if (dateStatus?.hasBooking) {
-            dayElement.className = `${baseClass} booked cursor-pointer`;
-            dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
-        } else {
-            dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
-            dayElement.title = '클릭하여 마감 설정';
-        }
+    dayElement.className = `${baseClass} past`;
+    dayElement.title = '지난 날짜';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = `${baseClass} blocked cursor-pointer`;
+    dayElement.title = '관리자 전체 마감';
+} else if (dateStatus?.isFull) {
+    dayElement.className = `${baseClass} full cursor-pointer`;
+    dayElement.title = '예약 마감 (2건 모두 예약됨)';
+} else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
+    // 여기가 핵심 변경사항: 부분 마감 + 예약 1개 이상 = 예약 마감
+    dayElement.className = `${baseClass} full cursor-pointer`;
+    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+} else if (dateStatus?.isPartiallyBlocked) {
+    dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
+    dayElement.title = '부분 마감 (1개 예약만 가능)';
+    dayElement.style.backgroundColor = '#F97316';
+} else if (dateStatus?.hasBooking) {
+    dayElement.className = `${baseClass} booked cursor-pointer`;
+    dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
+} else {
+    dayElement.className = `${baseClass} cursor-pointer rounded-lg hover:bg-blue-100 transition-colors text-gray-700`;
+    dayElement.title = '클릭하여 마감 설정';
+}
 
         // 날짜 요소 위치 설정 강제화
         dayElement.style.position = 'relative';
@@ -6846,17 +6809,23 @@ function renderAdminCalendar(date) {
 
         // 예약 수 배지 추가 (중요: bookingCount 값이 있는지 확인)
         if (dateStatus?.bookingCount > 0) {
-            addBookingCountBadge(dayElement, dateStatus);
-        }
+    addBookingCountBadge(dayElement, dateStatus);
+}
 
         // 날짜 텍스트 추가
         const dateText = document.createElement('span');
         dateText.textContent = currentDay;
         dateText.className = 'z-10';
-        dayElement.appendChild(dateText);
+        // 배지가 추가된 후에 날짜 텍스트 추가
+        if (dayElement.firstChild) {
+            dayElement.insertBefore(dateText, dayElement.firstChild);
+        } else {
+            dayElement.appendChild(dateText);
+        }
 
         // 날짜 클릭 이벤트 추가
         if (selectedDateObj >= today) {
+            // 새로운 방식: 마감 모달 열기
             dayElement.addEventListener('click', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -7341,54 +7310,54 @@ document.addEventListener('keydown', function(e) {
 });
 
     // 모달 관련 이벤트 리스너 설정
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        // 모달 내부 클릭 시 이벤트 전파 방지
-        const modalContent = modal.querySelector('.bg-white');
-        if (modalContent) {
-            modalContent.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-        }
-    });
+const modals = document.querySelectorAll('.modal');
+modals.forEach(modal => {
+    // 모달 내부 클릭 시 이벤트 전파 방지
+    const modalContent = modal.querySelector('.bg-white');
+    if (modalContent) {
+        modalContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+});
 
-    // ESC 키로 모달 닫기
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const visibleModal = document.querySelector('.modal.show');
-            if (visibleModal) {
-                if (visibleModal.id === 'noticeDetailModal') {
-                    closeNoticeDetail();
-                } else if (visibleModal.id === 'signupModal') {
-                    document.getElementById('closeSignup').click();
-                } else if (visibleModal.id === 'noticeWriteModal') {
-                    closeNoticeWriteModal();
-                } else if (visibleModal.id === 'userProfileModal') {
-                    closeUserProfileModal();
-                } else if (visibleModal.id === 'changePasswordModal') {
-                    closeChangePasswordModal();
-                } else if (visibleModal.id === 'dateBookingsModal') {
-                    closeDateBookingsModal();
-                } else {
-                    // 일반적인 모달 닫기
-                    visibleModal.classList.remove('show');
-                    setTimeout(() => {
-                        visibleModal.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }, 300);
-                }
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const visibleModal = document.querySelector('.modal.show');
+        if (visibleModal) {
+            if (visibleModal.id === 'noticeDetailModal') {
+                closeNoticeDetail();
+            } else if (visibleModal.id === 'signupModal') {
+                document.getElementById('closeSignup').click();
+            } else if (visibleModal.id === 'noticeWriteModal') {
+                closeNoticeWriteModal();
+            } else if (visibleModal.id === 'userProfileModal') {
+                closeUserProfileModal();
+            } else if (visibleModal.id === 'changePasswordModal') {
+                closeChangePasswordModal();
+            } else if (visibleModal.id === 'dateBookingsModal') {
+                closeDateBookingsModal();
+            } else {
+                // 일반적인 모달 닫기
+                visibleModal.classList.remove('show');
+                setTimeout(() => {
+                    visibleModal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 300);
             }
         }
-    });
+    }
+});
 
-    // 로그인 버튼과 예약 버튼에 명시적인 이벤트 중지 추가
-    document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button => {
-        const originalOnclick = button.onclick;
-        button.onclick = function(e) {
-            e.stopPropagation(); // 이벤트 전파 중지
-            if (originalOnclick) originalOnclick.call(this, e);
-        };
-    });
+// 로그인 버튼과 예약 버튼에 명시적인 이벤트 중지 추가
+document.querySelectorAll('button[onclick="showLoginScreen()"]').forEach(button => {
+    const originalOnclick = button.onclick;
+    button.onclick = function(e) {
+        e.stopPropagation(); // 이벤트 전파 중지
+        if (originalOnclick) originalOnclick.call(this, e);
+    };
+});
 
     // 여기에 지역 필터 변경 이벤트 리스너 추가
     document.getElementById('regionFilter')?.addEventListener('change', async function(e) {
