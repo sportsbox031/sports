@@ -5268,6 +5268,7 @@ const formattedCreatedAt = `${String(kstCreatedAt.getMonth() + 1).padStart(2, '0
                 return `
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">${booking.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${booking.city}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${formatDate(booking.date)}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex flex-col">
@@ -7806,8 +7807,6 @@ let currentInquiryId = null;
 let inquiryData = [];
 let userInquiries = [];
 let adminInquiries = [];
-let inquiryPage = 1;
-let inquiryLimit = 10;
 
 // 문의사항 페이지 표시 함수
 // 문의사항 페이지 표시 함수를 전역 스코프에 명시적으로 할당
@@ -8422,6 +8421,117 @@ async function loadUserInquiries() {
     }
 }
 
+// 문의사항 관리자 페이지네이션 관련 변수
+let currentInquiryPage = 1;
+const inquiryItemsPerPage = 10;
+
+// 문의사항 목록 렌더링 함수
+function renderAdminInquiries(inquiries, page = 1) {
+    const tbody = document.getElementById('adminInquiriesList');
+    const totalPages = Math.ceil(inquiries.length / inquiryItemsPerPage);
+    const startIndex = (page - 1) * inquiryItemsPerPage;
+    const endIndex = startIndex + inquiryItemsPerPage;
+    const currentPageItems = inquiries.slice(startIndex, endIndex);
+    
+    // 현재 페이지 저장
+    currentInquiryPage = page;
+    
+    if (!tbody) return;
+    
+    if (currentPageItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                    등록된 문의사항이 없습니다.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = currentPageItems.map((inquiry, index) => `
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap">${startIndex + index + 1}</td> <!-- 순차적인 번호 사용 -->
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${getCategoryClass(inquiry.category)}">
+                    ${getCategoryText(inquiry.category)}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${inquiry.is_private ? 
+                    '<span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>' : 
+                    ''}
+                <a href="javascript:viewInquiry(${inquiry.id})" class="text-indigo-600 hover:text-indigo-900">
+                    ${inquiry.title}
+                </a>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">${inquiry.author || '익명'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${formatDate(inquiry.created_at)}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${inquiry.has_answer ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                    ${inquiry.has_answer ? '답변완료' : '답변대기'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <button onclick="viewInquiry(${inquiry.id})" 
+                    class="text-indigo-600 hover:text-indigo-900 mr-3">
+                    ${inquiry.has_answer ? '상세보기' : '답변하기'}
+                </button>
+                <button onclick="deleteAdminInquiry(${inquiry.id})" 
+                    class="text-red-600 hover:text-red-900">
+                    삭제
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // 페이지네이션 렌더링
+    renderPagination(page, totalPages);
+}
+
+// 페이지네이션 렌더링 함수
+function renderPagination(currentPage, totalPages) {
+    const paginationContainer = document.querySelector('#inquiryManagementSection .mt-6.flex.justify-center nav');
+    if (!paginationContainer) return;
+    
+    let paginationHtml = `
+        <button onclick="changePage(${Math.max(1, currentPage - 1)})" 
+            class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+            <i class="fas fa-chevron-left text-gray-500"></i>
+        </button>
+    `;
+    
+    // 표시할 페이지 범위 결정 (최대 5개)
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `
+            <button onclick="changePage(${i})" 
+                class="w-10 h-10 flex items-center justify-center rounded-lg ${i === currentPage ? 'bg-primary text-white' : 'border border-gray-300 hover:bg-gray-50'}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    paginationHtml += `
+        <button onclick="changePage(${Math.min(totalPages, currentPage + 1)})" 
+            class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">
+            <i class="fas fa-chevron-right text-gray-500"></i>
+        </button>
+    `;
+    
+    paginationContainer.innerHTML = paginationHtml;
+}
+
+// 페이지 변경 함수
+function changePage(page) {
+    // 현재 표시된 문의사항 데이터와 함께 다시 렌더링
+    renderAdminInquiries(adminInquiries, page);
+}
+
 // 관리자 대시보드: 모든 문의사항 목록 로드
 async function loadAdminInquiries() {
     try {
@@ -8441,63 +8551,20 @@ async function loadAdminInquiries() {
         
         if (response.success) {
             adminInquiries = response.data || [];
-            
-            const tbody = document.getElementById('adminInquiriesList');
-            if (!tbody) return;
-            
-            if (adminInquiries.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="px-6 py-10 text-center text-gray-500">
-                            등록된 문의사항이 없습니다.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = adminInquiries.map(inquiry => `
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">${inquiry.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${getCategoryClass(inquiry.category)}">
-                            ${getCategoryText(inquiry.category)}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        ${inquiry.is_private ? 
-                            '<span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>' : 
-                            ''}
-                        <a href="javascript:viewInquiry(${inquiry.id})" class="text-indigo-600 hover:text-indigo-900">
-                            ${inquiry.title}
-                        </a>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">${inquiry.author || '익명'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(inquiry.created_at)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${inquiry.has_answer ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                            ${inquiry.has_answer ? '답변완료' : '답변대기'}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button onclick="viewInquiry(${inquiry.id})" 
-                            class="text-indigo-600 hover:text-indigo-900 mr-3">
-                            ${inquiry.has_answer ? '상세보기' : '답변하기'}
-                        </button>
-                        <button onclick="deleteAdminInquiry(${inquiry.id})" 
-                            class="text-red-600 hover:text-red-900">
-                            삭제
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            // 첫 페이지부터 렌더링
+            renderAdminInquiries(adminInquiries, 1);
         } else {
             showAlert('문의사항을 불러오는데 실패했습니다.', 'error');
+            document.getElementById('adminInquiriesList').innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                        문의사항을 불러오는데 실패했습니다.
+                    </td>
+                </tr>
+            `;
         }
     } catch (error) {
-        console.error('Admin inquiries loading error:', error);
+        console.error('Admin inquiries fetch error:', error);
         document.getElementById('adminInquiriesList').innerHTML = `
             <tr>
                 <td colspan="7" class="px-6 py-10 text-center text-gray-500">
