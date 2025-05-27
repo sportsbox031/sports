@@ -6491,37 +6491,50 @@ newNextButton.addEventListener('click', async function() {
 renderCalendar(currentDate);
 }
 
-function initializeAdminCalendar() {
+async function initializeAdminCalendar() {
     const adminCalendar = document.getElementById('adminCalendar');
     const adminCurrentMonthElement = document.getElementById('adminCurrentMonth');
-    const adminPrevMonth = document.getElementById('adminPrevMonth');
-    const adminNextMonth = document.getElementById('adminNextMonth');
-
-    // 필요한 DOM 요소들이 모두 존재하는지 확인
-    if (!adminCalendar || !adminCurrentMonthElement || !adminPrevMonth || !adminNextMonth) {
-        console.warn('관리자 캘린더 초기화에 필요한 DOM 요소를 찾을 수 없습니다.');
-        return;
-    }
+    const prevButton = document.getElementById('adminPrevMonth');
+    const nextButton = document.getElementById('adminNextMonth');
 
     // 현재 날짜 상태 초기화
     if (!adminCurrentDate) {
         adminCurrentDate = new Date();
     }
 
-    adminPrevMonth.addEventListener('click', function() {
+    // 기존 이벤트 핸들러 제거 후 새로 추가
+    const newPrevButton = prevButton.cloneNode(true);
+    const newNextButton = nextButton.cloneNode(true);
+    prevButton.parentNode.replaceChild(newPrevButton, prevButton);
+    nextButton.parentNode.replaceChild(newNextButton, nextButton);
+
+    // 이전 달 버튼 이벤트 핸들러에 updateCalendarStatus 추가
+    newPrevButton.addEventListener('click', async function() {
         adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
                                   adminCurrentDate.getMonth() - 1, 1);
+        // 상태 업데이트 후 달력 렌더링
+        await updateCalendarStatus();  // 이 부분 추가
         renderAdminCalendar(adminCurrentDate);
     });
 
-    adminNextMonth.addEventListener('click', function() {
+    // 다음 달 버튼 이벤트 핸들러에 updateCalendarStatus 추가
+    newNextButton.addEventListener('click', async function() {
         adminCurrentDate = new Date(adminCurrentDate.getFullYear(), 
                                   adminCurrentDate.getMonth() + 1, 1);
+        // 상태 업데이트 후 달력 렌더링
+        await updateCalendarStatus();  // 이 부분 추가
         renderAdminCalendar(adminCurrentDate);
     });
 
-    // 초기 달력 렌더링
+    // 중요: 초기 렌더링 전에 예약 상태 업데이트
+    await updateCalendarStatus();  // 이 부분 추가
     renderAdminCalendar(adminCurrentDate);
+    
+    // 디버그 로그
+    console.log('관리자 달력 초기화 완료:', {
+        달력요소: adminCalendar,
+        날짜: adminCurrentDate
+    });
 }
 
 // 일반 사용자용 날짜 클릭 핸들러
