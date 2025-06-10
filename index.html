@@ -2821,30 +2821,54 @@ async function loadHomeNotices() {
     try {
         console.log('홈화면 공지사항 로드 시작');
         
-        const response = await fetch(`${API_BASE_URL}/api/public/notices`);
-        console.log('API 응답 상태:', response.status);
+        // 요청 URL 로깅
+        const apiUrl = `${API_BASE_URL}/api/public/notices`;
+        console.log('요청 URL:', apiUrl);
         
-        if (!response.ok) {
-            console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
-            document.getElementById('homeNoticesList').innerHTML = 
-                '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
-            return;
+        const response = await fetch(apiUrl);
+        console.log('API 응답 상태:', response.status);
+        console.log('API 응답 헤더:', response.headers);
+        
+        // 응답 텍스트 먼저 확인
+        const responseText = await response.text();
+        console.log('응답 원본 텍스트:', responseText.substring(0, 500));
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log('파싱된 응답 데이터:', data);
+        } catch (parseError) {
+            console.error('JSON 파싱 오류:', parseError);
+            throw new Error('서버 응답을 파싱할 수 없습니다: ' + responseText.substring(0, 100));
         }
         
-        const data = await response.json();
-        console.log('받은 데이터:', data);
         const noticesList = document.getElementById('homeNoticesList');
+        if (!noticesList) {
+            console.error('homeNoticesList 요소를 찾을 수 없습니다');
+            return;
+        }
 
-        if (data.success && data.data && data.data.length > 0) {
-            console.log('원본 공지사항 데이터:', data.data);
+        if (!response.ok) {
+            console.warn('HTTP 오류:', response.status, data);
+            noticesList.innerHTML = `
+                <p class="text-center text-gray-500">
+                    공지사항을 불러올 수 없습니다 (${response.status})
+                    <br><small>${data.message || '서버 오류'}</small>
+                </p>`;
+            return;
+        }
+
+        if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
+            console.log('공지사항 데이터 처리 시작:', data.data.length, '개');
+            
             // 공통 정렬 함수 사용
             const sortedNotices = sortNoticesByImportanceAndDate(data.data);
-            console.log('정렬된 공지사항 데이터:', sortedNotices);
+            console.log('정렬 완료:', sortedNotices.length, '개');
             
-            // 공지사항 데이터를 전역 객체에 저장
+            // 전역 변수에 저장
             window.noticesData = sortedNotices;
             
-            // HTML 생성 - 새로운 디자인 적용
+            // HTML 생성
             noticesList.innerHTML = `
                 <div class="notice-tabs mb-4 border-b">
                     <div class="flex">
@@ -2853,14 +2877,12 @@ async function loadHomeNotices() {
                 </div>
                 <div class="notice-list space-y-6 overflow-y-auto max-h-[500px] pr-2">
                     ${sortedNotices.map((notice, index) => {
-                        // 날짜 형식 변환
                         const date = new Date(notice.created_at);
                         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                         
-                        // 내용 요약 (100자 제한)
-                        const contentSummary = notice.content.length > 100 
+                        const contentSummary = notice.content && notice.content.length > 100 
                             ? notice.content.substring(0, 100) + '...' 
-                            : notice.content;
+                            : (notice.content || '내용 없음');
                         
                         return `
                             <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
@@ -2871,7 +2893,7 @@ async function loadHomeNotices() {
                                                 ${notice.is_important ? 
                                                     '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
                                                     ''}
-                                                ${notice.title}
+                                                ${notice.title || '제목 없음'}
                                             </span>
                                             <span class="text-sm text-gray-500 font-normal">${formattedDate}</span>
                                         </h4>
@@ -2884,22 +2906,42 @@ async function loadHomeNotices() {
                 </div>
             `;
             
-            // 이벤트 리스너 추가는 독립 시스템에 위임
-            setTimeout(addDirectNoticeListeners, 100);
+            // 이벤트 리스너 추가
+            setTimeout(() => {
+                if (typeof addDirectNoticeListeners === 'function') {
+                    addDirectNoticeListeners();
+                    console.log('공지사항 이벤트 리스너 추가 완료');
+                }
+            }, 100);
             
         } else {
-            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
+            console.log('공지사항 데이터 없음 또는 빈 배열');
+            noticesList.innerHTML = `
+                <p class="text-center text-gray-500">
+                    등록된 공지사항이 없습니다.
+                    <br><small>${data.message || ''}</small>
+                </p>`;
+            
+            // 빈 배열로라도 전역 변수 설정
+            window.noticesData = [];
         }
         
         checkAdminStatus();
         console.log('홈화면 공지사항 로드 완료');
+        
     } catch (error) {
-        console.error('Home notices loading error:', error);
+        console.error('공지사항 로드 최종 오류:', error);
         const noticesList = document.getElementById('homeNoticesList');
         if (noticesList) {
-            noticesList.innerHTML = 
-                '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+            noticesList.innerHTML = `
+                <p class="text-center text-gray-500">
+                    공지사항을 불러오는 중 오류가 발생했습니다.
+                    <br><small>${error.message}</small>
+                </p>`;
         }
+        
+        // 오류 상황에서도 빈 배열로 설정
+        window.noticesData = [];
     }
 }
 
