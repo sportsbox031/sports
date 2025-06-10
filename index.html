@@ -2821,8 +2821,8 @@ async function loadHomeNotices() {
     try {
         console.log('홈화면 공지사항 로드 시작');
         
-        // 공개 API 경로 사용
         const response = await fetch(`${API_BASE_URL}/api/public/notices`);
+        console.log('API 응답 상태:', response.status);
         
         if (!response.ok) {
             console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
@@ -2832,6 +2832,7 @@ async function loadHomeNotices() {
         }
         
         const data = await response.json();
+        console.log('받은 데이터:', data);
         const noticesList = document.getElementById('homeNoticesList');
 
         if (data.success && data.data && data.data.length > 0) {
@@ -2894,8 +2895,11 @@ async function loadHomeNotices() {
         console.log('홈화면 공지사항 로드 완료');
     } catch (error) {
         console.error('Home notices loading error:', error);
-        document.getElementById('homeNoticesList').innerHTML = 
-            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        const noticesList = document.getElementById('homeNoticesList');
+        if (noticesList) {
+            noticesList.innerHTML = 
+                '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
+        }
     }
 }
 
