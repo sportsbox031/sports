@@ -532,7 +532,7 @@
 
 <!-- 공지사항 작성 모달 -->
 <div id="noticeWriteModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl m-auto max-h-[90vh] overflow-y-auto">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">공지사항 작성</h2>
             <button onclick="closeNoticeWriteModal()" class="text-gray-500 hover:text-gray-700">
@@ -545,57 +545,11 @@
                 <input type="text" id="noticeTitle" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
-            
-            <!-- 텍스트 형식 선택 추가 -->
             <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">텍스트 형식</label>
-                <div class="flex items-center space-x-4 mb-2">
-                    <label class="flex items-center">
-                        <input type="radio" name="contentType" value="plain" checked class="mr-2">
-                        <span>일반 텍스트</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="contentType" value="markdown" class="mr-2">
-                        <span>마크다운</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="contentType" value="html" class="mr-2">
-                        <span>HTML</span>
-                    </label>
-                    <button type="button" onclick="showFormatHelp()" class="text-blue-500 hover:text-blue-700 text-sm">
-                        <i class="fas fa-question-circle"></i> 도움말
-                    </button>
-                </div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
+                <textarea id="noticeContent" required rows="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
             </div>
-            
-            <!-- 탭 형식의 편집기 -->
-            <div>
-                <div class="border border-gray-300 rounded-lg overflow-hidden">
-                    <!-- 탭 헤더 -->
-                    <div class="bg-gray-50 border-b border-gray-300 flex">
-                        <button type="button" id="writeTab" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-r border-gray-300 hover:bg-gray-50 focus:outline-none">
-                            작성
-                        </button>
-                        <button type="button" id="previewTab" class="px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none">
-                            미리보기
-                        </button>
-                    </div>
-                    
-                    <!-- 작성 영역 -->
-                    <div id="writeArea" class="p-4">
-                        <textarea id="noticeContent" required rows="12" placeholder="내용을 입력하세요..."
-                            class="w-full px-3 py-2 border-0 focus:outline-none resize-none"></textarea>
-                    </div>
-                    
-                    <!-- 미리보기 영역 -->
-                    <div id="previewArea" class="p-4 min-h-[300px] hidden bg-gray-50">
-                        <div id="previewContent" class="prose max-w-none">
-                            미리보기 내용이 여기에 표시됩니다...
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- 첨부파일 필드 수정 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
@@ -630,54 +584,6 @@
                 등록하기
             </button>
         </form>
-    </div>
-</div>
-
-<!-- 형식 도움말 모달 -->
-<div id="formatHelpModal" class="modal">
-    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold">텍스트 형식 도움말</h3>
-            <button onclick="closeFormatHelp()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="space-y-6">
-            <div>
-                <h4 class="font-bold text-lg mb-2">📝 일반 텍스트</h4>
-                <p class="text-gray-600 mb-2">기본 텍스트 형식입니다. 링크는 자동으로 하이퍼링크로 변환됩니다.</p>
-                <div class="bg-gray-100 p-3 rounded text-sm">
-                    <strong>예시:</strong><br>
-                    자세한 내용은 https://example.com 에서 확인하세요.
-                </div>
-            </div>
-            
-            <div>
-                <h4 class="font-bold text-lg mb-2">📋 마크다운</h4>
-                <p class="text-gray-600 mb-2">마크다운 문법을 사용할 수 있습니다.</p>
-                <div class="bg-gray-100 p-3 rounded text-sm space-y-2">
-                    <div><strong># 제목 1</strong> → <span class="text-xl font-bold">제목 1</span></div>
-                    <div><strong>## 제목 2</strong> → <span class="text-lg font-bold">제목 2</span></div>
-                    <div><strong>**굵은 글씨**</strong> → <strong>굵은 글씨</strong></div>
-                    <div><strong>*기울임*</strong> → <em>기울임</em></div>
-                    <div><strong>[링크 텍스트](URL)</strong> → <a href="#" class="text-blue-500">링크 텍스트</a></div>
-                    <div><strong>- 목록 항목</strong> → • 목록 항목</div>
-                    <div><strong>`코드`</strong> → <code class="bg-gray-200 px-1 rounded">코드</code></div>
-                </div>
-            </div>
-            
-            <div>
-                <h4 class="font-bold text-lg mb-2">🏷️ HTML</h4>
-                <p class="text-gray-600 mb-2">HTML 태그를 직접 사용할 수 있습니다.</p>
-                <div class="bg-gray-100 p-3 rounded text-sm space-y-1">
-                    <div><strong>&lt;h1&gt;제목&lt;/h1&gt;</strong></div>
-                    <div><strong>&lt;strong&gt;굵은 글씨&lt;/strong&gt;</strong></div>
-                    <div><strong>&lt;em&gt;기울임&lt;/em&gt;</strong></div>
-                    <div><strong>&lt;a href="URL"&gt;링크&lt;/a&gt;</strong></div>
-                    <div><strong>&lt;ul&gt;&lt;li&gt;목록&lt;/li&gt;&lt;/ul&gt;</strong></div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -1994,133 +1900,6 @@
 
 <!-- JavaScript 코드 시작 -->
 <script>
-
-// 마크다운 라이브러리 로드 (CDN) - script 태그 상단에 추가
-const markdownScript = document.createElement('script');
-markdownScript.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-document.head.appendChild(markdownScript);
-
-// 공지사항 작성 관련 함수들 - DOMContentLoaded 이벤트 전에 추가
-function initializeNoticeEditor() {
-    const writeTab = document.getElementById('writeTab');
-    const previewTab = document.getElementById('previewTab');
-    const writeArea = document.getElementById('writeArea');
-    const previewArea = document.getElementById('previewArea');
-    const noticeContent = document.getElementById('noticeContent');
-    const contentTypeRadios = document.querySelectorAll('input[name="contentType"]');
-    
-    // 탭 전환
-    writeTab.addEventListener('click', () => {
-        writeTab.classList.add('bg-white', 'text-gray-700');
-        writeTab.classList.remove('text-gray-500');
-        previewTab.classList.remove('bg-white', 'text-gray-700');
-        previewTab.classList.add('text-gray-500');
-        writeArea.classList.remove('hidden');
-        previewArea.classList.add('hidden');
-    });
-    
-    previewTab.addEventListener('click', () => {
-        previewTab.classList.add('bg-white', 'text-gray-700');
-        previewTab.classList.remove('text-gray-500');
-        writeTab.classList.remove('bg-white', 'text-gray-700');
-        writeTab.classList.add('text-gray-500');
-        writeArea.classList.add('hidden');
-        previewArea.classList.remove('hidden');
-        updatePreview();
-    });
-    
-    // 실시간 미리보기 업데이트
-    noticeContent.addEventListener('input', () => {
-        if (!previewArea.classList.contains('hidden')) {
-            updatePreview();
-        }
-    });
-    
-    // 형식 변경 시 미리보기 업데이트
-    contentTypeRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (!previewArea.classList.contains('hidden')) {
-                updatePreview();
-            }
-        });
-    });
-}
-
-function updatePreview() {
-    const content = document.getElementById('noticeContent').value;
-    const contentType = document.querySelector('input[name="contentType"]:checked').value;
-    const previewContent = document.getElementById('previewContent');
-    
-    if (!content.trim()) {
-        previewContent.innerHTML = '<p class="text-gray-500">미리보기 내용이 여기에 표시됩니다...</p>';
-        return;
-    }
-    
-    let html = '';
-    
-    switch (contentType) {
-        case 'plain':
-            html = convertPlainTextToHtml(content);
-            break;
-        case 'markdown':
-            if (typeof marked !== 'undefined') {
-                html = marked.parse(content);
-            } else {
-                html = '<p class="text-red-500">마크다운 라이브러리를 로딩 중입니다...</p>';
-            }
-            break;
-        case 'html':
-            html = content;
-            break;
-        default:
-            html = convertPlainTextToHtml(content);
-    }
-    
-    previewContent.innerHTML = html;
-}
-
-function convertPlainTextToHtml(text) {
-    // URL 패턴 정의
-    const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
-    
-    // 텍스트를 HTML로 변환 (줄바꿈 처리)
-    let html = text.replace(/\n/g, '<br>');
-    
-    // URL을 링크로 변환
-    html = html.replace(urlPattern, (match) => {
-        let url = match;
-        if (!url.startsWith('http')) {
-            url = 'https://' + url;
-        }
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
-    });
-    
-    return html;
-}
-
-function renderNoticeContent(content, contentType = 'plain') {
-    switch (contentType) {
-        case 'markdown':
-            if (typeof marked !== 'undefined') {
-                return marked.parse(content);
-            }
-            return convertPlainTextToHtml(content);
-        case 'html':
-            return content;
-        case 'plain':
-        default:
-            return convertPlainTextToHtml(content);
-    }
-}
-
-function showFormatHelp() {
-    openModal('formatHelpModal');
-}
-
-function closeFormatHelp() {
-    closeModal('formatHelpModal');
-}
-
 // 전역 스코프에 함수 정의 및 window 객체에 명시적 할당
 window.addDirectNoticeListeners = function() {
     // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
@@ -2354,15 +2133,9 @@ function setupIndependentNoticeSystem() {
             
             // 모달 내용 설정
             document.getElementById('independentModalTitle').textContent = notice.title;
-        
-        // ⭐ 이 부분 수정 ⭐
-        // 기존: document.getElementById('independentModalContent').textContent = notice.content;
-        // 새로운: content_type에 따라 HTML 렌더링
-        const renderedContent = renderNoticeContent(notice.content, notice.content_type);
-        document.getElementById('independentModalContent').innerHTML = renderedContent; // textContent 대신 innerHTML
-        
-        document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-        document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+            document.getElementById('independentModalContent').textContent = notice.content;
+            document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+            document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
             
             // 첨부파일 섹션 처리
             const attachmentSection = document.getElementById('independentModalAttachment');
@@ -2821,54 +2594,29 @@ async function loadHomeNotices() {
     try {
         console.log('홈화면 공지사항 로드 시작');
         
-        // 요청 URL 로깅
-        const apiUrl = `${API_BASE_URL}/api/public/notices`;
-        console.log('요청 URL:', apiUrl);
+        // 공개 API 경로 사용
+        const response = await fetch(`${API_BASE_URL}/api/public/notices`);
         
-        const response = await fetch(apiUrl);
-        console.log('API 응답 상태:', response.status);
-        console.log('API 응답 헤더:', response.headers);
-        
-        // 응답 텍스트 먼저 확인
-        const responseText = await response.text();
-        console.log('응답 원본 텍스트:', responseText.substring(0, 500));
-        
-        let data;
-        try {
-            data = JSON.parse(responseText);
-            console.log('파싱된 응답 데이터:', data);
-        } catch (parseError) {
-            console.error('JSON 파싱 오류:', parseError);
-            throw new Error('서버 응답을 파싱할 수 없습니다: ' + responseText.substring(0, 100));
-        }
-        
-        const noticesList = document.getElementById('homeNoticesList');
-        if (!noticesList) {
-            console.error('homeNoticesList 요소를 찾을 수 없습니다');
-            return;
-        }
-
         if (!response.ok) {
-            console.warn('HTTP 오류:', response.status, data);
-            noticesList.innerHTML = `
-                <p class="text-center text-gray-500">
-                    공지사항을 불러올 수 없습니다 (${response.status})
-                    <br><small>${data.message || '서버 오류'}</small>
-                </p>`;
+            console.warn('공지사항을 불러오는데 실패했습니다:', response.status);
+            document.getElementById('homeNoticesList').innerHTML = 
+                '<p class="text-center text-gray-500">현재 공지사항을 불러올 수 없습니다.</p>';
             return;
         }
+        
+        const data = await response.json();
+        const noticesList = document.getElementById('homeNoticesList');
 
-        if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
-            console.log('공지사항 데이터 처리 시작:', data.data.length, '개');
-            
+        if (data.success && data.data && data.data.length > 0) {
+            console.log('원본 공지사항 데이터:', data.data);
             // 공통 정렬 함수 사용
             const sortedNotices = sortNoticesByImportanceAndDate(data.data);
-            console.log('정렬 완료:', sortedNotices.length, '개');
+            console.log('정렬된 공지사항 데이터:', sortedNotices);
             
-            // 전역 변수에 저장
+            // 공지사항 데이터를 전역 객체에 저장
             window.noticesData = sortedNotices;
             
-            // HTML 생성
+            // HTML 생성 - 새로운 디자인 적용
             noticesList.innerHTML = `
                 <div class="notice-tabs mb-4 border-b">
                     <div class="flex">
@@ -2877,12 +2625,14 @@ async function loadHomeNotices() {
                 </div>
                 <div class="notice-list space-y-6 overflow-y-auto max-h-[500px] pr-2">
                     ${sortedNotices.map((notice, index) => {
+                        // 날짜 형식 변환
                         const date = new Date(notice.created_at);
                         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                         
-                        const contentSummary = notice.content && notice.content.length > 100 
+                        // 내용 요약 (100자 제한)
+                        const contentSummary = notice.content.length > 100 
                             ? notice.content.substring(0, 100) + '...' 
-                            : (notice.content || '내용 없음');
+                            : notice.content;
                         
                         return `
                             <div class="notice-item border-b pb-6 cursor-pointer" data-notice-id="${index}" data-notice-real-id="${notice.id}">
@@ -2893,7 +2643,7 @@ async function loadHomeNotices() {
                                                 ${notice.is_important ? 
                                                     '<span class="inline-block mr-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">중요</span>' : 
                                                     ''}
-                                                ${notice.title || '제목 없음'}
+                                                ${notice.title}
                                             </span>
                                             <span class="text-sm text-gray-500 font-normal">${formattedDate}</span>
                                         </h4>
@@ -2906,42 +2656,19 @@ async function loadHomeNotices() {
                 </div>
             `;
             
-            // 이벤트 리스너 추가
-            setTimeout(() => {
-                if (typeof addDirectNoticeListeners === 'function') {
-                    addDirectNoticeListeners();
-                    console.log('공지사항 이벤트 리스너 추가 완료');
-                }
-            }, 100);
+            // 이벤트 리스너 추가는 독립 시스템에 위임
+            setTimeout(addDirectNoticeListeners, 100);
             
         } else {
-            console.log('공지사항 데이터 없음 또는 빈 배열');
-            noticesList.innerHTML = `
-                <p class="text-center text-gray-500">
-                    등록된 공지사항이 없습니다.
-                    <br><small>${data.message || ''}</small>
-                </p>`;
-            
-            // 빈 배열로라도 전역 변수 설정
-            window.noticesData = [];
+            noticesList.innerHTML = '<p class="text-center text-gray-500">등록된 공지사항이 없습니다.</p>';
         }
         
         checkAdminStatus();
         console.log('홈화면 공지사항 로드 완료');
-        
     } catch (error) {
-        console.error('공지사항 로드 최종 오류:', error);
-        const noticesList = document.getElementById('homeNoticesList');
-        if (noticesList) {
-            noticesList.innerHTML = `
-                <p class="text-center text-gray-500">
-                    공지사항을 불러오는 중 오류가 발생했습니다.
-                    <br><small>${error.message}</small>
-                </p>`;
-        }
-        
-        // 오류 상황에서도 빈 배열로 설정
-        window.noticesData = [];
+        console.error('Home notices loading error:', error);
+        document.getElementById('homeNoticesList').innerHTML = 
+            '<p class="text-center text-gray-500">공지사항을 불러오는 중 오류가 발생했습니다.</p>';
     }
 }
 
@@ -3043,10 +2770,7 @@ function showNoticeDetail(notice) {
     
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
-    
-    // 내용 렌더링 시 content_type 고려 (수정된 부분)
-    const renderedContent = renderNoticeContent(notice.content, notice.content_type);
-    document.getElementById('noticeDetailContent').innerHTML = renderedContent; // textContent 대신 innerHTML 사용
+    document.getElementById('noticeDetailContent').textContent = notice.content;
     
     const authorElement = document.getElementById('noticeDetailAuthor');
     if (authorElement) {
@@ -3134,7 +2858,7 @@ function closeNoticeDetail() {
 // 공지사항 수정 모달 HTML 추가 (body 끝 부분에 추가)
 const noticeEditModalHTML = `
 <div id="noticeEditModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl m-auto max-h-[90vh] overflow-y-auto">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">공지사항 수정</h2>
             <button onclick="closeNoticeEditModal()" class="text-gray-500 hover:text-gray-700">
@@ -3147,28 +2871,9 @@ const noticeEditModalHTML = `
                 <input type="text" id="editNoticeTitle" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
-            
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">텍스트 형식</label>
-                <div class="flex items-center space-x-4 mb-2">
-                    <label class="flex items-center">
-                        <input type="radio" name="editContentType" value="plain" class="mr-2">
-                        <span>일반 텍스트</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="editContentType" value="markdown" class="mr-2">
-                        <span>마크다운</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="editContentType" value="html" class="mr-2">
-                        <span>HTML</span>
-                    </label>
-                </div>
-            </div>
-            
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="editNoticeContent" required rows="10"
+                <textarea id="editNoticeContent" required rows="6"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
             </div>
             <div>
@@ -3220,13 +2925,6 @@ function editNotice() {
     document.getElementById('editNoticeRegion').value = notice.region || 'all';
     document.getElementById('editNoticeImportant').checked = notice.is_important === 1;
     
-    // ⭐ content_type 설정 추가 ⭐
-    const contentTypeRadios = document.querySelectorAll('input[name="editContentType"]');
-    const noticeContentType = notice.content_type || 'plain';
-    contentTypeRadios.forEach(radio => {
-        radio.checked = radio.value === noticeContentType;
-    });
-
     // 공지사항 상세 모달 닫기
     document.getElementById('independentNoticeModal').style.display = 'none';
     
@@ -3336,39 +3034,16 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
         
         showLoading();
         
-        const formData = new FormData();
-        formData.append('title', document.getElementById('noticeTitle').value);
-        formData.append('content', document.getElementById('noticeContent').value);
-        formData.append('content_type', document.querySelector('input[name="contentType"]:checked').value); // 새로 추가
-        formData.append('region', document.getElementById('noticeRegion').value);
-        formData.append('is_important', document.getElementById('noticeImportant').checked);
+        const noticeData = {
+            title: document.getElementById('noticeTitle').value,
+            content: document.getElementById('noticeContent').value,
+            region: document.getElementById('noticeRegion').value,
+            is_important: document.getElementById('noticeImportant').checked,
+            attachment: attachment
+        };
         
-        if (attachment) {
-            formData.append('attachment', attachment);
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-            },
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showAlert('공지사항이 등록되었습니다.', 'success');
-            closeNoticeWriteModal();
-            
-            // 공지사항 목록 새로고침
-            await loadHomeNotices();
-            if (document.getElementById('noticesListSection')) {
-                await loadUserNotices();
-            }
-        } else {
-            throw new Error(data.message || '공지사항 등록에 실패했습니다.');
-        }
+        await createNotice(noticeData);
+        closeNoticeWriteModal();
         
         // 알림 숨기기
         hideAlert();
@@ -3518,13 +3193,6 @@ document.addEventListener('visibilitychange', function() {
     }
 });    
 
-// 공지사항 작성 모달이 열릴 때 편집기 초기화
-    const originalShowNoticeWriteModal = window.showNoticeWriteModal;
-    window.showNoticeWriteModal = function() {
-        originalShowNoticeWriteModal();
-        setTimeout(initializeNoticeEditor, 100);
-    };
-
     document.getElementById('inquiryAnswerForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -3658,20 +3326,24 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
     e.preventDefault();
     
     try {
+        // ID 확인
         if (!window.currentNoticeId) {
             throw new Error('공지사항 ID를 찾을 수 없습니다.');
         }
         
+        console.log('수정 제출 - 공지사항 ID:', window.currentNoticeId);
+        
         showLoading();
         
-        // ⭐ content_type 추가 ⭐
+        // 수정할 데이터 준비
         const formData = {
             title: document.getElementById('editNoticeTitle').value,
             content: document.getElementById('editNoticeContent').value,
-            content_type: document.querySelector('input[name="editContentType"]:checked').value, // 추가
             region: document.getElementById('editNoticeRegion').value,
             is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0
         };
+        
+        console.log('수정 데이터:', formData); // 디버깅 로그 추가
         
         // API 요청
         const response = await fetch(`${API_BASE_URL}/api/admin/notices/${window.currentNoticeId}`, {
@@ -3694,12 +3366,49 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
             showAlert('공지사항이 수정되었습니다.', 'success');
             closeNoticeEditModal();
             
-            // 공지사항 목록 새로고침
-            await loadHomeNotices();
-            if (document.getElementById('noticesListSection')) {
-                await loadUserNotices();
+            // 공지사항 데이터 직접 새로 가져오기
+            try {
+                console.log('공지사항 데이터 새로고침 시작');
+                
+                // API에서 최신 데이터 가져오기
+                const noticesResponse = await apiRequest('/api/notices');
+                if (noticesResponse.success && noticesResponse.data) {
+                    console.log(`${noticesResponse.data.length}개 공지사항 데이터 받음`);
+                    
+                    // 새로 가져온 데이터 정렬 및 저장
+                    window.noticesData = sortNoticesByImportanceAndDate(noticesResponse.data);
+                    console.log('공지사항 데이터 새로 가져와서 정렬 완료');
+                    
+                    // 홈화면 공지사항 목록 다시 렌더링
+                    if (document.getElementById('homeNoticesList')) {
+                        console.log('홈화면 공지사항 목록 렌더링 시작');
+                        renderNoticesList(window.noticesData, 'homeNoticesList');
+                    }
+                    
+                    // 대시보드 공지사항 목록 다시 렌더링
+                    if (document.getElementById('noticesListSection')) {
+                        console.log('대시보드 공지사항 목록 렌더링 시작');
+                        // 함수가 정의되어 있는지 확인 후 호출
+                        if (typeof renderUserNoticesList === 'function') {
+                            renderUserNoticesList(window.noticesData, document.getElementById('noticesListSection'));
+                        } else {
+                            console.warn('renderUserNoticesList 함수가 정의되지 않았습니다');
+                            // 대체 방법으로 일반 renderNoticesList 함수 사용
+                            renderNoticesList(window.noticesData, 'noticesListSection');
+                        }
+                    }
+                }
+            } catch (fetchError) {
+                console.error('공지사항 데이터 새로고침 오류:', fetchError);
+                // 기존 방식으로 폴백
+                console.log('기존 방식으로 공지사항 새로고침 시도');
+                await loadHomeNotices();
+                if (document.getElementById('noticesListSection')) {
+                    await loadNotices();
+                }
             }
             
+            // 중요: 이벤트 리스너 다시 추가 (지연 시간 증가)
             setTimeout(addDirectNoticeListeners, 500);
         } else {
             throw new Error(data.message || '공지사항 수정에 실패했습니다.');
