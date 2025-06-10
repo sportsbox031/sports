@@ -2354,9 +2354,15 @@ function setupIndependentNoticeSystem() {
             
             // 모달 내용 설정
             document.getElementById('independentModalTitle').textContent = notice.title;
-            document.getElementById('independentModalContent').textContent = notice.content;
-            document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
-            document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
+        
+        // ⭐ 이 부분 수정 ⭐
+        // 기존: document.getElementById('independentModalContent').textContent = notice.content;
+        // 새로운: content_type에 따라 HTML 렌더링
+        const renderedContent = renderNoticeContent(notice.content, notice.content_type);
+        document.getElementById('independentModalContent').innerHTML = renderedContent; // textContent 대신 innerHTML
+        
+        document.getElementById('independentModalAuthor').textContent = `작성자: ${notice.author || '관리자'}`;
+        document.getElementById('independentModalDate').textContent = new Date(notice.created_at).toLocaleDateString();
             
             // 첨부파일 섹션 처리
             const attachmentSection = document.getElementById('independentModalAttachment');
@@ -3082,7 +3088,7 @@ function closeNoticeDetail() {
 // 공지사항 수정 모달 HTML 추가 (body 끝 부분에 추가)
 const noticeEditModalHTML = `
 <div id="noticeEditModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl m-auto max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">공지사항 수정</h2>
             <button onclick="closeNoticeEditModal()" class="text-gray-500 hover:text-gray-700">
@@ -3095,9 +3101,28 @@ const noticeEditModalHTML = `
                 <input type="text" id="editNoticeTitle" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">텍스트 형식</label>
+                <div class="flex items-center space-x-4 mb-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="editContentType" value="plain" class="mr-2">
+                        <span>일반 텍스트</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="editContentType" value="markdown" class="mr-2">
+                        <span>마크다운</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="editContentType" value="html" class="mr-2">
+                        <span>HTML</span>
+                    </label>
+                </div>
+            </div>
+            
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="editNoticeContent" required rows="6"
+                <textarea id="editNoticeContent" required rows="10"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
             </div>
             <div>
@@ -3149,6 +3174,13 @@ function editNotice() {
     document.getElementById('editNoticeRegion').value = notice.region || 'all';
     document.getElementById('editNoticeImportant').checked = notice.is_important === 1;
     
+    // ⭐ content_type 설정 추가 ⭐
+    const contentTypeRadios = document.querySelectorAll('input[name="editContentType"]');
+    const noticeContentType = notice.content_type || 'plain';
+    contentTypeRadios.forEach(radio => {
+        radio.checked = radio.value === noticeContentType;
+    });
+
     // 공지사항 상세 모달 닫기
     document.getElementById('independentNoticeModal').style.display = 'none';
     
@@ -3580,24 +3612,20 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
     e.preventDefault();
     
     try {
-        // ID 확인
         if (!window.currentNoticeId) {
             throw new Error('공지사항 ID를 찾을 수 없습니다.');
         }
         
-        console.log('수정 제출 - 공지사항 ID:', window.currentNoticeId);
-        
         showLoading();
         
-        // 수정할 데이터 준비
+        // ⭐ content_type 추가 ⭐
         const formData = {
             title: document.getElementById('editNoticeTitle').value,
             content: document.getElementById('editNoticeContent').value,
+            content_type: document.querySelector('input[name="editContentType"]:checked').value, // 추가
             region: document.getElementById('editNoticeRegion').value,
             is_important: document.getElementById('editNoticeImportant').checked ? 1 : 0
         };
-        
-        console.log('수정 데이터:', formData); // 디버깅 로그 추가
         
         // API 요청
         const response = await fetch(`${API_BASE_URL}/api/admin/notices/${window.currentNoticeId}`, {
@@ -3620,49 +3648,12 @@ document.getElementById('noticeEditForm').addEventListener('submit', async funct
             showAlert('공지사항이 수정되었습니다.', 'success');
             closeNoticeEditModal();
             
-            // 공지사항 데이터 직접 새로 가져오기
-            try {
-                console.log('공지사항 데이터 새로고침 시작');
-                
-                // API에서 최신 데이터 가져오기
-                const noticesResponse = await apiRequest('/api/notices');
-                if (noticesResponse.success && noticesResponse.data) {
-                    console.log(`${noticesResponse.data.length}개 공지사항 데이터 받음`);
-                    
-                    // 새로 가져온 데이터 정렬 및 저장
-                    window.noticesData = sortNoticesByImportanceAndDate(noticesResponse.data);
-                    console.log('공지사항 데이터 새로 가져와서 정렬 완료');
-                    
-                    // 홈화면 공지사항 목록 다시 렌더링
-                    if (document.getElementById('homeNoticesList')) {
-                        console.log('홈화면 공지사항 목록 렌더링 시작');
-                        renderNoticesList(window.noticesData, 'homeNoticesList');
-                    }
-                    
-                    // 대시보드 공지사항 목록 다시 렌더링
-                    if (document.getElementById('noticesListSection')) {
-                        console.log('대시보드 공지사항 목록 렌더링 시작');
-                        // 함수가 정의되어 있는지 확인 후 호출
-                        if (typeof renderUserNoticesList === 'function') {
-                            renderUserNoticesList(window.noticesData, document.getElementById('noticesListSection'));
-                        } else {
-                            console.warn('renderUserNoticesList 함수가 정의되지 않았습니다');
-                            // 대체 방법으로 일반 renderNoticesList 함수 사용
-                            renderNoticesList(window.noticesData, 'noticesListSection');
-                        }
-                    }
-                }
-            } catch (fetchError) {
-                console.error('공지사항 데이터 새로고침 오류:', fetchError);
-                // 기존 방식으로 폴백
-                console.log('기존 방식으로 공지사항 새로고침 시도');
-                await loadHomeNotices();
-                if (document.getElementById('noticesListSection')) {
-                    await loadNotices();
-                }
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+            if (document.getElementById('noticesListSection')) {
+                await loadUserNotices();
             }
             
-            // 중요: 이벤트 리스너 다시 추가 (지연 시간 증가)
             setTimeout(addDirectNoticeListeners, 500);
         } else {
             throw new Error(data.message || '공지사항 수정에 실패했습니다.');
