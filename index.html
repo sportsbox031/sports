@@ -532,7 +532,7 @@
 
 <!-- 공지사항 작성 모달 -->
 <div id="noticeWriteModal" class="modal">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl m-auto">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl m-auto max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">공지사항 작성</h2>
             <button onclick="closeNoticeWriteModal()" class="text-gray-500 hover:text-gray-700">
@@ -545,11 +545,57 @@
                 <input type="text" id="noticeTitle" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
+            
+            <!-- 텍스트 형식 선택 추가 -->
             <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">내용</label>
-                <textarea id="noticeContent" required rows="6"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                <label class="block text-gray-700 text-sm font-bold mb-2">텍스트 형식</label>
+                <div class="flex items-center space-x-4 mb-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="contentType" value="plain" checked class="mr-2">
+                        <span>일반 텍스트</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="contentType" value="markdown" class="mr-2">
+                        <span>마크다운</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="contentType" value="html" class="mr-2">
+                        <span>HTML</span>
+                    </label>
+                    <button type="button" onclick="showFormatHelp()" class="text-blue-500 hover:text-blue-700 text-sm">
+                        <i class="fas fa-question-circle"></i> 도움말
+                    </button>
+                </div>
             </div>
+            
+            <!-- 탭 형식의 편집기 -->
+            <div>
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <!-- 탭 헤더 -->
+                    <div class="bg-gray-50 border-b border-gray-300 flex">
+                        <button type="button" id="writeTab" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-r border-gray-300 hover:bg-gray-50 focus:outline-none">
+                            작성
+                        </button>
+                        <button type="button" id="previewTab" class="px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none">
+                            미리보기
+                        </button>
+                    </div>
+                    
+                    <!-- 작성 영역 -->
+                    <div id="writeArea" class="p-4">
+                        <textarea id="noticeContent" required rows="12" placeholder="내용을 입력하세요..."
+                            class="w-full px-3 py-2 border-0 focus:outline-none resize-none"></textarea>
+                    </div>
+                    
+                    <!-- 미리보기 영역 -->
+                    <div id="previewArea" class="p-4 min-h-[300px] hidden bg-gray-50">
+                        <div id="previewContent" class="prose max-w-none">
+                            미리보기 내용이 여기에 표시됩니다...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 첨부파일 필드 수정 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">첨부파일</label>
@@ -584,6 +630,54 @@
                 등록하기
             </button>
         </form>
+    </div>
+</div>
+
+<!-- 형식 도움말 모달 -->
+<div id="formatHelpModal" class="modal">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl m-auto max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">텍스트 형식 도움말</h3>
+            <button onclick="closeFormatHelp()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <div>
+                <h4 class="font-bold text-lg mb-2">📝 일반 텍스트</h4>
+                <p class="text-gray-600 mb-2">기본 텍스트 형식입니다. 링크는 자동으로 하이퍼링크로 변환됩니다.</p>
+                <div class="bg-gray-100 p-3 rounded text-sm">
+                    <strong>예시:</strong><br>
+                    자세한 내용은 https://example.com 에서 확인하세요.
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-bold text-lg mb-2">📋 마크다운</h4>
+                <p class="text-gray-600 mb-2">마크다운 문법을 사용할 수 있습니다.</p>
+                <div class="bg-gray-100 p-3 rounded text-sm space-y-2">
+                    <div><strong># 제목 1</strong> → <span class="text-xl font-bold">제목 1</span></div>
+                    <div><strong>## 제목 2</strong> → <span class="text-lg font-bold">제목 2</span></div>
+                    <div><strong>**굵은 글씨**</strong> → <strong>굵은 글씨</strong></div>
+                    <div><strong>*기울임*</strong> → <em>기울임</em></div>
+                    <div><strong>[링크 텍스트](URL)</strong> → <a href="#" class="text-blue-500">링크 텍스트</a></div>
+                    <div><strong>- 목록 항목</strong> → • 목록 항목</div>
+                    <div><strong>`코드`</strong> → <code class="bg-gray-200 px-1 rounded">코드</code></div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-bold text-lg mb-2">🏷️ HTML</h4>
+                <p class="text-gray-600 mb-2">HTML 태그를 직접 사용할 수 있습니다.</p>
+                <div class="bg-gray-100 p-3 rounded text-sm space-y-1">
+                    <div><strong>&lt;h1&gt;제목&lt;/h1&gt;</strong></div>
+                    <div><strong>&lt;strong&gt;굵은 글씨&lt;/strong&gt;</strong></div>
+                    <div><strong>&lt;em&gt;기울임&lt;/em&gt;</strong></div>
+                    <div><strong>&lt;a href="URL"&gt;링크&lt;/a&gt;</strong></div>
+                    <div><strong>&lt;ul&gt;&lt;li&gt;목록&lt;/li&gt;&lt;/ul&gt;</strong></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1900,6 +1994,133 @@
 
 <!-- JavaScript 코드 시작 -->
 <script>
+
+// 마크다운 라이브러리 로드 (CDN) - script 태그 상단에 추가
+const markdownScript = document.createElement('script');
+markdownScript.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+document.head.appendChild(markdownScript);
+
+// 공지사항 작성 관련 함수들 - DOMContentLoaded 이벤트 전에 추가
+function initializeNoticeEditor() {
+    const writeTab = document.getElementById('writeTab');
+    const previewTab = document.getElementById('previewTab');
+    const writeArea = document.getElementById('writeArea');
+    const previewArea = document.getElementById('previewArea');
+    const noticeContent = document.getElementById('noticeContent');
+    const contentTypeRadios = document.querySelectorAll('input[name="contentType"]');
+    
+    // 탭 전환
+    writeTab.addEventListener('click', () => {
+        writeTab.classList.add('bg-white', 'text-gray-700');
+        writeTab.classList.remove('text-gray-500');
+        previewTab.classList.remove('bg-white', 'text-gray-700');
+        previewTab.classList.add('text-gray-500');
+        writeArea.classList.remove('hidden');
+        previewArea.classList.add('hidden');
+    });
+    
+    previewTab.addEventListener('click', () => {
+        previewTab.classList.add('bg-white', 'text-gray-700');
+        previewTab.classList.remove('text-gray-500');
+        writeTab.classList.remove('bg-white', 'text-gray-700');
+        writeTab.classList.add('text-gray-500');
+        writeArea.classList.add('hidden');
+        previewArea.classList.remove('hidden');
+        updatePreview();
+    });
+    
+    // 실시간 미리보기 업데이트
+    noticeContent.addEventListener('input', () => {
+        if (!previewArea.classList.contains('hidden')) {
+            updatePreview();
+        }
+    });
+    
+    // 형식 변경 시 미리보기 업데이트
+    contentTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (!previewArea.classList.contains('hidden')) {
+                updatePreview();
+            }
+        });
+    });
+}
+
+function updatePreview() {
+    const content = document.getElementById('noticeContent').value;
+    const contentType = document.querySelector('input[name="contentType"]:checked').value;
+    const previewContent = document.getElementById('previewContent');
+    
+    if (!content.trim()) {
+        previewContent.innerHTML = '<p class="text-gray-500">미리보기 내용이 여기에 표시됩니다...</p>';
+        return;
+    }
+    
+    let html = '';
+    
+    switch (contentType) {
+        case 'plain':
+            html = convertPlainTextToHtml(content);
+            break;
+        case 'markdown':
+            if (typeof marked !== 'undefined') {
+                html = marked.parse(content);
+            } else {
+                html = '<p class="text-red-500">마크다운 라이브러리를 로딩 중입니다...</p>';
+            }
+            break;
+        case 'html':
+            html = content;
+            break;
+        default:
+            html = convertPlainTextToHtml(content);
+    }
+    
+    previewContent.innerHTML = html;
+}
+
+function convertPlainTextToHtml(text) {
+    // URL 패턴 정의
+    const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+    
+    // 텍스트를 HTML로 변환 (줄바꿈 처리)
+    let html = text.replace(/\n/g, '<br>');
+    
+    // URL을 링크로 변환
+    html = html.replace(urlPattern, (match) => {
+        let url = match;
+        if (!url.startsWith('http')) {
+            url = 'https://' + url;
+        }
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`;
+    });
+    
+    return html;
+}
+
+function renderNoticeContent(content, contentType = 'plain') {
+    switch (contentType) {
+        case 'markdown':
+            if (typeof marked !== 'undefined') {
+                return marked.parse(content);
+            }
+            return convertPlainTextToHtml(content);
+        case 'html':
+            return content;
+        case 'plain':
+        default:
+            return convertPlainTextToHtml(content);
+    }
+}
+
+function showFormatHelp() {
+    openModal('formatHelpModal');
+}
+
+function closeFormatHelp() {
+    closeModal('formatHelpModal');
+}
+
 // 전역 스코프에 함수 정의 및 window 객체에 명시적 할당
 window.addDirectNoticeListeners = function() {
     // 모든 공지사항 항목에 이벤트 추가 (홈화면 + 대시보드)
@@ -2770,7 +2991,10 @@ function showNoticeDetail(notice) {
     
     // 모달 내용 업데이트
     document.getElementById('noticeDetailTitle').textContent = notice.title;
-    document.getElementById('noticeDetailContent').textContent = notice.content;
+    
+    // 내용 렌더링 시 content_type 고려 (수정된 부분)
+    const renderedContent = renderNoticeContent(notice.content, notice.content_type);
+    document.getElementById('noticeDetailContent').innerHTML = renderedContent; // textContent 대신 innerHTML 사용
     
     const authorElement = document.getElementById('noticeDetailAuthor');
     if (authorElement) {
@@ -3034,16 +3258,39 @@ document.getElementById('noticeWriteForm').addEventListener('submit', async func
         
         showLoading();
         
-        const noticeData = {
-            title: document.getElementById('noticeTitle').value,
-            content: document.getElementById('noticeContent').value,
-            region: document.getElementById('noticeRegion').value,
-            is_important: document.getElementById('noticeImportant').checked,
-            attachment: attachment
-        };
+        const formData = new FormData();
+        formData.append('title', document.getElementById('noticeTitle').value);
+        formData.append('content', document.getElementById('noticeContent').value);
+        formData.append('content_type', document.querySelector('input[name="contentType"]:checked').value); // 새로 추가
+        formData.append('region', document.getElementById('noticeRegion').value);
+        formData.append('is_important', document.getElementById('noticeImportant').checked);
         
-        await createNotice(noticeData);
-        closeNoticeWriteModal();
+        if (attachment) {
+            formData.append('attachment', attachment);
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/admin/notices`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('공지사항이 등록되었습니다.', 'success');
+            closeNoticeWriteModal();
+            
+            // 공지사항 목록 새로고침
+            await loadHomeNotices();
+            if (document.getElementById('noticesListSection')) {
+                await loadUserNotices();
+            }
+        } else {
+            throw new Error(data.message || '공지사항 등록에 실패했습니다.');
+        }
         
         // 알림 숨기기
         hideAlert();
@@ -3192,6 +3439,13 @@ document.addEventListener('visibilitychange', function() {
         })();
     }
 });    
+
+// 공지사항 작성 모달이 열릴 때 편집기 초기화
+    const originalShowNoticeWriteModal = window.showNoticeWriteModal;
+    window.showNoticeWriteModal = function() {
+        originalShowNoticeWriteModal();
+        setTimeout(initializeNoticeEditor, 100);
+    };
 
     document.getElementById('inquiryAnswerForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
