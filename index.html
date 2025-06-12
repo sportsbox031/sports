@@ -6726,8 +6726,8 @@ function renderCalendar(date) {
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
     dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';  // 메시지 변경
 } else if (dateStatus?.isPartiallyBlocked) {
-    // 새로운 조건 추가
-    dayElement.className = 'calendar-day partially-blocked h-12 flex items-center justify-center cursor-pointer';
+    // 사용자 대시보드에서는 노란색(1개마감)으로 표시
+    dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
     dayElement.title = '부분 마감 (1개만 예약 가능)';
     addDateClickHandler(dayElement, year, month, currentDay);
 } else if (dateStatus?.hasBooking) {
