@@ -5002,14 +5002,14 @@ function renderUsersList(users) {
     }
     
     // 상단에 전체 회원 수 표시 추가
-    const userManagementSection = document.querySelector('.mt-8.bg-white.rounded-2xl.shadow-xl.p-8');
-    const sectionTitle = userManagementSection?.querySelector('h2');
-    if (sectionTitle) {
-        sectionTitle.innerHTML = `
-            <i class="fas fa-users text-indigo-600 mr-2"></i>
-            전체 회원 관리 <span class="text-sm font-normal text-gray-500 ml-2">(총 ${users.length}개 단체)</span>
-        `;
-    }
+    const userManagementSection = document.querySelector('#adminDashboard .mt-8.bg-white.rounded-2xl.shadow-xl.p-8:last-child');
+const sectionTitle = userManagementSection?.querySelector('h2');
+if (sectionTitle) {
+    sectionTitle.innerHTML = `
+        <i class="fas fa-users text-indigo-600 mr-2"></i>
+        전체 회원 관리 <span class="text-sm font-normal text-gray-500 ml-2">(총 ${users.length}개 단체)</span>
+    `;
+}
 
     try {
         tbody.innerHTML = users.map((user, index) => `
