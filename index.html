@@ -6716,15 +6716,15 @@ function renderCalendar(date) {
         if (selectedDateObj < today) {
     dayElement.className = 'calendar-day past h-12 flex items-center justify-center';
     dayElement.title = '지난 날짜';
-} else if (dateStatus?.isFullyBlocked) {
-    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
-    dayElement.title = '관리자 전체 마감';  // 메시지 변경
 } else if (dateStatus?.isFull) {
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감 (2건 모두 예약됨)';  // 메시지 변경
+    dayElement.title = '예약 마감 (2건 모두 예약됨)';
 } else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
     dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
-    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';  // 메시지 변경
+    dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
+    dayElement.title = '관리자 전체 마감';
 } else if (dateStatus?.isPartiallyBlocked) {
     // 사용자 대시보드에서는 노란색(1개마감)으로 표시
     dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
@@ -6825,16 +6825,15 @@ function renderAdminCalendar(date) {
         if (selectedDateObj < today) {
     dayElement.className = `${baseClass} past`;
     dayElement.title = '지난 날짜';
-} else if (dateStatus?.isFullyBlocked) {
-    dayElement.className = `${baseClass} blocked cursor-pointer`;
-    dayElement.title = '관리자 전체 마감';
 } else if (dateStatus?.isFull) {
     dayElement.className = `${baseClass} full cursor-pointer`;
     dayElement.title = '예약 마감 (2건 모두 예약됨)';
 } else if (dateStatus?.isPartiallyBlocked && dateStatus?.bookingCount >= 1) {
-    // 여기가 핵심 변경사항: 부분 마감 + 예약 1개 이상 = 예약 마감
     dayElement.className = `${baseClass} full cursor-pointer`;
     dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+} else if (dateStatus?.isFullyBlocked) {
+    dayElement.className = `${baseClass} blocked cursor-pointer`;
+    dayElement.title = '관리자 전체 마감';
 } else if (dateStatus?.isPartiallyBlocked) {
     dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
     dayElement.title = '부분 마감 (1개 예약만 가능)';
@@ -6917,10 +6916,11 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
         };
     }
 
-    if (dateStatus?.isFullyBlocked) {
+    // 예약 마감 상태를 가장 먼저 체크
+    if (dateStatus?.isFull) {
         return {
-            className: `${baseClass} blocked cursor-pointer`,
-            title: '전체 마감 (클릭하여 해제)'
+            className: `${baseClass} full cursor-pointer`,
+            title: '예약 마감'
         };
     }
 
@@ -6940,10 +6940,11 @@ function getDayConfiguration(dateObj, dateStatus, baseClass) {
         }
     }
 
-    if (dateStatus?.isFull) {
+    // 관리자 전체 마감을 마지막에 체크
+    if (dateStatus?.isFullyBlocked) {
         return {
-            className: `${baseClass} full cursor-pointer`,
-            title: '예약 마감'
+            className: `${baseClass} blocked cursor-pointer`,
+            title: '전체 마감 (클릭하여 해제)'
         };
     }
 
