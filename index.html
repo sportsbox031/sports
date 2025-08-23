@@ -4777,10 +4777,7 @@
                         showAlert('해당 날짜는 전체 마감되었습니다.', 'error', 3000);
                         return;
                     }
-                    if (dateStatus?.isPartiallyBlocked && dateStatus.bookingCount >= 1) {
-                        showAlert('해당 날짜는 부분 마감되어 더 이상 예약할 수 없습니다.', 'error', 3000);
-                        return;
-                    }
+                    // partial 상태는 예약 차단하지 않음 (1개 더 예약 가능)
 
                     const response = await apiRequest('/api/bookings', {
                         method: 'POST',
@@ -6932,10 +6929,15 @@
                         dayElement.className = 'calendar-day blocked h-12 flex items-center justify-center';
                         dayElement.title = '관리자 전체 마감';
                     } else if (dateStatus?.isPartiallyBlocked) {
-                        // 부분 마감인 경우 예약 수와 관계없이 노란색으로 표시
-                        dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
-                        dayElement.title = `예약 현황: ${dateStatus.bookingCount}/2`;
-                        addDateClickHandler(dayElement, year, month, currentDay);
+                        // 부분 마감 + 1개 예약이면 빨간색 (마감), 아니면 노란색
+                        if (dateStatus.bookingCount >= 1) {
+                            dayElement.className = 'calendar-day full h-12 flex items-center justify-center';
+                            dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+                        } else {
+                            dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
+                            dayElement.title = '부분 마감 (1개만 예약 가능)';
+                            addDateClickHandler(dayElement, year, month, currentDay);
+                        }
                     } else if (dateStatus?.hasBooking) {
                         dayElement.className = 'calendar-day booked h-12 flex items-center justify-center cursor-pointer';
                         dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
@@ -7038,9 +7040,15 @@
                         dayElement.className = `${baseClass} blocked cursor-pointer`;
                         dayElement.title = '관리자 전체 마감';
                     } else if (dateStatus?.isPartiallyBlocked) {
-                        dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
-                        dayElement.title = `예약 현황: ${dateStatus.bookingCount}/2`;
-                        dayElement.style.backgroundColor = '#F97316';
+                        // 부분 마감 + 1개 예약이면 빨간색, 아니면 주황색
+                        if (dateStatus.bookingCount >= 1) {
+                            dayElement.className = `${baseClass} full cursor-pointer`;
+                            dayElement.title = '예약 마감 (부분 마감 + 예약 1건)';
+                        } else {
+                            dayElement.className = `${baseClass} partially-blocked cursor-pointer`;
+                            dayElement.title = '부분 마감 (1개만 예약 가능)';
+                            dayElement.style.backgroundColor = '#F97316';
+                        }
                     } else if (dateStatus?.hasBooking) {
                         dayElement.className = `${baseClass} booked cursor-pointer`;
                         dayElement.title = `${dateStatus.bookingCount}개 예약됨`;
@@ -7128,12 +7136,19 @@
                 }
 
                 if (dateStatus?.isPartiallyBlocked) {
-                    // 부분 마감인 경우 예약 수와 관계없이 노란색 표시
-                    return {
-                        className: `${baseClass} partially-blocked cursor-pointer`,
-                        title: `예약 현황: ${dateStatus.bookingCount}/2`,
-                        backgroundColor: '#F97316'
-                    };
+                    // 부분 마감 + 1개 예약이면 빨간색, 아니면 주황색
+                    if (dateStatus.bookingCount >= 1) {
+                        return {
+                            className: `${baseClass} full cursor-pointer`,
+                            title: '예약 마감 (부분 마감 + 예약 1건)'
+                        };
+                    } else {
+                        return {
+                            className: `${baseClass} partially-blocked cursor-pointer`,
+                            title: '부분 마감 (1개만 예약 가능)',
+                            backgroundColor: '#F97316'
+                        };
+                    }
                 }
 
                 // 관리자 전체 마감을 마지막에 체크
